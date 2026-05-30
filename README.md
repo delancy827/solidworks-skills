@@ -581,3 +581,47 @@ MIT License — 免费用于个人和商业项目。
 
 **🚀 让我们一起，把 AI + CAD 的边界推得更远！**  
 *Let's push the boundaries of AI + CAD together!*
+
+---
+
+## ⚖️ 版权与免责声明 | Copyright & Disclaimer
+
+### 版权 | Copyright
+
+- **代码与文档**：© 2026 delancy827. 本技能包采用 [MIT License](LICENSE) 开源。
+- **SolidWorks** 是 Dassault Systèmes 的注册商标，本项目与 Dassault Systèmes 无关。
+- **WorkBuddy** 是独立 AI Agent 平台，本项目是其技能扩展，与官方无关。
+
+### 免责声明 | Disclaimer
+
+⚠️ **重要声明（请仔细阅读）：**
+
+1. **本技能包按"原样"提供，不承担任何担保责任。**  
+   The skill pack is provided "AS IS", without warranty of any kind.
+
+2. **不保证适用于你的具体场景。**  
+   使用者需自行测试、验证，后果自负。  
+   Users must test and verify by themselves. Use at your own risk.
+
+3. **不构成专业工程建议。**  
+   本技能包生成的模型/代码仅供参考，不替代专业工程师判断。  
+   Not a substitute for professional engineering judgment.
+
+4. **SolidWorks API 调用可能导致文件损坏、数据丢失。**  
+   使用前请**备份你的文件**！作者不对任何数据丢失负责。  
+   Always **backup your files** before use!
+
+5. **贡献者对其提交内容负责。**  
+   如有侵权内容，请联系我们删除。  
+   Contributors are responsible for their submissions.
+
+6. **本技能包与 Dassault Systèmes 无关。**  
+   我们不隶属于 SolidWorks 或其代理商。  
+   This project is not affiliated with Dassault Systèmes.
+
+---
+
+**使用本技能包即表示你同意以上声明。**  
+**By using this skill pack, you agree to the above disclaimer.**
+
+如有问题，请联系：[delancy827@example.com](mailto:delancy827@example.com)
