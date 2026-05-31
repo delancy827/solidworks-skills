@@ -9,7 +9,7 @@ namespace SWAutomation
     {
         static void Main(string[] args)
         {
-            string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\probe_log.txt";
+            string logPath = @".\probe_log.txt";
             System.IO.StreamWriter log = new System.IO.StreamWriter(logPath, false, System.Text.Encoding.UTF8);
             log.AutoFlush = true;
             Console.SetOut(log);

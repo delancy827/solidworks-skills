@@ -56,7 +56,7 @@ namespace SWAutomation
 
         static void Main(string[] args)
         {
-            string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\log.txt";
+            string logPath = @".\log.txt";
             System.IO.StreamWriter swLog = new System.IO.StreamWriter(logPath, false, System.Text.Encoding.UTF8);
             swLog.AutoFlush = true;
             Console.SetOut(swLog);

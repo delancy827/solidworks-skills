@@ -1879,7 +1879,7 @@ if feat is not None:
 
 ## 二十、2026-05-31 实战突破 — C# 高级自动化架构升级
 
-> **背景**：在叉形接头（Clevis Joint）全自动建模攻坚中，连续 12+ 轮迭代死磕，总结出以下"血泪经验"。所有突破均已实机验证通过。
+> **背景**：在叉形接头（Clevis Joint）全自动建模攻坚中，经过多轮迭代调试，总结出以下实战经验。所有方法均已实机验证通过。
 
 ---
 
@@ -1891,7 +1891,7 @@ if feat is not None:
 #### 根因
 COM 在不同权限级别下运行在不同的 Window Station，`GetActiveObject` 只能连到同权限级别的 COM 实例。
 
-#### 终极破局方案
+#### 推荐方案
 ```csharp
 // ✅ 正确：用 Activator.CreateInstance 强行拉起与 EXE 权限绝对一致的干净 SW 实例
 Type swType = Type.GetTypeFromProgID("SldWorks.Application");
@@ -1903,14 +1903,14 @@ swApp.Visible = true;
 // swApp = (SldWorks)Marshal.GetActiveObject("SldWorks.Application");
 ```
 
-#### 黄金法则
+#### 使用规则
 | 场景 | 方案 |
 |------|------|
 | SW 已开（同权限） | `Marshal.GetActiveObject` ✅ |
 | SW 未开 / 权限不明 | `Activator.CreateInstance` ✅ 最安全 |
 | 任何自动化脚本 | **首选 Activator.CreateInstance** |
 
-#### 新建零件铁律
+#### 新建零件规范
 ```csharp
 // ✅ 正确：NewDocument + 备用模板路径
 string partTemplate = swApp.GetUserPreferenceStringValue(
@@ -1949,17 +1949,17 @@ Console.WriteLine("✓ 前视基准面选中");
 
 ---
 
-### 20.3 神仙级面遍历算法（GetBodies2）🎯
+### 20.3 实体面遍历算法（GetBodies2）
 
-> **这是今天最重要的突破！** `SelectByRay` 射线法在复杂几何上容易脱靶，
-> 改用 **GetBodies2 → GetFaces → 几何极值** 实现 100% 精准盲选定位。
+> **核心突破**：`SelectByRay` 射线法在复杂几何上容易脱靶，
+> 改用 **GetBodies2 → GetFaces → 几何极值** 实现精准定位。
 
 #### 为什么 SelectByRay 不可靠？
 - 射线起点/方向参数需要精确计算，一个人工错误就射不中
 - 在拉伸/切除后的变形几何上，之前计算的面坐标已经失效
 - 叉形接头的后端面、顶面用射线法反复失败
 
-#### 终极方案：遍历实体面 + 几何极值定位
+#### 推荐方案：遍历实体面 + 几何极值定位
 
 ```csharp
 // 找 X 坐标最小的面（后端面）
@@ -2011,7 +2011,7 @@ static void SelectFace(object faceObj)
 
 ---
 
-### 20.4 C# 5 语法铁律（编译器兼容）🔒
+### 20.4 C# 5 语法规范（编译器兼容）
 
 #### 硬性规定
 ```csharp
@@ -2129,7 +2129,7 @@ else
 ### 20.8 标准日志重定向模板
 
 ```csharp
-string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\log.txt";
+string logPath = @".\log.txt";
 System.IO.StreamWriter swLog = new System.IO.StreamWriter(
     logPath, false, System.Text.Encoding.UTF8);
 swLog.AutoFlush = true;
