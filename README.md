@@ -1,6 +1,6 @@
-# 🔧 SolidWorks Skills for WorkBuddy
+# 🔧 SolidWorks Skills — 自动化设计技能包
 
-> **SolidWorks 自动化与设计技能包** — 让 AI Agent 真正学会用 SolidWorks  
+> **SolidWorks 自动化与设计技能包** — 让 AI Agent 真正学会用 SolidWorks 
 > *Let AI Agent truly learn to use SolidWorks*
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -30,7 +30,7 @@
 
 ### 🇨🇳 中文
 
-这是一个 **SolidWorks 技能包**，专门为 [WorkBuddy](https://workbuddy.ai) AI Agent 设计。
+这是一个 **SolidWorks 技能包**，为 AI Agent 设计的 SolidWorks 自动化技能包。
 
 **它能做什么？**
 - 🤖 **自动化建模** — 用自然语言描述，AI 自动建 3D 模型
@@ -49,11 +49,11 @@
 # 1. 克隆这个库
 git clone https://github.com/delancy827/solidworks-skills.git
 
-# 2. 复制技能到 WorkBuddy
-cp -r solidworks-skills/solidworks-automation ~/.workbuddy/skills/
-cp -r solidworks-skills/sw-designer ~/.workbuddy/skills/
+# 2. 安装到技能目录
+cp -r solidworks-skills/solidworks-automation /path/to/skills/
+cp -r solidworks-skills/sw-designer /path/to/skills/
 
-# 3. 启动 WorkBuddy，直接对话
+# 3. 加载使用
 "帮我建一个 M6 螺钉的 3D 模型"
 ```
 
@@ -61,7 +61,7 @@ cp -r solidworks-skills/sw-designer ~/.workbuddy/skills/
 
 ### 🇺🇸 English
 
-This is a **SolidWorks Skill Pack** designed for [WorkBuddy](https://workbuddy.ai) AI Agent.
+This is a **SolidWorks Skill Pack** designed for AI agents to automate SolidWorks.
 
 **What can it do?**
 - 🤖 **Automated Modeling** — Describe in natural language, AI builds 3D models
@@ -80,11 +80,11 @@ This is a **SolidWorks Skill Pack** designed for [WorkBuddy](https://workbuddy.a
 # 1. Clone this repo
 git clone https://github.com/delancy827/solidworks-skills.git
 
-# 2. Copy skills to WorkBuddy
-cp -r solidworks-skills/solidworks-automation ~/.workbuddy/skills/
-cp -r solidworks-skills/sw-designer ~/.workbuddy/skills/
+# 2. Copy skills
+cp -r solidworks-skills/solidworks-automation /path/to/skills/
+cp -r solidworks-skills/sw-designer /path/to/skills/
 
-# 3. Launch WorkBuddy, just chat
+# 3. Load and use
 "Build a 3D model of an M6 screw"
 ```
 
@@ -102,35 +102,35 @@ SolidWorks 是全球最流行的 3D CAD 软件之一，但它的 API 非常复�
 - 不同版本（2021/2024）API 参数数量不一样
 - 官方文档混乱，网上教程质量参差不齐
 
-**我们的解决方案：**  
+**我们的解决方案：** 
 把实战踩坑经验封装成 **AI Agent 技能包**，让 AI 真正学会用 SolidWorks，而不是靠猜。
 
 #### 📦 技能包结构
 
 ```
 solidworks-skills/
-├── solidworks-automation/          # 自动化建模技能
-│   ├── SKILL.md                    # 技能主文档（11KB，超详细）
-│   │   ├── SW 2024 API 完全指南
-│   │   ├── Python COM 实战踩坑记录
-│   │   ├── 参数化建模工作流
-│   │   ├── 错误处理与调试技巧
-│   │   └── 代码示例（4 个完整脚本）
-│   └── examples/                  # 可运行示例代码
-│       ├── create_part.py          # 基础零件建模
-│       ├── parametric_design.py    # 参数化设计
-│       ├── batch_export.py         # 批量导出
-│       └── advanced_features.py   # 高级特征建模
+├── solidworks-automation/     # 自动化建模技能
+│  ├── SKILL.md          # 技能主文档（11KB，超详细）
+│  │  ├── SW 2024 API 完全指南
+│  │  ├── Python COM 实战踩坑记录
+│  │  ├── 参数化建模工作流
+│  │  ├── 错误处理与调试技巧
+│  │  └── 代码示例（4 个完整脚本）
+│  └── examples/         # 可运行示例代码
+│    ├── create_part.py     # 基础零件建模
+│    ├── parametric_design.py  # 参数化设计
+│    ├── batch_export.py     # 批量导出
+│    └── advanced_features.py  # 高级特征建模
 │
-├── sw-designer/                   # 设计指导技能
-│   └── SKILL.md                  # 设计指南（22KB，超详细）
-│       ├── IMA 知识库集成（55 篇教程）
-│       ├── 参数化设计原则
-│       ├── 性能优化技巧
-│       ├── 设计规范检查清单
-│       └── 10 章完整设计流程
+├── sw-designer/          # 设计指导技能
+│  └── SKILL.md         # 设计指南（22KB，超详细）
+│    ├── IMA 知识库集成（55 篇教程）
+│    ├── 参数化设计原则
+│    ├── 性能优化技巧
+│    ├── 设计规范检查清单
+│    └── 10 章完整设计流程
 │
-└── README.md                      # 本文件
+└── README.md           # 本文件
 ```
 
 #### 🔥 核心功能
@@ -141,21 +141,21 @@ solidworks-skills/
 ```python
 # ✅ 正确：FeatureExtrusion2 需要 23 个参数（不是 17 个！）
 doc.FeatureManager.FeatureExtrusion2(
-    True, False, False,  # Sd, Flip, Dir
-    0, 0,               # T1, T2 (0=Blind)
-    0.05, 0.0,         # D1, D2 (米为单位！)
-    False, False,        # Dchk1, Dchk2
-    False, False,        # Ddir1, Ddir2
-    0.0, 0.0,          # Dang1, Dang2
-    False, False,        # Ofr, Ofc
-    False, False,        # Tf1, Tf2
-    False,               # Merge
-    False, False,        # UseFeatScope, UseAutoSelect
-    0.0, False, False   # StartOffset, IsAutoStartOffset, FlipStartOffset
+  True, False, False, # Sd, Flip, Dir
+  0, 0,        # T1, T2 (0=Blind)
+  0.05, 0.0,     # D1, D2 (米为单位！)
+  False, False,    # Dchk1, Dchk2
+  False, False,    # Ddir1, Ddir2
+  0.0, 0.0,     # Dang1, Dang2
+  False, False,    # Ofr, Ofc
+  False, False,    # Tf1, Tf2
+  False,        # Merge
+  False, False,    # UseFeatScope, UseAutoSelect
+  0.0, False, False  # StartOffset, IsAutoStartOffset, FlipStartOffset
 )
 
 # ❌ 错误：SelectByID2 必须用 VARIANT 包装
-# doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, Nothing, 0)  # 会报错！
+# doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, Nothing, 0) # 会报错！
 # ✅ 正确写法见 SKILL.md 第 127-156 行
 ```
 
@@ -209,21 +209,21 @@ SolidWorks is one of the world's most popular 3D CAD software, but its API is ex
 - Different versions (2021/2024) have different API parameter counts
 - Official docs are messy, online tutorials vary in quality
 
-**Our Solution:**  
+**Our Solution:** 
 Package real-world debugging experience into **AI Agent Skills**, letting AI truly learn SolidWorks instead of guessing.
 
 #### 📦 Skill Pack Structure
 
 ```
 solidworks-skills/
-├── solidworks-automation/          # Automation skill
-│   ├── SKILL.md                    # Main doc (11KB, super detailed)
-│   └── examples/                  # Runnable examples
+├── solidworks-automation/     # Automation skill
+│  ├── SKILL.md          # Main doc (11KB, super detailed)
+│  └── examples/         # Runnable examples
 │
-├── sw-designer/                   # Design guidance skill
-│   └── SKILL.md                  # Design guide (22KB, super detailed)
+├── sw-designer/          # Design guidance skill
+│  └── SKILL.md         # Design guide (22KB, super detailed)
 │
-└── README.md                      # This file
+└── README.md           # This file
 ```
 
 #### 🔥 Core Features
@@ -232,10 +232,10 @@ solidworks-skills/
 ```python
 # ✅ Correct: FeatureExtrusion2 needs 23 params (not 17!)
 doc.FeatureManager.FeatureExtrusion2(
-    True, False, False,
-    0, 0,
-    0.05, 0.0,  # Units in METERS!
-    # ... (20 more params, see SKILL.md)
+  True, False, False,
+  0, 0,
+  0.05, 0.0, # Units in METERS!
+  # ... (20 more params, see SKILL.md)
 )
 ```
 
@@ -264,24 +264,24 @@ doc.FeatureManager.FeatureExtrusion2(
 
 ## 安装方法 | Installation
 
-### 方法 1：直接复制到 WorkBuddy（推荐）
+### 方法 1：直接复制（推荐）
 
 ```bash
 # 克隆仓库
 git clone https://github.com/delancy827/solidworks-skills.git
 cd solidworks-skills
 
-# 复制到 WorkBuddy 技能目录
-cp -r solidworks-automation ~/.workbuddy/skills/
-cp -r sw-designer ~/.workbuddy/skills/
+# 复制到 技能目录
+cp -r solidworks-automation /path/to/skills/
+cp -r sw-designer /path/to/skills/
 
-# 重启 WorkBuddy
+# 重新加载
 ```
 
 ### 方法 2：作为 Git 子模块
 
 ```bash
-cd ~/.workbuddy/skills/
+cd /path/to/skills/
 git submodule add https://github.com/delancy827/solidworks-skills.git
 git submodule update --init --recursive
 ```
@@ -290,7 +290,7 @@ git submodule update --init --recursive
 
 1. 访问 https://github.com/delancy827/solidworks-skills
 2. 点击绿色 "Code" 按钮 → "Download ZIP"
-3. 解压后，把两个文件夹复制到 `~/.workbuddy/skills/`
+3. 解压后，把两个文件夹复制到 `/path/to/skills/`
 
 ---
 
@@ -298,7 +298,7 @@ git submodule update --init --recursive
 
 ### 示例 1：自动化建模（简单零件）
 
-**用户说：**  
+**用户说：** 
 > "帮我建一个 80x90x55mm 的长方体，材料是 10 钢"
 
 **AI 执行（solidworks-automation 技能）：**
@@ -321,7 +321,7 @@ boolstatus = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, Fals
 
 ### 示例 2：参数化设计（修改尺寸）
 
-**用户说：**  
+**用户说：** 
 > "把刚才的长方体宽度改成 100mm"
 
 **AI 执行：**
@@ -330,7 +330,7 @@ boolstatus = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, Fals
 width = doc.Parameter("Width").Value
 
 # 2. 修改尺寸
-doc.Parameter("Width").Value = 0.1  # 米为单位
+doc.Parameter("Width").Value = 0.1 # 米为单位
 
 # 3. 重建模型
 doc.EditRebuild3()
@@ -340,7 +340,7 @@ doc.EditRebuild3()
 
 ### 示例 3：设计审查（检查最佳实践）
 
-**用户说：**  
+**用户说：** 
 > "检查这个模型有没有设计问题"
 
 **AI 执行（sw-designer 技能）：**
@@ -430,8 +430,8 @@ git push origin feature/amazing-feature
 
 ---
 
-🙏 **希望大家一起来共同改进这个 skill！**  
-无论是踩坑记录、代码示例、文档改进，还是新的想法，都欢迎提交。  
+🙏 **希望大家一起来共同改进这个 skill！** 
+无论是踩坑记录、代码示例、文档改进，还是新的想法，都欢迎提交。 
 让我们一起把 AI + SolidWorks 的自动化做得更好！
 
 ---
@@ -548,7 +548,6 @@ git push origin feature/amazing-feature
 
 - **SolidWorks 官方文档** — 虽然很乱，但还是有参考价值的
 - **pywin32 社区** — 让 Python 能调用 COM 接口
-- **WorkBuddy 团队** — 提供了优秀的 AI Agent 平台
 - **所有贡献者** — 你们让这个项目变得更好
 
 ---
@@ -564,7 +563,6 @@ MIT License — 免费用于个人和商业项目。
 ## 相关链接 | Related Links
 
 - 🌐 **项目主页：** https://github.com/delancy827/solidworks-skills
-- 📖 **WorkBuddy 官网：** https://workbuddy.ai
 - 📚 **SolidWorks 官方文档：** https://help.solidworks.com
 - 💬 **讨论区：** https://github.com/delancy827/solidworks-skills/discussions
 
@@ -576,10 +574,10 @@ MIT License — 免费用于个人和商业项目。
 
 ---
 
-**🙏 如果你觉得这个技能包有用，请给个 Star！**  
+**🙏 如果你觉得这个技能包有用，请给个 Star！** 
 *If you find this skill pack useful, please give it a Star!*
 
-**🚀 让我们一起，把 AI + CAD 的边界推得更远！**  
+**🚀 让我们一起，把 AI + CAD 的边界推得更远！** 
 *Let's push the boundaries of AI + CAD together!*
 
 ---
@@ -590,38 +588,37 @@ MIT License — 免费用于个人和商业项目。
 
 - **代码与文档**：© 2026 delancy827. 本技能包采用 [MIT License](LICENSE) 开源。
 - **SolidWorks** 是 Dassault Systèmes 的注册商标，本项目与 Dassault Systèmes 无关。
-- **WorkBuddy** 是独立 AI Agent 平台，本项目是其技能扩展，与官方无关。
 
 ### 免责声明 | Disclaimer
 
 ⚠️ **重要声明（请仔细阅读）：**
 
-1. **本技能包按"原样"提供，不承担任何担保责任。**  
-   The skill pack is provided "AS IS", without warranty of any kind.
+1. **本技能包按"原样"提供，不承担任何担保责任。** 
+  The skill pack is provided "AS IS", without warranty of any kind.
 
-2. **不保证适用于你的具体场景。**  
-   使用者需自行测试、验证，后果自负。  
-   Users must test and verify by themselves. Use at your own risk.
+2. **不保证适用于你的具体场景。** 
+  使用者需自行测试、验证，后果自负。 
+  Users must test and verify by themselves. Use at your own risk.
 
-3. **不构成专业工程建议。**  
-   本技能包生成的模型/代码仅供参考，不替代专业工程师判断。  
-   Not a substitute for professional engineering judgment.
+3. **不构成专业工程建议。** 
+  本技能包生成的模型/代码仅供参考，不替代专业工程师判断。 
+  Not a substitute for professional engineering judgment.
 
-4. **SolidWorks API 调用可能导致文件损坏、数据丢失。**  
-   使用前请**备份你的文件**！作者不对任何数据丢失负责。  
-   Always **backup your files** before use!
+4. **SolidWorks API 调用可能导致文件损坏、数据丢失。** 
+  使用前请**备份你的文件**！作者不对任何数据丢失负责。 
+  Always **backup your files** before use!
 
-5. **贡献者对其提交内容负责。**  
-   如有侵权内容，请联系我们删除。  
-   Contributors are responsible for their submissions.
+5. **贡献者对其提交内容负责。** 
+  如有侵权内容，请联系我们删除。 
+  Contributors are responsible for their submissions.
 
-6. **本技能包与 Dassault Systèmes 无关。**  
-   我们不隶属于 SolidWorks 或其代理商。  
-   This project is not affiliated with Dassault Systèmes.
+6. **本技能包与 Dassault Systèmes 无关。** 
+  我们不隶属于 SolidWorks 或其代理商。 
+  This project is not affiliated with Dassault Systèmes.
 
 ---
 
-**使用本技能包即表示你同意以上声明。**  
+**使用本技能包即表示你同意以上声明。** 
 **By using this skill pack, you agree to the above disclaimer.**
 
 如有问题，请联系：[delancy827@example.com](mailto:delancy827@example.com)
