@@ -1,0 +1,33 @@
+# 编译输出
+*.exe
+*.pdb
+*.vshost.exe
+*.vshost.exe.config
+
+# SW Interop DLL（可以从SW安装目录引用）
+SolidWorks.Interop.sldworks.dll
+SolidWorks.Interop.swconst.dll
+
+# 日志文件
+*.log
+log.txt
+stage2_error.log
+
+# Python缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# 临时文件
+*.tmp
+*.bak
+*~
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,7 +1,0 @@
-[2026/5/31 15:22:04] Stage 2 Error:
-检索 COM 类工厂中 CLSID 为 {AFBEC3B2-B1A6-4908-B608-D97D2AAB5498} 的组件失败，原因是出现以下错误: 800702e4 请求的操作需要提升。 (异常来自 HRESULT:0x800702E4)。
-   在 System.RuntimeTypeHandle.CreateInstance(RuntimeType type, Boolean publicOnly, Boolean noCheck, Boolean& canBeCached, RuntimeMethodHandleInternal& ctor, Boolean& bNeedSecurityCheck)
-   在 System.RuntimeType.CreateInstanceSlow(Boolean publicOnly, Boolean skipCheckThis, Boolean fillCache, StackCrawlMark& stackMark)
-   在 System.Activator.CreateInstance(Type type, Boolean nonPublic)
-   在 System.Activator.CreateInstance(Type type)
-   在 SWStage2.Program.Main(String[] args)
