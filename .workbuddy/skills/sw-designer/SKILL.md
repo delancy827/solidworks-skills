@@ -89,17 +89,8 @@ author: Delancy
 
 **工具选择**：
 - VBA：内置宏，最简单的入门方式
-- C#：功能最强，强类型早期绑定，适合开发专业插件
+- C#：功能最强，适合开发专业插件
 - Python(win32com)：灵活高效，适合批量处理
-
-**架构选择决策树**：
-```
-需要FeatureCut4(27参数)或HoleWizard5(25+参数)？
-├── 是 → 必须用C#强类型（Python win32com >12参数会丢失）
-└── 否 → Python win32com足够
-    ├── 需要SelectByID2选面？ → 可能失败，考虑C#
-    └── 手动预选平面？ → Python足够
-```
 
 **核心API功能**：
 - 自动生成零件/装配体（`AddComponent`、`FeatureExtrusion`）
@@ -127,42 +118,6 @@ model.FeatureManager.FeatureExtrusion3(True, False, False, 0, 0, 0.05, 0.05,
 2. **配置驱动的高级应用**：配置管理器 + 设计表批量控制参数，实现不同规格模型快速切换
 3. **大型装配体自动化**：轻量化装配 + 选择性加载 + 自动化BOM生成
 4. **SpeedPak**：只加载外表面用于大装配体
-
-### 2.5 C#强类型架构最佳实践（2026-05-31验证）
-
-**编译环境**：
-- 使用 .NET Framework 4.x 的 `csc.exe`（仅支持C# 5语法）
-- 引用 Interop DLL：`SolidWorks.Interop.sldworks.dll` + `SolidWorks.Interop.swconst.dll`
-
-**权限管理**：
-- SW和EXE必须以**同一权限级别**运行（推荐都普通权限）
-- 管理员权限会导致COM连接隔离，操作结果留在隐藏实例中
-
-**选面策略优先级**：
-1. `SelectByRay`（不依赖中文名称，最稳健）
-2. `SelectByID2` + 坐标（空名称+坐标定位）
-3. `SelectByID2` + 名称（中文SW面名可能变化）
-
-**验证机制（防止假成功）**：
-```csharp
-// 不要信任返回值！SW API常返回null但操作成功
-Feature feat = swDoc.FeatureManager.FeatureExtrusion2(...);
-if (feat == null)
-{
-    int before = swDoc.GetFeatureCount();
-    swDoc.ForceRebuild3(false);
-    int after = swDoc.GetFeatureCount();
-    if (after > before) { /* 实际成功 */ }
-}
-```
-
-**日志重定向（UAC场景必备）**：
-```csharp
-StreamWriter log = new StreamWriter("log.txt", false, Encoding.UTF8);
-log.AutoFlush = true;
-Console.SetOut(log);
-// 所有Console.WriteLine自动写入文件
-```
 
 ---
 
@@ -433,3 +388,64 @@ K因子：钢0.44 / 不锈钢0.35 / 铝0.33 / 铜0.35
 | SW教程合集 | 快速入门、零件装配体、工程图、高级教程、曲面、钣金、焊件、模具、Simulation、Flow、电气、PDM、MBD | 45个资源 |
 
 **配合使用**：solidworks-automation skill 负责写代码建模，SW设计狮负责告诉AI"怎么设计才对"。
+
+---
+
+## 第十三章：SW 自动化设计避坑指南（2026-05-31 实战新增）
+
+> 来源：叉形接头（Clevis Joint）全自动建模 12+ 轮死磕经验。
+
+### 13.1 建模策略三段论
+
+对叉形接头这类"连接件"的自动化建模，推荐以下分段策略：
+
+| 阶段 | 操作 | 关键 |
+|------|------|------|
+| **1** | 前视基准面拉伸右侧叉部基体 | 90×50×50mm，以原点为起点 |
+| **2** | 遍历后端面（X 最小面），拉伸左侧扁柄 | 70×50×25mm，Z 轴居中（上下各缩进 12.5mm） |
+| **3** | 柄部末端 R25 半圆弧 + Φ18 通孔 | 圆心在 X=-0.045m, Z=0.025m |
+| **4** | 叉部顶面 U 形槽 75×25mm + 双侧 Φ18 通孔 | 槽 Z 轴 0.0125~0.0375m 居中 |
+
+### 13.2 草图坐标系注意事项
+
+⚠️ **前视基准面的草图坐标系映射**：
+- 草图 X 轴 → 模型 X 轴（水平）
+- 草图 Y 轴 → 模型 Z 轴（垂直）
+- `CreateCornerRectangle(X1,Y1,Z1, X2,Y2,Z2)` → Z 坐标控制垂直位置
+
+⚠️ **CreateArc 端点必须在圆上**：
+- 圆心 (cx,cy)、起点、终点三点距离必须都等于半径
+- 否则草图不闭合 → 拉伸/切除静默失败
+
+### 13.3 面选择设计策略
+
+| 面名称 | 定位方法 | 可靠性 |
+|--------|----------|:---:|
+| "前视基准面" | `SelectByID2` + 双语兜底 | ⭐⭐⭐⭐ |
+| "后端面"（X 最小） | `GetBodies2` → `GetFaces` → `GetBox` 找 minX | ⭐⭐⭐⭐⭐ |
+| "顶面"（Y 最大） | `GetBodies2` → `GetFaces` → `GetBox` 找 maxY | ⭐⭐⭐⭐⭐ |
+
+⚠️ **不推荐** `SelectByRay` 射线法 → 参数计算复杂，几何变形后容易脱靶。
+
+### 13.4 尺寸居中公式
+
+```
+叉形接头柄部居中：
+  总高 50mm → 居中后：Z 从 12.5mm 到 37.5mm（0.0125m ~ 0.0375m）
+  
+U 形槽居中：
+  叉部总宽 90mm，槽深 75mm → 槽从 X=0.090m 到 X=0.015m
+  槽宽 25mm 居中 → Z 从 12.5mm 到 37.5mm
+```
+
+### 13.5 自动建模脚本开发流程（最佳实践）
+
+```
+1. 先用 Stage 验证（简单方块+切除）确认 API 连接和编译环境 ✅
+2. 再写完整建模脚本，每步加验证（特征计数比对 + ForceRebuild3）
+3. 每个 API 调用后检查返回值 + 特征计数
+4. 失败立即 return（熔断），不在错误基础上继续
+5. 日志全量输出到文件（log.txt），方便远程调试
+```
+
+---

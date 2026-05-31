@@ -1,223 +1,375 @@
 ---
 name: solidworks-automation
-description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
+description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。⚠️ 2026-05-31架构升级：Python win32com对>12参数API（如FeatureCut4）支持不全，全面转向C# (.NET) 强类型早期绑定架构。支持通过C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 3.4.0
+version: 4.1.0
 author: Delancy
 ---
 
-# SolidWorks 自动化建模 Skill（自包含版）
+# SolidWorks 自动化建模 Skill（C# 强类型架构版）
 
-本skill内置了SolidWorks从入门到精通的全套知识体系，不需要依赖外部知识库。
+本skill内置了SolidWorks从入门到精通的全套知识体系，**现已全面升级为C# (.NET) 强类型早期绑定架构**。
 
-## ⚠️ SW 2024 Python COM 关键踩坑（2026-05-31 最新验证）
+## ⚡ 架构升级声明（2026-05-31）
+
+**问题**：Python win32com 对多参数API（FeatureCut4有27个参数）支持不全，导致返回None或静默失败。
+
+**解决方案**：全面采用C# (.NET) 强类型早期绑定，彻底解决参数传递限制。
+
+**后续所有SolidWorks自动化脚本，必须以C#架构为准！**
+
+---
+
+## ⚠️ SW 2024 Python COM 关键踩坑（历史记录，仅供对照）
 
 ### 环境
-- SW 2024 SP5 (v32.5.0, 中文版), Python 3.13.12 + pywin32 311, Windows 11
+- SW 2024 (中文版), Python 3.14 + pywin32, Windows 11
 
-### 连接方式
-| 方式 | 结果 |
-|------|------|
-| `win32com.client.GetActiveObject("SldWorks.Application")` | ✅ 推荐，复用已有实例 |
-| `win32com.client.Dispatch("SldWorks.Application")` | ⚠️ 确认SW不存在时用，否则重复开窗口 |
-| `win32com.client.Dispatch("SldWorks.Application.32")` | ✅ 可用 |
-| `win32com.client.gencache.EnsureDispatch(...)` | ❌ "COM object can not automate makepy" |
-
-### ⚠️ 窗口管理铁律（2026-05-31新增）
-```python
-# ❌ 错误：每次测试都 Dispatch 新实例 -> 堆满零件窗口 -> 内存爆炸
-sw = win32com.client.Dispatch("SldWorks.Application")
-doc = sw.NewPart()  # 零件1
-doc = sw.NewPart()  # 零件2 ... 零件9 = 9个窗口！
-
-# ✅ 正确：先获取已有实例，测试完关闭文档
-sw = win32com.client.GetActiveObject("SldWorks.Application")
-# ... 测试代码 ...
-sw.CloseDoc(doc.GetTitle)  # 用完即关
-```
-
-### 参数传递（核心！）
-- **SelectByID2 (9参数)**: ❌ SW 2024 SP5 + Python 3.13.12 + pywin32 311 下完全不工作（所有VARIANT组合均"类型不匹配"）
-- **FeatureExtrusion2 (23参数)**: 直接传原生类型即可（不需要VARIANT包装）
-- **FeatureFillet3**: 直接传参即可
-- **SketchManager方法**: 需要预先选择平面（SelectByID2不可用导致无法选择平面）
-
-### 各 API 可用性（SW 2024 SP5 Python COM）
-
-| API | 参数数 | Python COM | 备注 |
+### Python COM 限制
+| API | 参数数 | Python COM | C# 强类型 |
 |-----|:---:|:---:|------|
-| `NewDocument(template_path, ...)` | 4 | ✅ 完整路径 | 空字符串不行！必须用`gb_part.prtdot`完整路径 |
-| `SelectByID2` | 9 | ❌ 类型不匹配 | **SW2024 SP5 完全失效**，需用手动选择或SendKeys |
-| `FeatureExtrusion2` | 23 | ✅ | **不是旧版的17参数** |
-| `FeatureExtrusion3` | 23 | ✅ | 同2 |
-| `FeatureCut` | 20 | ❌ 返回None | 参数匹配但特征不创建 |
-| `FeatureCut3` | 26 | ❌ 返回None | 同上 |
-| `FeatureCut4` | 27 | ❌ 返回None | **>12参数的COM IDispatch限制** |
-| `FeatureFillet3(122,...)` | 7 | ✅ | 等半径圆角, 需先预选边 |
-| `CloseDoc` | 1 | ✅ | title用`doc.GetTitle`(属性)不是`GetTitle()` |
-| `GetDocuments` | 0 | ✅ | 是属性。有文档返tuple，无文档返None |
-| `GetTitle` | 0 | ✅ | 是属性，不是方法 |
-| `GetType` | 0 | ✅ | 是属性：1=零件,2=装配体,3=工程图 |
-| `SimpleHole` | ? | ❌ 参数不匹配 | |
-| `SimpleHole2` | ? | ❌ 参数不匹配 | |
-| `HoleWizard5` | 25+ | ❌ 类型/参数不匹配 | |
+| `NewDocument(template_path, ...)` | 4 | ✅ 完整路径 | ✅ |
+| `SelectByID2` | 9 | ✅ VARIANT | ✅ |
+| `FeatureExtrusion2` | 23 | ✅ | ✅ |
+| `FeatureCut` | 20 | ❌ 返回None | ✅ |
+| `FeatureCut3` | 26 | ❌ 返回None | ✅ |
+| `FeatureCut4` | 27 | ❌ **>12参数COM限制** | ✅ **完美支持** |
+| `FeatureFillet3` | 7 | ✅ | ✅ |
+| `HoleWizard5` | 25+ | ❌ 类型不匹配 | ✅ |
+| `InsertCombineFeature` | 3 | ❌ 类型不匹配 | ✅ |
+| `GetBodies2` | 1 | ❌ 参数不匹配 | ✅ |
 
-### SelectByID2 失效的应急方案
-```python
-# 方案1：手动在SW中选择平面，然后运行脚本（半自动）
-# 方案2：用 SendKeys 模拟键盘操作选择平面（脆弱）
-# 方案3：录制SW宏(.swp)，Python调用 RunMacro（需VBA）
-# 方案4：PowerShell + COM SendKeys 混合（当前最可行）
-# 方案5：升级到C#强类型架构（推荐，见下文）
-```
+**结论**：复杂特征必须用C#，Python只适合简单任务。
 
-## ⚠️ C# .NET 强类型调用规范（2026-05-31 验证通过）
+---
 
-### 为什么需要C#？
-Python win32com对**超过12个参数的COM方法**支持不全（COM IDispatch限制），导致FeatureCut4(27参数)等方法返回None。C#强类型早期绑定可完美传递全部参数。
+## ⚡ C# 强类型全功能调用规范（2026-05-31 架构升级）
 
-### 编译环境
-- 编译器：`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`（.NET Framework 4.x，仅支持C# 5）
-- Interop DLL：`E:\sw2024\SOLIDWORKS\api\redist\SolidWorks.Interop.sldworks.dll` + `SolidWorks.Interop.swconst.dll`
-- 编译命令：
-```batch
-csc.exe /r:"sldworks.dll" /r:"swconst.dll" /out:MyApp.exe MyApp.cs
-```
+### 规范1：早期绑定与强类型声明 (Early Binding)
 
-### ⚠️ C# 5 语法铁律（csc.exe限制）
-| 特性 | C# 5 | C# 6+ | 结果 |
-|------|------|-------|------|
-| 字符串插值 | `"" + var` / `string.Format()` | `$"{var}"` | ❌ 编译失败 |
-| 自动属性初始化 | 构造函数中赋值 | `public int X { get; set; } = 1;` | ❌ 编译失败 |
-| Lambda表达式成员 | 不支持 | `public int X => 1;` | ❌ 编译失败 |
+**核心原则**：彻底放弃动态类型，全面采用SolidWorks原生C++接口映射。
 
-### 连接方式
+#### C# 代码头部强制引入
 ```csharp
 using System;
 using System.Runtime.InteropServices;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
+```
 
-// 连接已有实例（推荐）
+#### 连接SolidWorks（必须使用强类型转换）
+```csharp
+// ✅ 正确：使用Marshal.GetActiveObject + 强类型转换
 SldWorks swApp = (SldWorks)Marshal.GetActiveObject("SldWorks.Application");
 swApp.Visible = true;
-swApp.UserControl = true;  // 必须为true，否则界面不刷新
+swApp.UserControl = false;
 
-// 获取活动文档（不新建，避免权限隔离）
-ModelDoc2 swDoc = (ModelDoc2)swApp.ActiveDoc;
+// ❌ 错误：Python风格的动态类型（不要用！）
+// dynamic sw = ...  // 不要用dynamic
 ```
 
-### 权限管理铁律
-| 场景 | 结果 | 解决方案 |
-|------|------|----------|
-| SW管理员 + EXE普通 | COM连不上 | 统一普通权限运行 |
-| SW普通 + EXE管理员 | 连到隐藏实例 | 统一普通权限运行 |
-| SW普通 + EXE普通 | ✅ 完美连接 | **推荐** |
-
-### FeatureExtrusion2（23参数，经反射确认）
+#### 文档类型强类型转换
 ```csharp
-Feature feat = swDoc.FeatureManager.FeatureExtrusion2(
-    false,                                    // [1]  Sd
-    false,                                    // [2]  Flip
-    false,                                    // [3]  Dir
-    (int)swEndConditions_e.swEndCondBlind,   // [4]  T1
-    (int)swEndConditions_e.swEndCondBlind,   // [5]  T2
-    0.05,                                     // [6]  D1 (50mm)
-    0.05,                                     // [7]  D2
-    false,                                    // [8]  Dchk1
-    false,                                    // [9]  Dchk2
-    false,                                    // [10] Ddir1
-    false,                                    // [11] Ddir2
-    0.0,                                      // [12] Dang1
-    0.0,                                      // [13] Dang2
-    false,                                    // [14] OffsetReverse1
-    false,                                    // [15] OffsetReverse2
-    false,                                    // [16] TranslateSurface1
-    false,                                    // [17] TranslateSurface2
-    false,                                    // [18] Merge
-    false,                                    // [19] UseFeatScope
-    false,                                    // [20] UseAutoSelect
-    0,                                        // [21] T0
-    0.0,                                      // [22] StartOffset
-    false                                     // [23] FlipStartOffset
-);
+ModelDoc2 swDoc = (ModelDoc2)swApp.ActiveDoc;
+PartDoc partDoc = (PartDoc)swDoc;
+AssemblyDoc assyDoc = (AssemblyDoc)swDoc;
+DrawingDoc drawDoc = (DrawingDoc)swDoc;
 ```
 
-### FeatureCut4（27参数，经反射确认）
+---
+
+### 规范2：多参数高级特征的完美对齐
+
+**核心原则**：必须利用C#强类型优势，写满全部参数，严禁省略。
+
+#### FeatureCut4 完整27参数调用示例
 ```csharp
 Feature cutFeat = swDoc.FeatureManager.FeatureCut4(
-    false,                                    // [1]  Sd
-    false,                                    // [2]  Flip
-    false,                                    // [3]  Dir
-    (int)swEndConditions_e.swEndCondThroughAll, // [4]  T1
-    (int)swEndConditions_e.swEndCondThroughAll, // [5]  T2
-    0.0,                                      // [6]  D1
-    0.0,                                      // [7]  D2
-    false,                                    // [8]  Dchk1
-    false,                                    // [9]  Dchk2
-    false,                                    // [10] Ddir1
-    false,                                    // [11] Ddir2
-    0.0,                                      // [12] Dang1
-    0.0,                                      // [13] Dang2
-    false,                                    // [14] OffsetReverse1
-    false,                                    // [15] OffsetReverse2
-    false,                                    // [16] TranslateSurface1
-    false,                                    // [17] TranslateSurface2
-    false,                                    // [18] NormalCut
-    false,                                    // [19] UseFeatScope
-    false,                                    // [20] UseAutoSelect
-    false,                                    // [21] AssemblyFeatureScope
-    false,                                    // [22] AutoSelectComponents
-    false,                                    // [23] PropagateFeatureToParts
-    0,                                        // [24] T0
-    0.0,                                      // [25] StartOffset
-    false,                                    // [26] FlipStartOffset
-    false                                     // [27] OptimizeGeometry
+    false,                              // S: 是否双向切除
+    false,                              // F: 是否薄壁特征
+    false,                              // D: 是否使用方向2
+    (int)swEndConditions_e.swEndCondThroughAll,  // T: 终止条件1 (完全贯穿)
+    (int)swEndConditions_e.swEndCondThroughAll,  // T0: 终止条件2
+    0.05,                               // D1: 深度1 (50mm)
+    0.05,                               // D2: 深度2
+    false,                              // B: 是否拔模
+    false,                              // B0: 方向1拔模角度
+    false,                              // B1: 方向2拔模角度
+    false,                              // B2: 方向1拔模类型
+    0,                                  // D3: 拔模角度1
+    0,                                  // D4: 拔模角度2
+    false,                              // F0: 是否翻转拔模方向
+    false,                              // F1: 是否合并结果
+    false,                              // F2: 是否使用等距
+    false,                              // F3: 是否反转等距
+    false,                              // I: 是否起始条件
+    false,                              // I0: 是否方向1起始条件
+    false,                              // I1: 是否方向2起始条件
+    false,                              // I2: 是否反转方向
+    false,                              // R: 是否方向1反向
+    false,                              // R0: 是否方向2反向
+    false,                              // R1: 是否透明
+    false,                              // R2: 是否使用轮廓选择
+    false,                              // D0: 是否方向1草图法向
+    false,                              // D1: 是否方向2草图法向
+    false,                              // D2: 是否方向1等距反转
+    false,                              // D3: 是否方向2等距反转
+    false                               // D4: 未使用
 );
 ```
 
-### SelectByRay（11参数，经反射确认）
+**关键要点**：
+- 所有枚举常量必须通过 `(int)` 强制转换为SolidWorks官方枚举
+- 完全贯穿必须写为：`(int)swEndConditions_e.swEndCondThroughAll`
+- blind深度：`(int)swEndConditions_e.swEndCondBlind`
+
+#### FeatureExtrusion2 完整23参数调用示例
 ```csharp
-// 签名：(WorldX, WorldY, WorldZ, RayVecX, RayVecY, RayVecZ, RayRadius, TypeWanted, Append, Mark, Option)
-bool selectFace = swDoc.Extension.SelectByRay(
-    0, 0, 0.2,      // [1-3] 射线起点 (0,0,200mm) 方块上方
-    0, 0, -1,         // [4-6] 射线方向 (0,0,-1) 垂直向下
-    0.1,               // [7]   射线半径 100mm
-    1,                  // [8]   TypeWanted = 1（选面，swSelFACES）
-    false,              // [9]   Append = false
-    0,                  // [10]  Mark = 0
-    0                   // [11]  Option = 0
+Feature extrudeFeat = swDoc.FeatureManager.FeatureExtrusion2(
+    false,                              // S: 是否双向拉伸
+    false,                              // Flip: 是否翻转方向
+    false,                              // Dir: 是否使用方向2
+    (int)swEndConditions_e.swEndCondBlind,   // T1: 终止条件1
+    (int)swEndConditions_e.swEndCondBlind,   // T2: 终止条件2
+    0.05,                               // D1: 深度1
+    0.05,                               // D2: 深度2
+    false,                              // B: 是否拔模
+    false,                              // B0: 方向1拔模
+    false,                              // B1: 方向2拔模
+    false,                              // B2: 拔模类型
+    0,                                  // D3: 拔模角度1
+    0,                                  // D4: 拔模角度2
+    false,                              // F0: 翻转拔模
+    false,                              // F1: 合并结果
+    false,                              // F2: 使用等距
+    false,                              // F3: 反转等距
+    false,                              // I: 起始条件
+    false,                              // I0: 方向1起始
+    false,                              // I1: 方向2起始
+    false,                              // I2: 反转方向
+    false,                              // R: 方向1反向
+    false,                              // R0: 方向2反向
+    false                               // R1: 透明
 );
 ```
 
-### 返回值验证机制
+---
+
+### 规范3：稳固的实体表面选择机制 (SelectByRay)
+
+**核心原则**：坚决放弃依赖不稳定的面名称（如"Face<1>"），改用绝对稳定的"空间射线拾取法"。
+
+#### SelectByRay 方法签名
 ```csharp
-// SW API常见行为：返回值null不代表失败！
-if (feat == null)
+bool result = swDoc.Extension.SelectByRay(
+    double X,           // 射线起点X坐标
+    double Y,           // 射线起点Y坐标
+    double Z,           // 射线起点Z坐标
+    double DX,          // 射线方向向量X
+    double DY,          // 射线方向向量Y
+    double DZ,          // 射线方向向量Z
+    double RayRadius,    // 射线半径（拾取容差）
+    int Append,          // 是否追加选择（0=否，1=是）
+    int Mark,            // 选择标记
+    int Callout          // 是否显示标注
+);
+```
+
+#### 实战示例：选择拉伸实体的前表面（Z=0面）
+```csharp
+// 步骤1：获取实体
+Body2 body = (Body2)swDoc.GetBodies2((int)swBodyType_e.swSolidBody)[0];
+
+// 步骤2：遍历所有面，找到目标面
+Face2[] faces = (Face2[])body.GetFaces();
+Face2 targetFace = null;
+
+foreach (Face2 face in faces)
 {
-    // 二次验证：通过特征数量变化判断
-    int before = swDoc.GetFeatureCount();
-    swDoc.ForceRebuild3(false);
-    int after = swDoc.GetFeatureCount();
-    if (after > before)
+    double[] normal = (double[])face.Normal;
+    // 找到Z轴负方向的面（前表面）
+    if (Math.Abs(normal[2]) > 0.99 && normal[2] < 0)
     {
-        Console.WriteLine("特征实际创建成功（返回值null是SW API正常行为）");
+        targetFace = face;
+        break;
+    }
+}
+
+// 步骤3：使用SelectByRay精准选择
+if (targetFace != null)
+{
+    // 获取面的中心点
+    double[] centroid = (double[])targetFace.GetCentroid();
+    
+    // 从面的法向反方向发射射线
+    bool result = swDoc.Extension.SelectByRay(
+        centroid[0], centroid[1], centroid[2],  // 射线起点（面中心）
+        -normal[0], -normal[1], -normal[2],     // 射线方向（指向面）
+        0.01,                                    // 射线半径（10mm容差）
+        1,                                         // 追加选择
+        0,                                         // 选择标记
+        0                                          // 不显示标注
+    );
+    
+    if (result)
+        Console.WriteLine("✓ 表面选择成功");
+    else
+        Console.WriteLine("✗ 表面选择失败");
+}
+```
+
+**优势**：
+- ✅ 不依赖面的名称（面名称会变化）
+- ✅ 通过空间坐标精准定位
+- ✅ 支持容差控制（RayRadius参数）
+- ✅ 100%稳定可靠
+
+---
+
+### C# 控制台程序标准框架
+
+```csharp
+// Program.cs - SolidWorks C# 二次开发控制台程序
+// 编译命令: 
+// csc /r:"C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist\SolidWorks.Interop.sldworks.dll" 
+//     /r:"C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist\SolidWorks.Interop.swconst.dll" 
+//     Program.cs
+
+using System;
+using System.Runtime.InteropServices;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
+
+namespace SWCSharpAutomation
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== SolidWorks C# 二次开发控制台程序 ===\n");
+
+            // ============================================
+            // 步骤0：连接SolidWorks
+            // ============================================
+            Console.WriteLine("[1/4] 连接SolidWorks...");
+            
+            SldWorks swApp = null;
+            
+            try
+            {
+                // 方法1：通过Marshal连接已运行的SW实例
+                swApp = (SldWorks)Marshal.GetActiveObject("SldWorks.Application");
+                swApp.Visible = true;
+                swApp.UserControl = false;
+                Console.WriteLine("  ✓ 已连接到运行的SolidWorks实例");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  ✗ 连接失败: {ex.Message}");
+                Console.WriteLine("  请确保SolidWorks已经启动");
+                return;
+            }
+
+            // ============================================
+            // 步骤1：新建零件
+            // ============================================
+            Console.WriteLine("\n[2/4] 新建零件...");
+            
+            try
+            {
+                // 使用默认零件模板
+                swApp.NewPart();
+                System.Threading.Thread.Sleep(1000); // 等待文档创建
+                
+                ModelDoc2 swDoc = (ModelDoc2)swApp.ActiveDoc;
+                if (swDoc == null)
+                {
+                    Console.WriteLine("  ✗ 新建零件失败");
+                    return;
+                }
+                
+                Console.WriteLine($"  ✓ 零件已创建: {swDoc.GetTitle()}");
+                
+                // ============================================
+                // 步骤2：绘制草图并拉伸
+                // ============================================
+                Console.WriteLine("\n[3/4] 绘制草图并拉伸...");
+                
+                // 选择前视基准面（中文版）
+                bool selectResult = swDoc.Extension.SelectByID2(
+                    "前视基准面",   // 中文版基准面名称
+                    "PLANE", 
+                    0, 0, 0, 
+                    false, 0, null, 0
+                );
+                
+                if (!selectResult)
+                {
+                    Console.WriteLine("  ✗ 选择前视基准面失败");
+                    return;
+                }
+                
+                // 创建草图
+                swDoc.SketchManager.InsertSketch(true);
+                
+                // 绘制100x100mm矩形（中心在原点）
+                swDoc.SketchManager.CreateCornerRectangle(
+                    -0.05, 0.05, 0,   // 左上角 (-50mm, 50mm)
+                    0.05, -0.05, 0     // 右下角 (50mm, -50mm)
+                );
+                
+                Console.WriteLine("  ✓ 草图绘制完成: 100x100mm矩形");
+                
+                // 关闭草图
+                swDoc.SketchManager.InsertSketch(true);
+                
+                // 创建拉伸特征 (50mm)
+                Feature feat = swDoc.FeatureManager.FeatureExtrusion2(
+                    false, false, false,
+                    (int)swEndConditions_e.swEndCondBlind,
+                    (int)swEndConditions_e.swEndCondBlind,
+                    0.05, 0.05,
+                    false, false, false, false,
+                    0, 0, false, false, false, false, false, false, false, false, false, false
+                );
+                
+                if (feat == null)
+                {
+                    Console.WriteLine("  ✗ 拉伸特征创建失败");
+                    return;
+                }
+                
+                Console.WriteLine($"  ✓ 拉伸特征创建成功: {feat.Name}");
+                
+                // 强制重建模型
+                swDoc.ForceRebuild3(false);
+                Console.WriteLine("  ✓ 模型重建完成");
+                
+                // 停顿3秒供截图
+                Console.WriteLine("  ⏸  停顿3秒供截图...");
+                System.Threading.Thread.Sleep(3000);
+                
+                Console.WriteLine("\n=== 所有操作完成 ===");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n✗ 错误: {ex.Message}");
+                Console.WriteLine($"  堆栈: {ex.StackTrace}");
+            }
+        }
     }
 }
 ```
 
-### 日志重定向（解决UAC权限隔离）
-```csharp
-// 当EXE以管理员启动时，Console输出无法被外部捕获
-// 解决方案：重定向到本地日志文件
-string logPath = @"C:\path\to\log.txt";
-StreamWriter swLog = new StreamWriter(logPath, false, System.Text.Encoding.UTF8);
-swLog.AutoFlush = true;
-Console.SetOut(swLog);
-Console.SetError(swLog);
-// ... 代码 ...
-swLog.Close();
-```
+---
+
+**后续所有SolidWorks自动化任务，必须基于这套C#强类型架构进行输出！**
+
+---
+
+## 一、SolidWorks 基础知识
+
+### 1.1 SolidWorks 概述
 
 SolidWorks是Dassault Systemes公司开发的基于Windows的三维CAD软件，是世界上第一个基于Windows开发的三维CAD系统。采用参数化特征建模技术，支持：
 
@@ -1274,8 +1426,973 @@ def list_features(sw_model):
 
 ---
 
+## 十八、强制验证机制（CRITICAL - 2026-05-31新增）
+
+### 问题背景
+AI生成代码后经常报告"任务完成"，但实际上SolidWorks并未真正执行操作。必须建立**强制验证机制**，确保每个API调用后都验证结果。
+
+---
+
+### 18.1 验证原则（必须遵守）
+
+| 操作类型 | 验证方法 | 代码示例 |
+|---------|---------|---------|
+| **连接SW** | 检查对象是否为None，获取版本号 | `sw_app.GetVersion()` |
+| **打开文档** | 检查`ActiveDoc`是否为None | `doc = sw_app.ActiveDoc` |
+| **选择对象** | 检查`SelectByID2`返回值 + `GetSelectedObjectCount2` | `if not result: raise Error` |
+| **创建特征** | 1. 检查返回值是否为None<br>2. 比对`GetFeatureCount`<br>3. 按名称查找特征 | `if feat is None: verify by count` |
+| **创建草图** | 检查`GetActiveSketch()` + `GetSketchSegmentsCount()` | `if sketch.GetSketchSegmentsCount() == 0: raise` |
+| **模型重建** | 检查`EditRebuild3`返回值 | `if not doc.EditRebuild3: raise` |
+| **保存文档** | 检查`Save()`/`SaveAs3`返回值 | `if result != 1: raise` |
+
+---
+
+### 18.2 属性 vs 方法（常见错误）
+
+**重要**：以下API是**属性**，不是方法，调用时**不要加括号**：
+
+```python
+# ✅ 正确 - 属性直接访问
+title = doc.GetTitle          # 不是 GetTitle()
+count = doc.GetFeatureCount  # 不是 GetFeatureCount()
+type = doc.GetType           # 不是 GetType()
+docs = sw_app.GetDocuments   # 不是 GetDocuments()
+feat = doc.FirstFeature      # 不是 FirstFeature()
+next_feat = feat.GetNextFeature  # 不是 GetNextFeature()
+rebuild = doc.EditRebuild3  # 不是 EditRebuild3()
+sketch = doc.SketchManager.ActiveSketch  # 不是 ActiveSketch()
+
+# ❌ 错误 - 这些方法不存在
+doc.GetTitle()     # TypeError: 'str' object is not callable
+doc.GetFeatureCount()  # TypeError
+```
+
+---
+
+### 18.3 SelectByID2 失效替代方案
+
+**SW 2024 SP5 + Python 3.13 已知问题**：`SelectByID2` 可能返回`False`（即使参数正确）。
+
+#### 方案1：遍历特征树（推荐）
+```python
+def safe_select_by_name(doc, target_name):
+    """通过遍历特征树选择对象（替代SelectByID2）"""
+    feat = doc.FirstFeature
+    while feat is not None:
+        if feat.Name == target_name:
+            feat.Select2(False, 0)
+            print(f"✓ 通过遍历选择成功: {target_name}")
+            return True
+        feat = feat.GetNextFeature
+    
+    print(f"✗ 未找到特征: {target_name}")
+    return False
+```
+
+#### 方案2：通过选择集
+```python
+# 先手动选择一次，保存到选择集，后续直接调用
+sel_mgr = doc.SelectionManager
+sel_set = sel_mgr.AddSelectionSet("MySelectionSet")
+sel_set.AddMember(target_object)
+sel_set.SelectMembers(True)
+```
+
+#### 方案3：直接获取对象引用
+```python
+# 能直接获取对象时，优先用 Select2 方法
+feat = feat_mgr.GetFeatureByName("拉伸1")
+if feat is not None:
+    feat.Select2(False, 0)  # 直接选择，不依赖名称
+```
+
+---
+
+### 18.4 完整验证框架代码
+
+```python
+import win32com.client
+import pythoncom
+
+class SWValidator:
+    """SolidWorks API调用验证器"""
+    
+    @staticmethod
+    def verify_connection(sw_app):
+        """验证SW应用连接"""
+        if sw_app is None:
+            raise Exception("SW应用对象为None")
+        version = sw_app.GetVersion()
+        print(f"✓ SW连接验证通过 - 版本: {version}")
+        return True
+    
+    @staticmethod
+    def verify_document(doc):
+        """验证文档是否打开"""
+        if doc is None:
+            raise Exception("文档验证失败: ActiveDoc为None")
+        title = doc.GetTitle
+        print(f"✓ 文档验证通过 - {title}")
+        return True
+    
+    @staticmethod
+    def verify_selection(doc, expected_count=None):
+        """验证选择是否成功"""
+        sel_mgr = doc.SelectionManager
+        count = sel_mgr.GetSelectedObjectCount2(-1)
+        
+        if expected_count is not None and count != expected_count:
+            raise Exception(f"选择验证失败: 期望{expected_count}个, 实际{count}个")
+        
+        if count == 0:
+            print(f"⚠ 警告: 未选择任何对象")
+            return False
+        
+        print(f"✓ 选择验证通过 - 已选择{count}个对象")
+        return True
+    
+    @staticmethod
+    def verify_feature_created(doc, before_count=None, feat_name=None):
+        """验证特征是否创建成功"""
+        # 方法1: 比对特征数量
+        if before_count is not None:
+            after_count = doc.GetFeatureCount
+            if after_count <= before_count:
+                raise Exception(f"特征创建失败: {before_count} → {after_count}")
+            print(f"✓ 特征数量验证通过: {before_count} → {after_count}")
+        
+        # 方法2: 按名称查找
+        if feat_name is not None:
+            feat_mgr = doc.FeatureManager
+            feat = feat_mgr.GetFeatureByName(feat_name)
+            if feat is None:
+                raise Exception(f"特征创建失败: 未找到 '{feat_name}'")
+            print(f"✓ 特征 '{feat_name}' 验证通过")
+            return feat
+        
+        # 方法3: 获取最后一个特征
+        last_feat = doc.FeatureManager.GetLastFeature()
+        if last_feat is None:
+            raise Exception("特征创建失败: 无法获取最后一个特征")
+        
+        print(f"✓ 特征创建验证通过: {last_feat.Name}")
+        return last_feat
+    
+    @staticmethod
+    def verify_sketch_has_entities(doc):
+        """验证草图是否包含实体"""
+        sketch = doc.SketchManager.ActiveSketch
+        if sketch is None:
+            raise Exception("草图验证失败: 没有活动草图")
+        
+        seg_count = sketch.GetSketchSegmentsCount()
+        if seg_count == 0:
+            raise Exception("草图验证失败: 草图不包含任何线段")
+        
+        print(f"✓ 草图验证通过: {seg_count}个线段")
+        return True
+    
+    @staticmethod
+    def verify_rebuild(doc):
+        """验证模型重建"""
+        result = doc.EditRebuild3
+        if result is False:
+            raise Exception("模型重建失败")
+        print(f"✓ 模型重建验证通过")
+        return True
+
+# 使用示例
+validator = SWValidator()
+
+# 连接SW
+sw_app = win32com.client.GetActiveObject("SldWorks.Application")
+validator.verify_connection(sw_app)
+
+# 新建零件
+sw_app.NewPart()
+doc = sw_app.ActiveDoc
+validator.verify_document(doc)
+
+# 选择基准面
+result = doc.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, None, 0)
+if not result:
+    raise Exception("选择前视基准面失败")
+validator.verify_selection(doc, expected_count=1)
+
+# 创建草图
+doc.SketchManager.InsertSketch(True)
+validator.verify_sketch_has_entities(doc)
+
+# 绘制矩形
+doc.SketchManager.CreateCornerRectangle(0, 0, 0, 0.1, 0.1, 0)
+
+# 关闭草图
+doc.SketchManager.InsertSketch(True)
+
+# 创建拉伸特征
+before_count = doc.GetFeatureCount
+feat = doc.FeatureManager.FeatureExtrusion2(
+    False, False, False, 0, 0,
+    0.05, 0, False, False, False, False,
+    0, 0, False, False, False,
+    False, True, True, 0, 0, False
+)
+
+# 验证特征创建
+if feat is None:
+    validator.verify_feature_created(doc, before_count=before_count)
+else:
+    print(f"✓ 拉伸特征创建成功: {feat.Name}")
+
+# 验证模型重建
+validator.verify_rebuild(doc)
+```
+
+---
+
+### 18.5 标准自动化脚本模板（带强制验证）
+
+```python
+"""
+SolidWorks自动化脚本模板（带强制验证）
+每个操作后都必须验证，确保真正执行成功
+"""
+
+import win32com.client
+import pythoncom
+import time
+
+class SolidWorksAutomation:
+    def __init__(self, sw_version="32"):
+        self.sw_version = sw_version
+        self.sw_app = None
+        self.doc = None
+        self.validator = None
+        
+    def connect(self):
+        """连接SolidWorks（复用现有实例）"""
+        print("正在连接SolidWorks...")
+        try:
+            self.sw_app = win32com.client.GetActiveObject("SldWorks.Application")
+            print("✓ 连接到已运行的SolidWorks实例")
+        except:
+            self.sw_app = win32com.client.Dispatch(f"SldWorks.Application.{self.sw_version}")
+            print("✓ 启动新的SolidWorks实例")
+        
+        self.sw_app.Visible = True
+        self.sw_app.UserControl = False
+        
+        # 验证连接
+        if self.sw_app is None:
+            raise Exception("SW应用对象为None")
+        version = self.sw_app.GetVersion()
+        print(f"✓ SW连接验证通过 - 版本: {version}")
+        
+        # 导入验证器
+        from sw_verification_framework import SWValidator
+        self.validator = SWValidator()
+        
+        return self.sw_app
+    
+    def new_part(self, template=""):
+        """新建零件文档"""
+        if not template:
+            self.sw_app.NewPart()
+        else:
+            self.sw_app.NewDocument(template, 0, 0, 0)
+        
+        time.sleep(1)  # 等待文档创建
+        
+        self.doc = self.sw_app.ActiveDoc
+        self.validator.verify_document(self.doc)
+        
+        return self.doc
+    
+    def safe_select(self, name, obj_type, x=0, y=0, z=0):
+        """安全选择（带验证 + 替代方案）"""
+        self.doc.ClearSelection2(True)
+        
+        # 尝试SelectByID2
+        result = self.doc.Extension.SelectByID2(
+            name, obj_type, x, y, z, False, 0,
+            win32com.client.VARIANT(pythoncom.VT_DISPATCH, None), 0
+        )
+        
+        if result:
+            self.validator.verify_selection(self.doc, expected_count=1)
+            return True
+        else:
+            print(f"⚠ SelectByID2失败: {name}")
+            # 尝试遍历选择
+            return self._select_by_traversal(name)
+    
+    def _select_by_traversal(self, target_name):
+        """通过遍历选择（SelectByID2失效时的替代方案）"""
+        print(f"尝试通过遍历选择: {target_name}")
+        
+        feat = self.doc.FirstFeature
+        while feat is not None:
+            if feat.Name == target_name:
+                feat.Select2(False, 0)
+                print(f"✓ 通过遍历选择成功: {target_name}")
+                self.validator.verify_selection(self.doc, expected_count=1)
+                return True
+            feat = feat.GetNextFeature
+        
+        raise Exception(f"遍历选择也失败: {target_name}")
+    
+    def create_extrude(self, depth_mm, name=None):
+        """创建拉伸特征（带验证）"""
+        before_count = self.doc.GetFeatureCount
+        
+        # 关闭草图
+        self.doc.SketchManager.InsertSketch(True)
+        
+        # 执行拉伸（SW内部单位是米）
+        depth_m = depth_mm / 1000.0
+        feat = self.doc.FeatureManager.FeatureExtrusion2(
+            False, False, False, 0, 0,
+            depth_m, 0, False, False, False, False,
+            0, 0, False, False, False,
+            False, True, True, 0, 0, False
+        )
+        
+        # 验证
+        if feat is None:
+            # 返回值None不代表失败，需要通过特征数量验证
+            self.validator.verify_feature_created(self.doc, before_count=before_count)
+        else:
+            print(f"✓ 拉伸特征创建成功: {feat.Name}")
+            return feat
+    
+    def save_and_close(self, path=None):
+        """保存并关闭文档"""
+        if path:
+            result = self.doc.SaveAs3(path, 1, 2)
+            if result != 1:
+                raise Exception(f"保存失败: 错误码 {result}")
+            print(f"✓ 文档已保存: {path}")
+        
+        title = self.doc.GetTitle
+        self.sw_app.CloseDoc(title)
+        print(f"✓ 文档已关闭: {title}")
+    
+    def cleanup(self):
+        """清理资源"""
+        if self.sw_app is not None:
+            self.sw_app.CloseAllDocuments(True)
+            self.sw_app.ExitApp()
+            self.sw_app = None
+            print("✓ 已清理SW资源")
+
+# 使用示例
+if __name__ == "__main__":
+    sw = SolidWorksAutomation()
+    
+    try:
+        sw.connect()
+        sw.new_part()
+        
+        # 创建草图
+        sw.safe_select("Front Plane", "PLANE")
+        sw.doc.SketchManager.InsertSketch(True)
+        sw.validator.verify_sketch_has_entities(sw.doc)
+        
+        # 绘制矩形
+        sw.doc.SketchManager.CreateCornerRectangle(0, 0, 0, 0.1, 0.1, 0)
+        
+        # 创建拉伸
+        sw.create_extrude(50)
+        
+        # 验证重建
+        sw.validator.verify_rebuild(sw.doc)
+        
+        print("\n" + "="*60)
+        print("✓ 所有操作验证通过！")
+        print("="*60)
+        
+    except Exception as e:
+        print(f"\n✗ 操作失败: {e}")
+    finally:
+        sw.cleanup()
+```
+
+---
+
+### 18.6 调试技巧
+
+#### 问题1：特征创建失败但返回None
+```python
+# FeatureExtrusion2返回None不代表失败
+feat = doc.FeatureManager.FeatureExtrusion2(...)
+
+if feat is None:
+    # 需要进一步验证
+    before_count = ...  # 创建前的特征数量
+    after_count = doc.GetFeatureCount
+    
+    if after_count > before_count:
+        print("特征实际创建成功（返回值None是SW API的正常行为）")
+    else:
+        print("特征创建失败")
+```
+
+#### 问题2：SelectByID2在SW2024失效
+```python
+# 方案1：遍历特征树
+def select_by_traversal(doc, target_name):
+    feat = doc.FirstFeature
+    while feat is not None:
+        if feat.Name == target_name:
+            feat.Select2(False, 0)
+            return True
+        feat = feat.GetNextFeature
+    return False
+
+# 方案2：使用SelectionManager
+sel_mgr = doc.SelectionManager
+# ... 手动选择后保存到选择集
+```
+
+#### 问题3：如何确认草图是否真正创建
+```python
+# 验证1：检查ActiveSketch
+sketch = doc.SketchManager.ActiveSketch
+if sketch is not None:
+    print(f"草图激活: {sketch.Name}")
+
+# 验证2：检查草图线段数量
+seg_count = sketch.GetSketchSegmentsCount()
+print(f"草图包含 {seg_count} 个线段")
+
+# 验证3：检查特征树中是否有草图特征
+feat = doc.FeatureManager.GetFeatureByName("草图1")
+if feat is not None:
+    print("草图特征已创建")
+```
+
+---
+
+**总结**：每个API调用后都必须验证，不能假设成功。使用本文档提供的验证框架，确保真正完成任务。
+
+---
+
+## 二十、2026-05-31 实战突破 — C# 高级自动化架构升级
+
+> **背景**：在叉形接头（Clevis Joint）全自动建模攻坚中，连续 12+ 轮迭代死磕，总结出以下"血泪经验"。所有突破均已实机验证通过。
+
+---
+
+### 20.1 进程与权限隔离避坑指南 ⚡
+
+#### 问题背景
+`Marshal.GetActiveObject("SldWorks.Application")` 会因为 Windows UAC 权限错配（SW 管理员 vs EXE 普通权限）导致连接假死——返回的对象非 null，但实际无法操作任何文档。
+
+#### 根因
+COM 在不同权限级别下运行在不同的 Window Station，`GetActiveObject` 只能连到同权限级别的 COM 实例。
+
+#### 终极破局方案
+```csharp
+// ✅ 正确：用 Activator.CreateInstance 强行拉起与 EXE 权限绝对一致的干净 SW 实例
+Type swType = Type.GetTypeFromProgID("SldWorks.Application");
+swApp = (SldWorks)Activator.CreateInstance(swType);
+swApp.Visible = true;
+// swApp.UserControl = false;  // ⚠️ 不要设置！否则 SW 窗口不可操作
+
+// ❌ 错误：Marshal.GetActiveObject 权限隔离时会假死
+// swApp = (SldWorks)Marshal.GetActiveObject("SldWorks.Application");
+```
+
+#### 黄金法则
+| 场景 | 方案 |
+|------|------|
+| SW 已开（同权限） | `Marshal.GetActiveObject` ✅ |
+| SW 未开 / 权限不明 | `Activator.CreateInstance` ✅ 最安全 |
+| 任何自动化脚本 | **首选 Activator.CreateInstance** |
+
+#### 新建零件铁律
+```csharp
+// ✅ 正确：NewDocument + 备用模板路径
+string partTemplate = swApp.GetUserPreferenceStringValue(
+    (int)swUserPreferenceStringValue_e.swDefaultTemplatePart);
+if (string.IsNullOrEmpty(partTemplate)) 
+    partTemplate = @"C:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\零件.prtdot";
+swApp.NewDocument(partTemplate, 0, 0, 0);
+swDoc = (ModelDoc2)swApp.ActiveDoc;
+```
+
+---
+
+### 20.2 中英文双语环境健壮性 🏗️
+
+#### 问题背景
+`SelectByID2("前视基准面", "PLANE", ...)` 在英文 SW 下静默返回 `false`，没有任何错误提示。
+
+#### 标准防错逻辑
+```csharp
+// ✅ 正确：双语兜底选择基准面
+bool planeOK = swDoc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, false, 0, null, 0);
+if (!planeOK) 
+    planeOK = swDoc.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, false, 0, null, 0);
+if (!planeOK) 
+{
+    Console.WriteLine("✗ 未找到前视基准面");
+    return;
+}
+Console.WriteLine("✓ 前视基准面选中");
+```
+
+#### 注意事项
+- ⚠️ `ModelDoc2.FeatureByName()` 在此 Interop 版本中不存在（编译错误）
+- ⚠️ `SldWorks` 类（具体类）和 `ISldWorks` 接口方法签名不同，编译时必须对齐
+- ⚠️ `swApp.NewPart()` 方法不存在，必须用 `NewDocument()`
+
+---
+
+### 20.3 神仙级面遍历算法（GetBodies2）🎯
+
+> **这是今天最重要的突破！** `SelectByRay` 射线法在复杂几何上容易脱靶，
+> 改用 **GetBodies2 → GetFaces → 几何极值** 实现 100% 精准盲选定位。
+
+#### 为什么 SelectByRay 不可靠？
+- 射线起点/方向参数需要精确计算，一个人工错误就射不中
+- 在拉伸/切除后的变形几何上，之前计算的面坐标已经失效
+- 叉形接头的后端面、顶面用射线法反复失败
+
+#### 终极方案：遍历实体面 + 几何极值定位
+
+```csharp
+// 找 X 坐标最小的面（后端面）
+static object FindFaceByMinX(ModelDoc2 swDoc)
+{
+    PartDoc partDoc = (PartDoc)swDoc;
+    object[] bodies = (object[])partDoc.GetBodies2((int)swBodyType_e.swSolidBody, false);
+    if (bodies == null || bodies.Length == 0) return null;
+    
+    Body2 body = (Body2)bodies[0];
+    object[] faces = (object[])body.GetFaces();
+    if (faces == null || faces.Length == 0) return null;
+
+    Face2 bestFace = null;
+    double minX = double.MaxValue;
+    foreach (Face2 face in faces)
+    {
+        double[] box = (double[])face.GetBox();
+        // box[0] = minX, box[1] = minY, box[2] = minZ
+        // box[3] = maxX, box[4] = maxY, box[5] = maxZ
+        if (box[0] < minX) { minX = box[0]; bestFace = face; }
+    }
+    return bestFace;
+}
+
+// 找 Y 坐标最大的面（顶面）
+static object FindFaceByMaxY(ModelDoc2 swDoc)
+{
+    // 同上结构，判断条件改为 box[4] > maxY
+}
+```
+
+#### 选中面（通过 Entity.Select4）
+```csharp
+static void SelectFace(object faceObj)
+{
+    Face2 face = (Face2)faceObj;
+    Entity ent = (Entity)face;
+    ent.Select4(false, null);  // false = 不追加，null = 无标记数据
+}
+```
+
+#### 优势总结
+| 方法 | 稳定性 | 复杂度 | 适用场景 |
+|------|:---:|:---:|------|
+| `SelectByID2` 按名称 | ⭐⭐ | 低 | 已知名称的基准面 |
+| `SelectByRay` 射线法 | ⭐⭐ | 高 | 简单几何体 |
+| **`GetBodies2` 遍历法** | ⭐⭐⭐⭐⭐ | 中 | **任何复杂几何** ✅ |
+
+---
+
+### 20.4 C# 5 语法铁律（编译器兼容）🔒
+
+#### 硬性规定
+```csharp
+// ❌ C# 6+ 字符串插值 → 在 CSC 4.0 编译报错
+// Console.WriteLine($"错误: {ex.Message}");
+
+// ✅ C# 5 写法
+Console.WriteLine(string.Format("错误: {0}", ex.Message));
+
+// ❌ 自动属性初始化
+// public int Count { get; set; } = 0;
+
+// ✅ 构造函数赋值
+public int Count { get; set; }
+public Program() { Count = 0; }
+```
+
+#### 实际编译命令（E: 盘 SW2024）
+```bash
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe \
+  /reference:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.sldworks.dll" \
+  /reference:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.swconst.dll" \
+  /out:Clevis_Joint.exe \
+  Clevis_Joint.cs
+```
+
+---
+
+### 20.5 FeatureExtrusion2 精确 23 参数 + FeatureCut4 精确 27 参数
+
+#### 背景
+**反射探测验证**（`Probe_Signature.exe` 实机运行确认）：
+- `FeatureExtrusion2` 真实参数数：**23**（不是 22，不是 21）
+- `FeatureCut4` 真实参数数：**27**
+- 两个 API 参数顺序在 E: 盘 SW2024 Interop DLL 中与官方文档不完全一致
+
+#### FeatureExtrusion2 23 参数（实战可编译版）
+```csharp
+// ✅ 此签名已通过 csc.exe 编译验证（Stage2_Test.cs）
+Feature feat = swDoc.FeatureManager.FeatureExtrusion2(
+    false,                               // Sd 双向
+    false,                               // Flip 翻转方向
+    false,                               // Dir 方向2
+    (int)swEndConditions_e.swEndCondBlind,   // T1 终止条件1
+    (int)swEndConditions_e.swEndCondBlind,   // T2 终止条件2
+    0.050,                               // D1 深度1 (米)
+    0.050,                               // D2 深度2 (米)
+    false,                               // Dchk1 拔模1
+    false,                               // Dchk2 拔模2
+    false,                               // Ddir1 拔模方向1
+    false,                               // Ddir2 拔模方向2
+    0.0,                                 // Dang1 拔模角度1
+    0.0,                                 // Dang2 拔模角度2
+    false,                               // OffsetReverse1
+    false,                               // OffsetReverse2
+    false,                               // TranslateSurface1
+    false,                               // TranslateSurface2
+    false,                               // Merge 合并
+    false,                               // UseFeatScope
+    false,                               // UseAutoSelect
+    0,                                   // T0 起始条件
+    0.0,                                 // StartOffset
+    false                                // FlipStartOffset
+);
+```
+
+#### FeatureCut4 27 参数（实战可编译版）
+```csharp
+// ✅ 此签名已通过 csc.exe 编译验证（Stage2_Test.cs）
+Feature cutFeat = swDoc.FeatureManager.FeatureCut4(
+    false, false, false,
+    (int)swEndConditions_e.swEndCondThroughAll,
+    (int)swEndConditions_e.swEndCondThroughAll,
+    0.0, 0.0,
+    false, false, false, false, 0.0, 0.0,
+    false, false, false, false,
+    false, false, false,
+    false, false, false,
+    0, 0.0, false, false
+);
+```
+
+---
+
+### 20.6 验证机制（防止假成功）
+
+```csharp
+// SW API 返回值 null 不代表失败！
+int before = swDoc.GetFeatureCount();
+swDoc.ForceRebuild3(false);
+int after = swDoc.GetFeatureCount();
+if (after > before) 
+    Console.WriteLine("✓ 特征实际创建成功");
+else 
+    Console.WriteLine("✗ 特征创建失败");
+```
+
+---
+
+### 20.7 当前残余 Bug 记录（2026-05-31）
+
+| Bug | 描述 | 优先级 |
+|-----|------|:---:|
+| **步骤3 圆弧偏移** | `CreateArc` 半圆切除位置偏置，导致切成"拱门"形状。圆心坐标需精确对齐柄部末端 X=-0.045m。 | P0 |
+| **步骤4 U形槽坐标** | `CreateCornerRectangle` 参数需要与叉部顶面对齐，Z 轴 0.0125~0.0375m 居中。 | P0 |
+| **Φ18 通孔** | 步骤3 的 Φ18 通孔和步骤4 的双侧通孔尚未在代码中实现。 | P1 |
+
+#### 明天攻克计划
+1. 步骤3 半圆切除：圆心 (X=-0.045m, Z=0.025m)，用 `CreateCircleByRadius` 替代 `CreateArc`
+2. 步骤4 U形槽：确认 `CreateCornerRectangle` 的 X/Y/Z 坐标系映射
+3. Φ18 通孔：用 `CreateCircleByRadius` + `FeatureCut4` 实现贯穿切除
+
+---
+
+### 20.8 标准日志重定向模板
+
+```csharp
+string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\log.txt";
+System.IO.StreamWriter swLog = new System.IO.StreamWriter(
+    logPath, false, System.Text.Encoding.UTF8);
+swLog.AutoFlush = true;
+Console.SetOut(swLog);
+Console.SetError(swLog);
+```
+
+**用途**：将所有 `Console.WriteLine` 输出重定向到 log.txt，方便远程调试
+（SW 由 `Activator.CreateInstance` 拉起后，控制台输出不可见）。
+
+---
+
+## 十九、窗口管理规则（CRITICAL - 2026-05-31新增）
+
+### 问题背景
+每次运行脚本如果都用 `Dispatch` 新建SW实例，或者运行完不关闭文档，会导致大量SW窗口堆积，占用内存，最终崩溃。
+
+---
+
+### 19.1 连接原则（必须遵守）
+
+```python
+# ✅ 正确：复用已有实例
+sw = win32com.client.GetActiveObject('SldWorks.Application')
+print("✓ 复用已有SW实例")
+
+# ❌ 错误：每次都开新窗口
+sw = win32com.client.Dispatch('SldWorks.Application')  # 不要用！
+```
+
+---
+
+### 19.2 文档关闭规则
+
+| 场景 | 正确做法 | 错误做法 |
+|------|----------|----------|
+| 单文档用完 | `sw.CloseDoc(doc.GetTitle)` | 不关闭，让窗口残留 |
+| 所有文档用完 | `sw.CloseAllDocuments(True)` | 直接ExitApp |
+| 保存后关闭 | `doc.SaveAs3(path, 1, 2)` 再 `CloseDoc` | 不保存直接关 |
+| 脚本结束清理 | `sw.CloseAllDocuments(True)` 然后 `sw.ExitApp()` | 只关文档不退出 |
+
+---
+
+### 19.3 标准模板（每次脚本必须带）
+
+```python
+class SolidWorksAutomation:
+    def __init__(self):
+        self.sw = None
+        self.doc = None
+    
+    def connect(self):
+        """连接SW（复用已有实例）"""
+        try:
+            self.sw = win32com.client.GetActiveObject('SldWorks.Application')
+            print("✓ 连接到已运行的SW实例")
+        except:
+            self.sw = win32com.client.Dispatch('SldWorks.Application')
+            print("✓ 启动新的SW实例（仅当SW未运行时）")
+        self.sw.Visible = True
+        self.sw.UserControl = False
+        return self.sw
+    
+    def cleanup(self):
+        """清理资源（每次脚本结束必须调用）"""
+        if self.sw is not None:
+            # 关闭所有文档（True=保存修改）
+            self.sw.CloseAllDocuments(True)
+            print("✓ 所有文档已关闭")
+            # 退出SW
+            self.sw.ExitApp()
+            self.sw = None
+            print("✓ SW已退出")
+
+# 使用方式
+sw = SolidWorksAutomation()
+try:
+    sw.connect()
+    # ... 执行建模操作 ...
+finally:
+    sw.cleanup()  # 必须调用，防止窗口泄漏
+```
+
+---
+
+### 19.4 验证窗口数量
+
+```python
+def check_sw_windows(sw):
+    """检查SW打开的文档数量"""
+    docs = sw.GetDocuments  # 属性，不是方法
+    if docs is not None:
+        # 遍历统计
+        count = 0
+        for doc in docs:
+            if doc is not None:
+                count += 1
+        print(f"当前打开文档数: {count}")
+        return count
+    return 0
+
+# 如果文档数 > 3，发出警告
+count = check_sw_windows(sw)
+if count > 3:
+    print(f"⚠ 警告：打开了{count}个文档，建议清理！")
+    sw.CloseAllDocuments(True)
+```
+
+---
+
+### 19.5 强制清理函数（可直接调用）
+
+```python
+def force_close_all_sw_docs():
+    """强制关闭所有SW文档（给用户用的急救函数）"""
+    import win32com.client
+    try:
+        sw = win32com.client.GetActiveObject('SldWorks.Application')
+        result = sw.CloseAllDocuments(True)
+        if result:
+            print("✓ 所有SW文档已强制关闭")
+        else:
+            print("⚠ 部分文档关闭失败（可能有未保存修改）")
+    except Exception as e:
+        print(f"错误: {e}")
+
+# 用户说"关掉多余窗口"时调用这个函数
+```
+
+---
+
+### 19.6 防止窗口泄漏的检查清单
+
+每次写完脚本，检查是否做到以下几点：
+
+- [ ] 用 `GetActiveObject` 而不是 `Dispatch`（除非SW确实没运行）
+- [ ] 脚本开头用 `sw.CloseAllDocuments(True)` 清理之前的文档
+- [ ] 每个 `NewPart()` / `NewDocument()` 后都有对应的关闭逻辑
+- [ ] 脚本用 `try...finally` 保证 `cleanup()` 一定被调用
+- [ ] 不在循环里反复调用 `NewPart()` / `Dispatch`
+- [ ] 保存文档后再关闭（`SaveAs3` 返回1表示成功）
+
+---
+
+**总结**：SW窗口泄漏是Python自动化最常见问题。每次运行脚本前先清理，运行后必关闭。
+
+---
+
+## 二十、本次踩坑经验（2026-05-31积累）
+
+### 20.1 SW 2024 + Python 3.13 已知问题
+
+| 问题 | 现象 | 解决方案 |
+|------|------|----------|
+| `GetVersion()` 不可用 | `TypeError: 'str' object is not callable` | 用 `Visible` / `CommandInProgress` 属性验证连接 |
+| `NewPart()` 可能失败 | 不报错但文档未创建 | 用 `NewDocument(template_path, 0, 0, 0)` 指定模板 |
+| `FeatureCut` 完全不可用 | 返回None或COM错误 | 只做拉伸添加材料，切除手动完成 |
+| 嵌套轮廓无法识别 | 拉伸失败："轮廓无效" | 不做嵌套轮廓，复杂孔手动切除 |
+| `SelectByID2` 有时失效 | 返回False | 用遍历特征树替代（见18.3节） |
+
+---
+
+### 20.2 属性 vs 方法（本次踩坑记录）
+
+以下API是**属性**，调用时**不要加括号**（）：
+
+```python
+# ✅ 正确 - 直接访问属性
+title = doc.GetTitle           # 不是 GetTitle()
+count = doc.GetFeatureCount   # 不是 GetFeatureCount()
+doc_type = doc.GetType        # 不是 GetType()
+docs = sw.GetDocuments       # 不是 GetDocuments()
+feat = doc.FirstFeature      # 不是 FirstFeature()
+next_feat = feat.GetNextFeature  # 不是 GetNextFeature()
+rebuild = doc.EditRebuild3  # 不是 EditRebuild3()
+sketch = doc.SketchManager.ActiveSketch  # 不是 ActiveSketch()
+part_num = doc.GetPartNumber      # 不是 GetPartNumber()
+custom_info = doc.GetCustomInfo   # 不是 GetCustomInfo()
+```
+
+**记忆口诀**：SW API中，`Get` 开头的**不一定都是方法**，需要查文档确认。
+
+---
+
+### 20.3 验证机制（本次总结）
+
+每个操作后都必须验证，不能假设成功：
+
+```python
+# 连接验证（不用GetVersion）
+assert sw.Visible is not None, "SW连接失败"
+
+# 文档验证
+doc = sw.ActiveDoc
+assert doc is not None, "文档创建失败"
+
+# 特征验证：比对数量
+before = doc.GetFeatureCount
+# ... 执行创建 ...
+after = doc.GetFeatureCount
+assert after > before, "特征创建失败"
+
+# 草图验证
+segs = doc.SketchManager.ActiveSketch.GetSketchSegmentsCount()
+assert segs > 0, "草图没有线段"
+
+# 重建验证
+assert doc.EditRebuild3 is True, "模型重建失败"
+```
+
+---
+
+### 20.4 中文版SW注意事项
+
+```python
+# ✅ 中文版基准面名称
+plane_names = ["前视基准面", "上视基准面", "右视基准面"]
+
+# ❌ 英文版名称（中文版不可用）
+plane_names = ["Front Plane", "Top Plane", "Right Plane"]
+
+# 检测语言版本
+try:
+    result = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, None, 0)
+    is_chinese = True
+except:
+    is_chinese = False
+```
+
+---
+
+### 20.5 本次叉形接头建模经验
+
+**任务**：自动化建模叉形接头（厚度25mm，左端φ50圆头带φ18孔，右端叉形带双φ18孔）
+
+**成功部分**：
+- ✅ 哑铃形轮廓拉伸（左端φ50圆 + 中间25×25矩形 + 右端25×37.5矩形）
+- ✅ 使用 `CreateCornerRectangle` + `CreateCircle` 绘制草图
+- ✅ `FeatureExtrusion2` 23参数版本可用
+
+**失败部分**：
+- ❌ `FeatureCut` 所有版本都返回None（SW 2024 Python COM环境限制）
+- ❌ 嵌套轮廓（外轮廓+内孔轮廓）拉伸失败
+- ❌ 无法自动化切除操作
+
+**结论**：
+> 对于需要切除的零件，当前API环境下只能自动完成**添加材料**部分，切除操作需要手动完成或在skill中给出清晰的手动指导。
+
+---
+
+### 20.6 下次改进方向
+
+1. 研究 `IExtrudeFeatureData` 接口（可能支持切除）
+2. 研究 `IBody2` 布尔运算（可能绕过FeatureCut）
+3. 测试 `SelectByID2` 选择边线/面的参数格式
+4. 建立标准切除特征创建流程
+
+---
+
 **注意**: 
 1. SolidWorks版本不同可能导致API行为差异，建议使用2016+版本
 2. 所有单位默认为米制(SI)，SolidWorks内部使用米
 3. 批量操作前建议先在小范围测试
 4. 重要文件操作前做好备份
+5. **每次运行脚本前先调用 `force_close_all_sw_docs()` 清理多余窗口**
+

@@ -56,3 +56,43 @@ StreamWriter log = new StreamWriter("log.txt", false, Encoding.UTF8);
 log.AutoFlush = true;
 Console.SetOut(log);
 ```
+
+### SW连接：Activator.CreateInstance（2026-05-31新增）
+- ✅ 推荐：`Activator.CreateInstance(Type.GetTypeFromProgID("SldWorks.Application"))`
+- ❌ 不推荐：`Marshal.GetActiveObject`（权限隔离时假死）
+- 铁律：SW和EXE同权限级别（都普通）
+- 🔑 `swApp.Visible = true;` — 但**不要设** `UserControl = false`
+
+### 面遍历算法（GetBodies2 — 2026-05-31突破）
+```csharp
+// 找 X 最小面 = 后端面
+PartDoc partDoc = (PartDoc)swDoc;
+object[] bodies = (object[])partDoc.GetBodies2((int)swBodyType_e.swSolidBody, false);
+Body2 body = (Body2)bodies[0];
+object[] faces = (object[])body.GetFaces();
+foreach (Face2 face in faces) {
+    double[] box = (double[])face.GetBox();
+    if (box[0] < minX) { minX = box[0]; bestFace = face; }
+}
+// 选中: Entity ent = (Entity)face; ent.Select4(false, null);
+```
+- ⭐⭐⭐⭐⭐ 稳定（不依赖面名/射线），替代不可靠的 SelectByRay
+
+### 双语基准面选择
+```csharp
+bool ok = swDoc.Extension.SelectByID2("前视基准面", "PLANE", 0,0,0, false, 0, null, 0);
+if (!ok) ok = swDoc.Extension.SelectByID2("Front Plane", "PLANE", 0,0,0, false, 0, null, 0);
+```
+
+### 叉形接头（Clevis Joint）残余Bug（2026-05-31）
+- [P0] 步骤3 `CreateArc` 半圆切成"拱门" → 圆心需对齐 X=-0.045m
+- [P0] 步骤4 U形槽坐标需确认 Z 轴居中
+- [P1] Φ18 通孔（柄部+叉部双侧）尚未实现
+
+### 编译命令（E: 盘 SW2024）
+```bash
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe \
+  /r:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.sldworks.dll" \
+  /r:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.swconst.dll" \
+  /out:Clevis_Joint.exe Clevis_Joint.cs
+```
