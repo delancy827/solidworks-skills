@@ -1,0 +1,68 @@
+# Changelog
+
+## 2026-05-31
+
+### solidworks-automation v4.1.0
+
+**新增第二十章：C# 高级自动化架构升级**
+
+- **进程与权限隔离**：`Activator.CreateInstance` 替代 `Marshal.GetActiveObject`，彻底解决 Windows UAC 权限错配导致连接假死的问题
+- **中英文双语基准面选择**：`SelectByID2` 中文名 + 英文名兜底机制，兼容多语言 SW 环境
+- **实体面遍历算法**：`GetBodies2` → `GetFaces` → `GetBox` 几何极值定位，替代不稳定的 `SelectByRay` 射线法，实现精准盲选定位
+- **C# 5 语法规范**：确认系统 CSC 编译器（.NET 4.0）仅支持 C# 5，文档化全部禁区（字符串插值、自动属性初始化等）
+- **FeatureExtrusion2 / FeatureCut4 精确签名**：经反射探测实机确认 23 / 27 参数，提供可编译的完整调用模板
+- **叉形接头建模实战**：步骤1（叉部 90×50×50mm）+ 步骤2（柄部 70×50×25mm 居中）验证通过
+
+### sw-designer v2.3.0
+
+**新增第十三章：SW 自动化设计避坑指南**
+
+- 叉形接头分段建模策略（四段式：叉部→柄部→圆头打孔→U形槽）
+- 草图坐标系映射说明
+- 面选择方案对比（SelectByID2 / SelectByRay / GetBodies2 遍历法）
+- 尺寸居中公式与开发流程最佳实践
+
+### 代码交付
+
+- `Clevis_Joint.cs` — 叉形接头自动建模脚本（步骤1+2 通过）
+- `Probe_Sig.cs` — API 签名反射探测工具
+
+### 仓库维护
+
+- 新增 `CHANGELOG.md`
+- 隐私审查：移除硬编码用户路径，排除运行时日志
+
+---
+
+## 2026-05-31 (上午)
+
+### solidworks-automation v3.4.0 → v4.0.0
+
+- **架构升级**：Python win32com → C# (.NET) 强类型早期绑定
+- **Stage1+2 验证通过**：`FeatureExtrusion2`（23参数）+ `FeatureCut4`（27参数）
+- API 参数白名单：经反射探测确认 7 个常用 API 的精确参数数
+- 新增 C# 编译命令模板与连接规范
+
+### sw-designer v2.2.0 → v2.3.0
+
+- 新增架构选择决策树（Python vs C#）
+- 验证机制章节（防止 API 调用假成功）
+
+---
+
+## 初始版本
+
+### solidworks-automation v3.1.0 → v3.2.0
+
+- 新增模具设计API（凸凹模/刃口/装配/工程图标注）
+- 新增冲压模具知识（间隙/冲裁力/缺陷）
+- 新增国标 GB 规范（IT14/粗糙度）
+- 双语中英文 README
+
+### v3.1.0 / v2.1.0
+
+- 双语 CN/EN、版本历史、场景表
+
+### 初始提交
+
+- solidworks-automation 和 sw-designer 技能创建
