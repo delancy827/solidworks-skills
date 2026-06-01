@@ -1,8 +1,63 @@
 # Changelog
 
-## 2026-06-01
+## 2026-06-01（晚间：跨机验证 + 知识库固化 + 双环架构）
 
-### solidworks-automation（叉形接头全自动建模通关 — 反射探测终局版）
+### solidworks-automation v4.2.0 → v4.4.0
+
+#### 第一轮跨机验证反馈（舍友电脑SW2024中文版）
+
+- 🚨 **CreateLine 闭合铁律**：浮点坐标→微米级端点间隙→轮廓不闭合，全部坐标取整到整数mm
+- 🚨 **SaveAs中文路径**：SaveAs3中文路径返回0静默失败，降级SaveAs
+- 📐 **图纸分析五步法**：基准面→尺寸链→交叉验算→坐标表→代码
+- 📦 **Python VARIANT包装参考**：D2必须非零
+
+#### 第二轮跨机验证反馈（舍友SW 32.5.0 + pywin32 306）
+
+- 🚨 **FeatureExtrusion2 版本依赖警告**：pywin32 306下23参数调用失败，修正API表为"⚠️版本依赖"
+- 🚨 **C#沙箱隔离发现**：WorkBuddy环境下C# exe无法Marshal.GetActiveObject(SW)
+- ⭐ **Python→VBA混合架构**：绕过Python COM限制和C#沙箱隔离的关键路线
+- 📸 **AI视觉QA验证工作流**：截图→多模态对比→差异矩阵
+- 🔧 **SelectByID2 ctx多格式回退**：None/()/tuple()三种回退
+
+#### Section 24：五大核心铁律速查
+- 铁律0：启动清理（关闭孤儿文档）
+- 铁律1：实体计数验证（废弃特征数）
+- 铁律2：系统基准面绝对坐标
+- 铁律3-7：五大Interop雷区速查表
+- 铁律8：三级降级策略
+
+#### Section 25：双重嵌套纠错环验证系统
+- 内环：编译纠错（csc.exe → stderr → AI重写，最大5轮）
+- 外环-A：几何内核物理校验（GetBodies2/包围盒/体积）
+- 外环-B：多模态视觉VLM裁判（三视图截图→5项审查→PASS/FAIL/MODIFY）
+- 自适应迭代优化（最大3-8轮，同类型错误3次→熔断）
+
+#### Skill资产
+- `scripts/visual_qa_capture.py`：四视图自动截图
+- `scripts/sw_connect_info.py`：SW诊断工具
+- `scripts/SW_VBA_Fix.py`：VBA宏注入参考模板
+- `scripts/SW_Final_Fix.py`：FeatureExtrusion2完整参数示例
+
+### sw-designer v2.3.0 → v2.5.0
+
+#### 第十四章：正交几何设计六大铁律
+- 设计环境净化原则、实体级验证取代特征数验证
+- 基准面选择的设计决策、双向贯穿的设计意图
+- 上视坐标Y↔Z翻转认知、设计-实现转换五雷区
+
+#### 第十五章：双重嵌套纠错环—设计验证层级体系
+- L1-L4四级信任层级（API返回值→特征数→物理测量→视觉QA）
+
+### swskills.md（项目级知识库）
+- 九大章节集中归档：五大雷区 + GetBodies2防假跑 + 三级降级 + 双环验证 + 编译环境速查
+
+### 代码交付
+- `Part1_Base.cs`, `Part2_Clevis.cs`, `Part3_Pin.cs`, `Pin_Shaft.cs`
+- `swskills.md`（项目根目录，322行）
+
+---
+
+## 2026-06-01（下午：叉形接头全自动建模通关）
 
 #### 下午突破：反射探测拆穿5个DLL参数陷阱 🔬
 
