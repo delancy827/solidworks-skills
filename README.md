@@ -20,7 +20,6 @@
 - [使用示例 | Usage Examples](#使用示例-usage-examples)
 - [技术细节 | Technical Details](#技术细节-technical-details)
 - [贡献指南 | Contributing](#贡献指南-contributing)
-- [路线图 | Roadmap](#路线图-roadmap)
 - [常见问题 | FAQ](#常见问题-faq)
 - [更新日志 | Changelog](#更新日志-changelog)
 
@@ -436,34 +435,6 @@ git push origin feature/amazing-feature
 
 ---
 
-## 路线图 | Roadmap
-
-### ✅ 已完成（v3.1.0 / v2.1.0）
-
-- [x] SW 2024 API 完全指南
-- [x] Python COM 实战踩坑记录
-- [x] 基础建模示例（4 个）
-- [x] 中英双语支持
-- [x] 版本历史记录
-
-### 🔄 进行中（v3.2.0）
-
-- [ ] 支持 SW 2025 新 API
-- [ ] 添加装配体自动化建模
-- [ ] 集成 Simulation 有限元分析
-- [ ] 更多示例代码（10+ 个）
-
-### 🔮 计划中（v4.0.0）
-
-- [ ] 支持 SolidWorks PDM 集成
-- [ ] 支持批量出图（工程图自动化）
-- [ ] AI 设计建议（基于大模型）
-- [ ] 插件市场（社区贡献的技能）
-
-**想影响路线图？** [开一个 Discussion](https://github.com/delancy827/solidworks-skills/discussions) 告诉我们你想要什么功能！
-
----
-
 ## 常见问题 | FAQ
 
 ### ❓ 这个技能包免费吗？
@@ -517,30 +488,35 @@ git push origin feature/amazing-feature
 
 ## 更新日志 | Changelog
 
+完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
+
+### v4.0.0 (2026-05-31)
+
+**核心升级：C# 强类型架构（替代 Python win32com）**
+
+- 新增 Stage1+2 验证通过：`FeatureExtrusion2`（23参数）+ `FeatureCut4`（27参数）
+- API 参数白名单：经反射探测确认 7 个常用 API 的精确参数数
+- 新增 C# 编译命令模板与连接规范
+
+### v3.2.0 (2026-05-30)
+
+**功能扩展**
+
+- 新增模具设计 API（凸凹模/刃口/装配/工程图标注）
+- 新增冲压模具知识（间隙/冲裁力/常见缺陷）
+- 新增国标 GB 规范（IT14/粗糙度/模具标准）
+
 ### v3.1.0 / v2.1.0 (2026-05-30)
 
-**🎉 重大更新：中英双语 + 详细文档**
+**中英双语 + 文档完善**
 
-- ✨ **新增：** 完整的中英双语支持
-- ✨ **新增：** 版本历史记录表
-- ✨ **新增：** 适用场景表（When to Use）
-- ✨ **优化：** SKILL.md 结构重组，更易阅读
-- ✨ **优化：** 添加更多代码示例
-- 🐛 **修复：** 修正 API 参数数量错误
-- 🐛 **修复：** 补充缺失的错误处理机制
-
-**贡献者：** @delancy827
-
----
-
-### v3.0.0 / v2.0.0 (2026-05-30)
-
-**🎉 首次发布**
-
-- ✨ 初始版本发布
-- ✨ 支持 SW 2024 API
-- ✨ 基础建模功能
-- ✨ IMA 知识库集成
+- 新增完整的中英双语支持
+- 新增版本历史记录表
+- 新增适用场景表（When to Use）
+- SKILL.md 结构重组，更易阅读
+- 添加更多代码示例
+- 修正 API 参数数量错误
+- 补充缺失的错误处理机制
 
 ---
 
