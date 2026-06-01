@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-01
+
+### solidworks-automation（叉形接头全自动建模通关）
+
+- **闭合轮廓切除法**：`CreateArc` + 多条 `CreateLine` 组合成闭合切除区，替代 `FeatureFillet3`（此 Interop 版本不存在）
+- **R25 圆头 + Φ18 通孔**：一次 `FeatureCut4` 完成端部圆角+打孔
+- **U 形槽坐标修正**：`CreateCornerRectangle` 的 z 参数必须为 0（2D草图约束）
+- **双侧 Φ18 通孔**：前视基准面画两个 `CreateCircleByRadius` 圆，`FeatureCut4` 贯穿切除
+- **额外发现**：`FeatureFillet3` 在 E: 盘 SW2024 Interop DLL 中不存在
+
 ## 2026-05-31
 
 ### solidworks-automation v4.1.0

@@ -84,10 +84,11 @@ bool ok = swDoc.Extension.SelectByID2("前视基准面", "PLANE", 0,0,0, false, 
 if (!ok) ok = swDoc.Extension.SelectByID2("Front Plane", "PLANE", 0,0,0, false, 0, null, 0);
 ```
 
-### 叉形接头（Clevis Joint）残余Bug（2026-05-31）
-- [P0] 步骤3 `CreateArc` 半圆切成"拱门" → 圆心需对齐 X=-0.045m
-- [P0] 步骤4 U形槽坐标需确认 Z 轴居中
-- [P1] Φ18 通孔（柄部+叉部双侧）尚未实现
+### 叉形接头（Clevis Joint）建模经验（2026-06-01攻克）
+- 步骤3 R25圆头：用闭合轮廓切除法（`CreateArc` + 3条 `CreateLine` 构成切除区）+ `CreateCircleByRadius` 打 Φ18 孔，一次 `FeatureCut4` 完成
+- 步骤4 U形槽：`CreateCornerRectangle` 的 z1/z2 必须设为 0（2D草图），用 (x1,y1) (x2,y2) 定义矩形
+- 步骤5 双侧 Φ18 通孔：前视基准面画两个圆，`FeatureCut4` ThroughAll
+- ⚠️ 注意：此 Interop DLL 中 `FeatureFillet3` 不存在，不可用圆角API
 
 ### 编译命令（E: 盘 SW2024）
 ```bash
