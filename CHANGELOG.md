@@ -2,13 +2,35 @@
 
 ## 2026-06-01
 
-### solidworks-automation（叉形接头全自动建模通关）
+### solidworks-automation（叉形接头全自动建模通关 — 反射探测终局版）
 
-- **闭合轮廓切除法**：`CreateArc` + 多条 `CreateLine` 组合成闭合切除区，替代 `FeatureFillet3`（此 Interop 版本不存在）
-- **R25 圆头 + Φ18 通孔**：一次 `FeatureCut4` 完成端部圆角+打孔
-- **U 形槽坐标修正**：`CreateCornerRectangle` 的 z 参数必须为 0（2D草图约束）
-- **双侧 Φ18 通孔**：前视基准面画两个 `CreateCircleByRadius` 圆，`FeatureCut4` 贯穿切除
-- **额外发现**：`FeatureFillet3` 在 E: 盘 SW2024 Interop DLL 中不存在
+#### 下午突破：反射探测拆穿5个DLL参数陷阱 🔬
+
+- 🚨 **Merge=参数18** — 实测FeatureExtrusion2的参数18才是Merge（非文档3号位），旧代码参数3=false焊接从未生效
+- 🚨 **FeatureCut4 Sd必须为false** — 反射确认参数1=true时切除完全不执行
+- 🚨 **InsertRefPlane Distance=8** — 枚举名`swRefPlaneReferenceConstraints_e`（带s），签名`(int,double,int,double,int,double)`旧版API
+- 🚨 **CreateArc不可用** → `Create3PointArc` 三点圆弧替代
+- 🚨 **上视基准面草图Y正方向=模型Z负方向** → 坐标必须取负值
+
+#### 防假跑机制 🛡️
+
+- `GetFeatureCount()` 被空草图/错误特征节点绕过 → **GetBodies2实体计数**做硬验证
+- 双重验证：特征数增长 + 实体数量
+- 4/4步骤全部通过，实体数恒定=1
+
+#### 空间正交几何重构法 📐
+
+- 废弃面遍历，全程三大系统基准面绝对坐标
+- 偏移基准面(`InsertRefPlane(8,0.0125,...)`)替代不支持StartOffset
+- 90°正交：前视(Z向) + 上视(Y向) 双向ThroughAll
+
+#### 上午攻关（已完成）
+
+- 闭合轮廓切除法：`CreateArc` + 多条 `CreateLine` 组合成闭合切除区，替代 `FeatureFillet3`（此 Interop 版本不存在）
+- R25 圆头 + Φ18 通孔：一次 `FeatureCut4` 完成端部圆角+打孔
+- U 形槽坐标修正：`CreateCornerRectangle` 的 z 参数必须为 0（2D草图约束）
+- 双侧 Φ18 通孔：前视基准面画两个 `CreateCircleByRadius` 圆，`FeatureCut4` 贯穿切除
+- 额外发现：`FeatureFillet3` 在 E: 盘 SW2024 Interop DLL 中不存在
 
 ## 2026-05-31
 

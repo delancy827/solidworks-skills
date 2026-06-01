@@ -490,13 +490,30 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v4.0.0 (2026-05-31)
+### v4.1.0 — 叉形接头全自动建模通关 + 防假跑验证体系 (2026-06-01)
 
-**核心升级：C# 强类型架构（替代 Python win32com）**
+**核心突破：反射探测拆穿 DLL 参数陷阱 + GetBodies2 防假跑机制**
 
-- 新增 Stage1+2 验证通过：`FeatureExtrusion2`（23参数）+ `FeatureCut4`（27参数）
-- API 参数白名单：经反射探测确认 7 个常用 API 的精确参数数
-- 新增 C# 编译命令模板与连接规范
+#### 🔬 Interop DLL 底层避坑
+- 🚨 **Merge=参数18**（非文档的3号位！）— 旧代码一直false导致扁柄从未真正合并
+- 🚨 **FeatureCut4 Sd必须为false** — true会导致切除完全不执行
+- 🚨 **InsertRefPlane Distance=8**（枚举名带s后缀）— 替代FeatureExtrusion2不支持的StartOffset
+- 🚨 **CreateArc不可用** → Create3PointArc替代
+- 🚨 **上视基准面草图Y方向=模型Z负方向** → 坐标取负
+
+#### 🛡️ 防假跑终极断言
+- `GetFeatureCount()` 被空草图/错误特征绕过 → **GetBodies2实体计数硬验证**
+- 双重验证模式：特征数增长 + 实体数量
+- 4/4步骤全部通过（特征数增长+实体数恒定=1）
+
+#### 📐 空间正交几何重构法
+- 废弃面遍历 → 三大系统原生基准面绝对坐标
+- 偏移基准面（InsertRefPlane）实现居中扁柄
+- 90°正交：前视基准面(Z向) + 上视基准面(Y向) 双向贯穿
+
+#### 📋 新增文件
+- `Clevis_Joint.cs` — 叉形接头全自动建模（反射修正版）
+- 完整技术沉淀：API参数白名单、DLL铁律5条、正交重构法
 
 ### v3.2.0 (2026-05-30)
 
