@@ -85,10 +85,56 @@ if (!ok) ok = swDoc.Extension.SelectByID2("Front Plane", "PLANE", 0,0,0, false, 
 ```
 
 ### 叉形接头（Clevis Joint）建模经验（2026-06-01攻克）
-- 步骤3 R25圆头：用闭合轮廓切除法（`CreateArc` + 3条 `CreateLine` 构成切除区）+ `CreateCircleByRadius` 打 Φ18 孔，一次 `FeatureCut4` 完成
-- 步骤4 U形槽：`CreateCornerRectangle` 的 z1/z2 必须设为 0（2D草图），用 (x1,y1) (x2,y2) 定义矩形
-- 步骤5 双侧 Φ18 通孔：前视基准面画两个圆，`FeatureCut4` ThroughAll
-- ⚠️ 注意：此 Interop DLL 中 `FeatureFillet3` 不存在，不可用圆角API
+
+#### ⚠️ Interop DLL参数顺序陷阱（2026-06-01下午反射验证）
+**FeatureExtrusion2真实签名**（反射确认）：
+```
+[Sd][Flip][Dir][T1][T2][D1][D2][Dchk1][Dchk2][Ddir1][Ddir2][Dang1][Dang2]
+[OffsetRev1][OffsetRev2][TransSurf1][TransSurf2][Merge][UseFeatScope][UseAutoSelect]
+[T0(StartType)][StartOffset][FlipStartOffset]
+```
+| 参数 | 文档位置 | 真实位置 | 说明 |
+|------|----------|----------|------|
+| Merge | 参数3 | **参数18** | 旧代码一直把Merge放在参数3，始终为false！ |
+| StartType(T0) | 参数12 | **参数21** | Offset=1在此DLL不支持 |
+| StartOffset | 参数13 | **参数22** | 不支持offset → 用InsertRefPlane代替 |
+
+**FeatureCut4真实签名**（反射确认）：
+```
+[Sd=false才能工作!][Flip][Dir][T1][T2][D1][D2]...[NormalCut]...
+[AssyScope][AutoSelComp][Propagate][T0][StartOffset][FlipStartOffset][Optimize]
+```
+- ⚠️ **Sd参数必须为false**，true会导致FeatureCut4完全失败
+
+#### InsertRefPlane偏移基准面
+- 签名：`InsertRefPlane(int FirstConstraint, double Dist, int, double, int, double)` — **旧版API**
+- 约束值：`Distance=8`（枚举`swRefPlaneReferenceConstraints_e`，带**s**后缀）
+- 用法：先SelectByID2选中前视基准面 → InsertRefPlane(8, 0.0125, 0,0,0,0) → 获取Feature.Name作为平面名
+- 替代FeatureExtrusion2不支持StartOffset的问题
+
+#### CreateArc vs Create3PointArc
+- ⚠️ `CreateArc` 在此DLL中不工作（无论方向-1还是1）
+- ✅ `Create3PointArc(x1,y1,z1, x2,y2,z2, x3,y3,z3)` — 三点圆弧可用
+
+#### 上视基准面草图坐标方向
+- ⚠️ 上视基准面草图Y正方向 = **模型Z负方向**
+- 画U形槽Y坐标必须取负值：`CreateCornerRectangle(0.015, -0.0125, 0, 0.090, -0.0375, 0)`
+
+#### 真实验证：GetBodies2替代GetFeatureCount
+```csharp
+// GetFeatureCount增长≠实体成功！（草图本身+1，废特征+1）
+// 用GetBodies2做硬验证：
+object[] bodies = partDoc.GetBodies2((int)swBodyType_e.swSolidBody, false);
+int solidCount = (bodies == null) ? 0 : bodies.Length;
+```
+
+- **关键发现**：`swEndCondThroughAll=1`（不是4！），所有FeatureCut4必须使用枚举值而非硬编码
+- **铁律**：**放弃面选草图**，全部用系统基准面(Front/Top/Right)画绝对坐标草图
+- R25圆头：Create3PointArc三点弧（起点(-0.045,0)、终点(-0.045,0.050)、中点(-0.070,0.025)）
+- U形槽：上视基准面画矩形(Y负坐标!)，T1=1,T2=1双向贯穿
+- Φ18通孔：前视基准面(0.075,0.025)，T1=1,T2=1
+- ⚠️ `FeatureFillet3` 在此 Interop DLL 中不存在
+- ⚠️ `SelectByRay` TypeWanted必须=1(swSelFACES)，=2是选边
 
 ### 编译命令（E: 盘 SW2024）
 ```bash
