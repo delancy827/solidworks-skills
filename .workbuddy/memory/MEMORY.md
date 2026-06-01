@@ -143,3 +143,47 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe \
   /r:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.swconst.dll" \
   /out:Clevis_Joint.exe Clevis_Joint.cs
 ```
+
+### 跨机验证新增铁律（2026-06-01 舍友电脑反馈）
+
+#### CreateLine 闭合铁律
+- ❌ 浮点坐标 → 微米级端点间隙 → 轮廓不闭合 → FeatureExtrusion2静默失败
+- ✅ 全部坐标取整到整数mm → `mm(-50), mm(50)` 而非 `-0.05, 0.05`
+- 优先使用 CreateCornerRectangle（天然闭合）
+
+#### SaveAs 中文路径铁律
+- SaveAs3 中文路径返回0静默失败，SaveAs不返回错误码但有效
+- 通用安全保存：先试 SaveAs3，result=0 降级到 SaveAs
+
+#### 图纸分析五步法
+1. 识别底座基准面(Y=0)
+2. 建立Y轴尺寸链
+3. 建立X轴对称性
+4. 交叉验算尺寸链
+5. 生成坐标表 → 直接映射代码
+
+铁律：生成代码前必须纸上推导尺寸链，严禁凭看图感觉写坐标
+
+### 跨机验证新增铁律（2026-06-01 第二轮）
+
+#### FeatureExtrusion2 Python COM 版本依赖
+- SW 32.5.0 + pywin32 306 → FeatureExtrusion2 **23参数调用失败**
+- 与 pywin32版本/SW Service Pack 有关，不能假设一定可用
+- 策略：优先尝试，失败降级到 VBA宏
+
+#### C#沙箱隔离
+- WorkBuddy环境下，C# exe的 `Marshal.GetActiveObject("SldWorks.Application")` → MK_E_UNAVAILABLE
+- 原因：C# 子进程不在sandbox安全上下文中，无法访问SW COM
+- 仅非sandbox环境（本机直接运行）C# exe可用
+
+#### Python→VBA混合架构（三级降级策略）
+- Tier 1: Python COM (简单操作：草图/选择/视图)
+- Tier 2: Python→VBA宏注入 (复杂特征：FeatureCut4/FeatureExtrusion2/HoleWizard5)
+- Tier 3: C# exe (非sandbox环境)
+
+#### SelectByID2 ctx参数健壮性
+- ctx 参数格式因SW/pywin32版本而异：None / () / tuple()
+- 统一用 `[None, (), tuple()]` 三种格式回退
+
+#### AI视觉验证
+- 截图→AI多模态对比→差异矩阵，用于建模后标准验证
