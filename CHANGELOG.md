@@ -20,6 +20,31 @@
 - 假验证/假成功 → 铁律2（W-A-R 闭环）
 - 盲猜 API 类名 → 铁律3（dir() 实机探测）
 
+#### Section 39：单轮廓凹口法（Single Profile Notch Method）— 89.5°回弹补偿终极攻克
+- 🎯 **架构级降维打击** — 完全绕过 FeatureCut/布尔减/IModeler 的全部 COM 锁死问题
+- 🎯 **一次 FeatureExtrusion2 成型** — 外框+U形凹口的单闭合轮廓，拉伸后直接得到带槽实体
+- 🎯 **零切除API依赖** — 从"减材料思维"转向"截面造型思维"，彻底摆脱 SW 2024 Standalone 切除限制
+- 🎯 **学术诚信保障** — 实体模型真实反映89.5°，非工程图标注造假
+
+#### Section 40：89.5°角度验证三级链
+- ✅ **Level 1 — 开放轮廓验证**：CreateLine 两线段 89.5° 角保持 0.5000° 精确无误
+- ✅ **Level 2 — 闭合梯形验证**：四线段闭合梯形，斜壁垂直偏差 0.5000°，FeatureExtrusion2 拉伸成功
+- ✅ **Level 3 — 单轮廓凹口验证**：七线段凹口轮廓（外框+U形槽），面数=9（6外表面+3槽内表面），89.5°双侧斜壁确认
+
+#### Section 41：SW 2024 Standalone COM 切除API系统性限制终局报告
+- ❌ **FeatureCut1/2/3/4**：全部返回 null（反射验证 20/23/26/27 参数全版本）
+- ❌ **InsertCombineFeature**：返回 null
+- ❌ **Body2.Cut / Body2.Operations2**：返回 false/失败码
+- ❌ **IModeler.Operations / Operations2**：无法创建有效结果实体
+- ❌ **VBA 宏注入**：RunMacro 无法执行 .swb 文件
+- ❌ **Python win32com FeatureCut4**：同样返回 None
+- **结论**：SW 2024 Standalone COM 模式下，切除/布尔运算类 API 被系统级禁用，必须从几何构造层面绕过
+
+#### Section 42：课设实战脚本 — 凸模U形槽（学号27号）
+- 📐 **PunchUShape_27_SingleProfile.cs** — 完整生产级脚本，含参数表、三级验证、保存双路径
+- 📐 **参数化驱动**：A1=42, gap=2.1, slotTopW=37.8, slotBotW=38.236, slotDepth=25, punchW=62, punchH=27, punchL=80
+- 📐 **文件输出**：C:/temp/ + D:/冲压课设1/181班27号/ 双路径保存
+
 ---
 
 ## 2026-06-02（第四轮：凳子建模架构 + P1-P10审计框架）

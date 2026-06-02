@@ -505,6 +505,13 @@ git push origin feature/amazing-feature
 - 彻底解决"API 脑补"：不确定的 API 必须 dir() 实机探测后才能用
 - XML 标签格式：大模型 RLHF 训练对 `<system_directives>` 服从度远超 Markdown
 
+#### 🎯 单轮廓凹口法 — 凸模U形槽89.5°回弹补偿终极攻克
+- **零切除API依赖**：完全绕过 FeatureCut1/2/3/4、InsertCombineFeature、Body2.Cut 的全部 COM 锁死
+- **一次 FeatureExtrusion2 成型**：外框+U形凹口的单闭合轮廓，7条线段直接拉伸成带89.5°斜壁实体
+- **89.5°三级验证链**：开放轮廓(0.5000°) → 闭合梯形(0.5000°) → 单轮廓凹口(面数=9) 全部通过
+- **学术诚信保障**：实体模型真实反映89.5°，非工程图标注造假
+- **课设交付**：`PunchUShape_27_SingleProfile.cs` — 学号27号完整生产级脚本
+
 ### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)
 
 **核心突破：三轮跨机验证踩坑 + Python COM 完全解码**
