@@ -490,6 +490,21 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v4.8.0 — 架构级升级：三大铁律 + W-A-R 闭环断言 (2026-06-02)
+
+**核心突破：从"建议级约束"升级为"代码级约束"——AI 把自己当编译器而非聊天助手**
+
+#### 🏗️ system_directives 区块（最高优先级）
+- 🚨 **铁律 1：单例与窗口生命周期** — GetActiveObject 优先 / ActiveDoc 复用 / try...finally CloseDoc
+- 🚨 **铁律 2：W-A-R 闭环断言** — Write(提取指纹)→Assert(重建+错误码)→Read(硬断言±1μm)
+- 🚨 **铁律 3：反幻觉与异常熔断** — API 盲猜禁止 / dir() 实机探测 / 失败零容忍
+
+#### 核心改进
+- 彻底解决"多窗口泛滥"：强制复用 SW 实例和文档
+- 彻底解决"假验证/假跑"：修改后必须 Read 回来比对，Assert 失败即熔断
+- 彻底解决"API 脑补"：不确定的 API 必须 dir() 实机探测后才能用
+- XML 标签格式：大模型 RLHF 训练对 `<system_directives>` 服从度远超 Markdown
+
 ### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)
 
 **核心突破：三轮跨机验证踩坑 + Python COM 完全解码**
