@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-06-02（第三轮跨机验证：Python COM 底层陷阱 + 类封装架构）
+
+### solidworks-automation v4.4.0 → v4.5.0
+
+#### Section 26：Python COM 底层陷阱速查
+
+- 🔴 **SelectByID2 Callout = VDISPATCH** — 第8参数必须 `VARIANT(VT_DISPATCH, None)`，不能用 Python None
+- 🔴 **COM 属性/方法混淆速查表** — GetTitle/GetFeatureCount/FirstFeature 是**属性**；GetNextFeature/GetTypeName2 是**方法**
+- 🔴 **多 ProgID SW 连接回退** — `.32` → `.64` → `""` 三种回退
+- 🔴 **try/finally COM 清理保证** — 确保 `CoUninitialize` 一定执行
+
+#### Section 27：Python 类封装架构模板
+
+- `BracketBuilder` 类封装模板（可复用）
+- `VARIANTHelper` VARIANT 统一包装器
+- 参数表 `PARAMS` 字典驱动所有尺寸
+- 边界框自验证机制
+- 步骤独立方法 + 返回值判断链路
+
+### sw-designer v2.5.0 → v2.6.0
+
+#### 第十六章：斜面建草图的绝对禁止规则
+
+- 设计铁律：绝对禁止在斜面上新建草图
+- 正确替代：Front Plane + 中面拉伸
+- 草图平面选择决策树
+
+#### 第十七章：参数化设计的 Python 封装架构
+
+- 全局变量 → 类封装的战略意义对照表
+- 参数表 vs 硬编码的设计哲学
+- 设计验证闭环（参数→建模→验证→修正）
+
+
 ## 2026-06-01（晚间：跨机验证 + 知识库固化 + 双环架构）
 
 ### solidworks-automation v4.2.0 → v4.4.0
