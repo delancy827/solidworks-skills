@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-02（架构级升级：三大铁律 + W-A-R 闭环断言 + system_directives）
+
+### solidworks-automation v4.7.0 → v4.8.0（架构级）
+
+#### 🏗️ system_directives 区块（最高优先级）
+- 🚨 **铁律 1：单例与窗口生命周期** — GetActiveObject 优先 / ActiveDoc 复用 / try...finally CloseDoc
+- 🚨 **铁律 2：W-A-R 闭环断言** — Write(提取指纹)→Assert(重建+错误码)→Read(硬断言±1μm)
+- 🚨 **铁律 3：反幻觉与异常熔断** — API 盲猜禁止 / dir() 实机探测 / 失败零容忍
+
+#### 核心改进
+- 从"建议级约束"升级为"代码级约束"——AI 把自己当编译器而非聊天助手
+- 把"89.5° 幻觉"问题从根本上阻断：必须 Read 回来比对，Assert 失败就熔断
+- XML 标签 `<system_directives>` 格式——大模型 RLHF 训练对 XML 服从度远超 Markdown
+- 禁止静默捕获（catch pass），禁止工程图造假，禁止脑补 API
+
+#### 实战触发场景
+- 多窗口泛滥 → 铁律1（GetActiveObject + CloseDoc）
+- 假验证/假成功 → 铁律2（W-A-R 闭环）
+- 盲猜 API 类名 → 铁律3（dir() 实机探测）
+
+---
+
 ## 2026-06-02（第四轮：凳子建模架构 + P1-P10审计框架）
 
 ### solidworks-automation v4.6.0 → v4.7.0
