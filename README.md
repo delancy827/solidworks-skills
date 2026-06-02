@@ -490,7 +490,29 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v4.1.0 — 叉形接头全自动建模通关 + 防假跑验证体系 (2026-06-01)
+### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)
+
+**核心突破：三轮跨机验证踩坑 + Python COM 完全解码**
+
+#### 🔴 Python COM 底层陷阱
+- **SelectByID2 Callout = VDISPATCH** — 第8参数必须 `VARIANT(VT_DISPATCH, None)`，Python None 直接 TypeError
+- **COM 属性/方法混淆** — GetTitle/GetFeatureCount 是属性；GetNextFeature/GetTypeName2 是方法
+- **多 ProgID 回退连接** — `.32` → `.64` → `""` 三种回退确保连上 SW
+- **try/finally 清理保证** — `CoUninitialize` 绝不泄漏
+
+#### 🏗️ Python 类封装架构
+- `BracketBuilder` 类封装模板（参数表驱动 + 边界框自验证）
+- `VARIANTHelper` 统一包装器，消灭 VARIANT 地狱
+- 步骤独立方法 + 返回值判断链路，脚本可维护性大幅提升
+
+#### 🧪 三轮跨机验证成果
+- **第一轮**：CreateLine 浮点坐标 → 强制整数 mm；SaveAs3 中文路径 → 降级 SaveAs
+- **第二轮**：FeatureExtrusion2 版本依赖警告（pywin32 306 可能失败）；C# 沙箱隔离 → Python→VBA 混合架构
+- **第三轮**：斜面建草图绝对禁止（6 版本全败）；双重嵌套纠错环（编译纠错 + 几何校验 + 视觉 QA）
+
+---
+
+### v4.1.0 — 叉形接头全自动建模通关 + 防假跑验证体系 (2026-05-31)
 
 **核心突破：反射探测拆穿 DLL 参数陷阱 + GetBodies2 防假跑机制**
 
