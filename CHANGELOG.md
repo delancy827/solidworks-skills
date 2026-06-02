@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026-06-02（第四轮：凳子建模架构 + P1-P10审计框架）
+
+### solidworks-automation v4.6.0 → v4.7.0
+
+#### Section 32：凳子建模架构模式
+- 🪑 **参数化凳子建模器** — 座面 + 4腿坐标计算
+- 🪑 **腿位置计算法** — `(-half_l + offset + half_g, ...)` 公式
+- 🪑 **flip=True 向下拉伸腿** — 从前视基准面拉伸方向处理
+
+#### Section 33：P1-P10 问题审计框架
+- 🔍 **10大问题清单** — P1连接/P2模板/P3验证/P4基准面/P10切除架构
+- 🔍 **审计使用方法** — 每次交付前逐条打勾
+
+#### Section 34：CoInitialize + EditRebuild3 验证链
+- 🔧 **`pythoncom.CoInitialize()` 必须显式调用** — 否则 Dispatch 返回无效指针
+- 🔧 **`EditRebuild3()` L4.5验证层级** — 保存前强制重建
+
+#### Section 35：版本化 ProgID 连接策略
+- 🔗 **`SldWorks.Application.32/.31/.30`** — 按SW版本指定ProgID
+- 🔗 **回退链：版本号 → 无版本号 → 报错**
+
+#### Section 36：动态模板检测
+- 📁 **多路径自动检测** — `C:/ProgramData/.../gb_part.prtdot` 遍历
+- 📁 **D盘/SW2024/SW2023多版本覆盖**
+
+#### Section 37：基准面名称自动翻译
+- 🌐 **中英文自动切换** — `Front Plane ↔ 前视基准面`
+- 🌐 **遍历特征树回退** — `FirstFeature` 属性 + `GetNextFeature()` 方法
+
+#### Section 38：完整生产级脚本模板
+- 🏭 **吕亚峰验证版** — `生产级建模器` 类模板
+- 🏭 **`finally: pythoncom.CoUninitialize()`** — COM资源确保释放
+
+### sw-designer v2.6.0 → v2.7.0
+（待补充凳子设计规则）
+
+---
+
 ## 2026-06-02（第三轮跨机验证：Python COM 底层陷阱 + 类封装架构）
 
 ### solidworks-automation v4.4.0 → v4.5.0

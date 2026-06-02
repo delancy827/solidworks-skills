@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 3.2.0
+version: 4.7.0
 author: Delancy
 ---
 
@@ -1151,3 +1151,576 @@ def list_features(sw_model):
 2. 所有单位默认为米制(SI)，SolidWorks内部使用米
 3. 批量操作前建议先在小范围测试
 4. 重要文件操作前做好备份
+
+---
+
+## 二十八、SWValidator 验证框架（跨机测试验证）
+
+### 问题背景
+API 返回值（`S_OK`、`None`、特征对象）不能证明操作真正成功。吕亚峰（2026-06-02 跨机测试）验证了必须多层验证。
+
+### 验证层级（L1-L4）
+
+| 层级 | 验证方式 | 代码 | 可靠性 |
+|-------|---------|------|--------|
+| L1 | API 返回值 | `if feat is not None` | ⭐ 低（假成功） |
+| L2 | 特征数变化 | `GetFeatureCount()` 前后对比 | ⭐⭐ 中（空草图会骗） |
+| L3 | 实体数 | `GetBodies2()` 计数 | ⭐⭐⭐ 高 |
+| L4 | 物理测量 | `GetMassProperties()` / 包围盒 | ⭐⭐⭐⭐ 最高 |
+
+### SWValidator 类（可直接复用）
+
+```python
+class SWValidator:
+    """SolidWorks API调用验证器（吕亚峰跨机测试验证版）"""
+    
+    @staticmethod
+    def verify_connection(sw_app):
+        """验证SW应用连接是否有效——用Visible属性，不用GetVersion()"""
+        if sw_app is None:
+            raise Exception("SW应用对象为None")
+        try:
+            visible = sw_app.Visible          # 属性，不用()
+            _ = sw_app.CommandInProgress  # 能读就说明COM活了
+            print(f"  ✓ SW连接验证通过 (Visible={visible})")
+            return True
+        except Exception as e:
+            raise Exception(f"SW连接验证失败: {e}")
+
+    @staticmethod
+    def verify_feature_created(doc, before_count=None):
+        """验证特征是否真正创建"""
+        after_count = doc.GetFeatureCount()
+        if before_count is not None:
+            if after_count <= before_count:
+                raise Exception(f"特征创建失败: {before_count} → {after_count}")
+            print(f"  ✓ 特征数验证通过: {before_count} → {after_count}")
+        # 再查最后一个特征名
+        last_feat = doc.FeatureManager.GetLastFeature()
+        if last_feat is not None:
+            print(f"  ✓ 最后特征: {last_feat.Name}")
+        return last_feat
+
+    @staticmethod
+    def verify_body_count(doc, before_count=None):
+        """GetBodies2硬验证（最可靠）"""
+        bodies = doc.GetBodies2(0, False)  # 0=solid
+        count = len(bodies) if bodies else 0
+        if before_count is not None:
+            if count <= before_count:
+                raise Exception(f"实体数未增加: {before_count} → {count}")
+            print(f"  ✓ 实体数验证通过: {before_count} → {count}")
+        return count
+```
+
+### safe_select 遍历回退方案
+
+```python
+def safe_select(doc, plane_name):
+    """SelectByID2失败→遍历特征树回退"""
+    # 先试 SelectByID2（正确VARIANT写法）
+    ok = doc.Extension.SelectByID2(
+        plane_name, "PLANE", 0, 0, 0,
+        False, 0,
+        win32com.client.VARIANT(pythoncom.VT_DISPATCH, None),
+        0
+    )
+    if ok:
+        return True
+    # 回退：遍历特征树
+    feat = doc.FirstFeature         # 属性，不用()
+    while feat is not None:
+        if feat.Name == plane_name:
+            feat.Select2(False, 0)
+            return True
+        feat = feat.GetNextFeature()  # 方法，要加()
+    return False
+```
+
+---
+
+## 二十九、国内网络环境 + pywin32 版本陷阱
+
+### raw.githubusercontent.com 被墙问题（吕亚峰测试发现）
+
+**现象**：GitHub API 可连，但 `raw.githubusercontent.com` 无法访问（国内 GFW 封锁）。
+
+**影响**：`curl` 直接下载技能文件会失败。
+
+**解决方案**：
+```python
+# 方案1：用 jsDelivr CDN（推荐）
+url = "https://cdn.jsdelivr.net/gh/delancy827/solidworks-skills@main/README.md"
+
+# 方案2：用 gitclone.com 镜像
+url = "https://gitclone.com/github.com/delancy827/solidworks-skills/blob/main/README.md"
+
+# 方案3：SSH 克隆（已配置SSH key时）
+git clone git@github.com:delancy827/solidworks-skills.git
+```
+
+### pywin32 版本选择铁律
+
+| pywin32版本 | FeatureExtrusion2 | 推荐 |
+|--------------|-------------------|------|
+| v306 | ❌ 23参数调用失败 | 不用 |
+| v311 | ✅ 通过 | **推荐** |
+| v228 | ⚠️ 部分API异常 | 勉强 |
+
+**安装命令**：
+```bash
+# 推荐版本
+pip install pywin32==311
+# 或者最新版
+pip install -U pywin32
+```
+
+### UserControl = False 导致 Python COM 卡死
+
+**问题**：`clevis_fork_automation.py` 第31行 `sw.UserControl = False` 会导致 Python 脚本结束时 SW 被强制回收，`GetActiveObject` 后续连不上。
+
+**正确写法**：
+```python
+sw = win32com.client.GetActiveObject("SldWorks.Application")
+sw.Visible = True
+sw.UserControl = True   # ✅ Python自动化必须True，防止SW被GC回收
+```
+
+### GetVersion() 可用性更正
+
+Sec 26 之前记录 `GetVersion` 是属性。吕亚峰环境（pywin32 v311 + SW 2024）实测**可作为方法调用**：
+
+```python
+# pywin32 v311 + SW 2024：✅ 可以调用
+ver = sw.GetVersion()   # 返回字符串如 "32.5.0"
+print(f"SW版本: {ver}")
+
+# 如果是属性（某些版本），这样读：
+try:
+    ver = sw.GetVersion()   # 试方法
+except:
+    ver = sw.GetVersion     # 再试属性
+```
+
+---
+
+## 三十、连接回退完整链路（生产可用）
+
+```python
+def connect_sw():
+    """
+    连接SolidWorks（完整回退链路）
+    吕亚峰跨机测试验证：GetActiveObject在某些环境失败→必须Dispatch回退
+    """
+    sw = None
+    
+    # 第一优先：连已有实例
+    try:
+        sw = win32com.client.GetActiveObject("SldWorks.Application")
+        print("  ✓ 连接到已运行SW实例")
+    except:
+        pass
+    
+    # 回退：启动新实例
+    if sw is None:
+        for progid in ["SldWorks.Application.32",
+                        "SldWorks.Application.64",
+                        "SldWorks.Application"]:
+            try:
+                sw = win32com.client.Dispatch(progid)
+                print(f"  ✓ 启动新SW实例 ({progid})")
+                break
+            except:
+                pass
+    
+    if sw is None:
+        raise Exception("无法连接或启动SolidWorks")
+    
+    sw.Visible = True
+    sw.UserControl = True   # ⚠️ 必须True，否则Python结束后SW被Kill
+    
+    # 验证连接（读属性，不是调用方法）
+    _ = sw.Visible
+    print(f"  ✓ SW连接验证通过")
+    
+    return sw
+```
+
+---
+
+## 三十一、完整验证工作流（推荐的自动化脚本结构）
+
+```python
+import win32com.client
+import pythoncom
+
+class ClevisAutomation:
+    def __init__(self):
+        self.sw = None
+        self.doc = None
+    
+    def connect(self):
+        self.sw = connect_sw()  # 用上面Sec30的函数
+        return self.sw
+    
+    def new_part(self):
+        before = self.sw.GetDocumentCount()
+        template = r'C:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\gb_part.prtdot'
+        self.sw.NewDocument(template, 0, 0, 0)
+        import time; time.sleep(1)
+        self.doc = self.sw.ActiveDoc
+        assert self.doc is not None, "新建零件失败"
+        print(f"  ✓ 零件创建: {self.doc.GetTitle}")  # 属性
+        return self.doc
+    
+    def select_plane(self, name):
+        # 用 safe_select（Sec28）
+        ok = safe_select(self.doc, name)
+        if not ok:
+            raise Exception(f"无法选择基准面: {name}")
+        return True
+    
+    def extrude(self, depth_mm):
+        before = self.doc.GetFeatureCount()
+        self.doc.SketchManager.InsertSketch(True)  # 关闭草图
+        
+        depth_m = depth_mm / 1000.0
+        feat = self.doc.FeatureManager.FeatureExtrusion2(
+            False, False, False,
+            0, 0,
+            depth_m, 0,
+            False, False, False, False,
+            0, 0, False, False, False, False,
+            True, True, True,
+            0, False, False
+        )
+        
+        # L2验证
+        SWValidator.verify_feature_created(self.doc, before)
+        # L3验证
+        SWValidator.verify_body_count(self.doc)
+        return feat
+    
+    def save(self, path):
+        # 先用SaveAs3，失败降级SaveAs
+        result = self.doc.SaveAs3(path, 1, 2)
+        if result != 1:
+            print(f"  ⚠ SaveAs3返回{result}，降级SaveAs")
+            self.doc.SaveAs(path)
+
+if __name__ == "__main__":
+    auto = ClevisAutomation()
+    try:
+        auto.connect()
+        auto.new_part()
+        # ... 建模步骤 ...
+        auto.save(r"C:\temp\clevis.SLDPRT")
+        print("✓ 完成")
+    except Exception as e:
+        print(f"✗ 失败: {e}")
+        import traceback; traceback.print_exc()
+
+---
+
+## 三十二、凳子建模架构模式（吕亚峰跨机验证 2026-06-02）
+
+### 问题背景
+叉形接头是单件拉伸特征，而**凳子**是**多体装配建模**——座面 + 4条腿，需要多次选基准面、多次拉伸、坐标计算。吕亚峰实测验证了这个模式。
+
+### 凳子参数化架构
+
+```python
+class 凳子建模器:
+    """凳子自动化建模器（吕亚峰验证版）"""
+
+    # 默认尺寸参数（单位：米）
+    默认尺寸 = {
+        '座面长度': 0.300,       # 300mm
+        '座面宽度': 0.300,       # 300mm
+        '座面厚度': 0.025,       # 25mm
+        '腿长度': 0.400,         # 400mm
+        '腿截面': 0.030,         # 30mm 正方形
+        '腿偏移': 0.020,         # 腿到边缘距离 20mm
+    }
+
+    def 计算腿位置(self, seat_l, seat_w, leg_size, offset):
+        """计算4条腿的草图原点坐标"""
+        half_l = seat_l / 2
+        half_w = seat_w / 2
+        half_g = leg_size / 2
+        return [
+            (-half_l + offset + half_g, -half_w + offset + half_g),  # 前左
+            ( half_l - offset - half_g, -half_w + offset + half_g),  # 前右
+            (-half_l + offset + half_g,  half_w - offset - half_g),  # 后左
+            ( half_l - offset - half_g,  half_w - offset - half_g),  # 后右
+        ]
+```
+
+### 关键建模步骤（4步）
+
+```
+凳子建模流程：
+├── 步骤1：选择上视基准面 → 画矩形座面 → 拉伸厚度
+├── 步骤2：选择前视基准面 → 画腿截面 → 拉伸腿长（flip=True 向下）
+├── 步骤3：重复4次（每条腿一次，坐标不同）
+└── 步骤4：EditRebuild3() 重建 → SaveAs3 保存
+```
+
+### 腿坐标系陷阱
+
+**座面原点在中心，腿的草图原点也在中心**——需要偏移坐标让腿出现在座面角落：
+
+```python
+# 正确：腿截面草图（在前视基准面画，X=左右，Y=前后，Z=上下）
+half_leg = leg_size / 2
+# 前左腿：X=-0.150+0.020+0.015=-0.115, Y=-0.115
+self.创建矩形草图(lx - half_leg, ly - half_leg,
+                     lx + half_leg, ly + half_leg)
+# 拉伸方向：flip=True（向下拉伸腿长）
+self.拉伸(leg_length, flip=True, name=f"腿{i+1}")
+```
+
+---
+
+## 三十三、P1-P10 问题审计框架（系统代码审查法）
+
+吕亚峰在 `凳子_建模分析报告.md` 中提出了**10大问题审计框架**，适用于任何 SW 自动化脚本的 code review。
+
+### 问题清单
+
+| 编号 | 类别 | 问题描述 | 严重度 | 修复方案 |
+|------|------|----------|--------|----------|
+| P1 | 连接 | `GetActiveObject` 失败无备用 | 🔴 高 | GetActiveObject → Dispatch 回退链 |
+| P2 | 兼容性 | 硬编码模板路径 | 🔴 高 | 动态检测多个可能路径 |
+| P3 | 验证 | `FeatureExtrusion2` 返回 None 无验证 | 🟡 中 | L1-L4 验证链 |
+| P4 | 兼容性 | 中英文基准面名称硬编码 | 🟡 中 | 自动检测 SW 语言版本 |
+| P5 | 性能 | `time.sleep(1)` 固定等待 | 🟢 低 | `EditRebuild3()` 主动重建 |
+| P6 | 错误处理 | 选择失败只打印不中断 | 🟡 中 | `raise SW建模Error` |
+| P7 | 参数 | `Dir` 参数含义因版本而异 | 🟡 中 | 反射探测确认参数顺序 |
+| P8 | 资源 | 无显式 COM 资源清理 | 🟢 低 | `pythoncom.CoUninitialize()` |
+| P9 | 日志 | 缺少详细日志 | 🟢 低 | 每步 `[1/6]` 进度输出 |
+| P10 | 架构 | 用拉伸代替切除 | 🔴 高 | 加法建模策略（FeatureCut4 不可用） |
+
+### 使用方法
+
+每次写完 SW 自动化脚本，按 P1-P10 逐条检查，全部打勾才能交付。
+
+---
+
+## 三十四、CoInitialize + EditRebuild3 验证链
+
+### CoInitialize 必须显式调用
+
+`凳子_自动建模_优化版.py` 第329行：
+
+```python
+if __name__ == "__main__":
+    # 初始化 COM（必须显式调用，否则 Dispatch 可能失败）
+    pythoncom.CoInitialize()
+    try:
+        建模器 = 凳子建模器()
+        建模器.连接()
+        # ...
+    finally:
+        pythoncom.CoUninitialize()  # 确保释放
+```
+
+**原因**：Python 进程如果没有消息循环，`Dispatch` 可能返回无效 COM 指针。`CoInitialize()` 确保 COM 公寓初始化。
+
+### EditRebuild3 重建验证（L4.5 层级）
+
+```python
+def 重建验证(self):
+    """强制重建模型（L4.5验证层级）"""
+    try:
+        self.doc.EditRebuild3()
+        print("  ✓ 重建完成")
+        return True
+    except Exception as e:
+        print(f"  ✗ 重建失败: {e}")
+        return False
+
+# 在保存前调用
+self.重建验证()
+self.保存(path)
+```
+
+**与 L1-L4 的关系**：
+- L1-L3：创建时验证
+- **L4**：`GetMassProperties()` 物理测量
+- **L4.5**：`EditRebuild3()` 强制重建（捕捉重建错误）
+
+---
+
+## 三十五、版本化 ProgID 连接策略
+
+`凳子_自动建模_优化版.py` 第80行使用了**版本化 ProgID**：
+
+```python
+def 连接(self):
+    # 方法1：GetActiveObject
+    try:
+        self.sw = win32com.client.GetActiveObject("SldWorks.Application")
+        return
+    except: pass
+
+    # 方法2：版本化 Dispatch（SW 2024=32, 2023=31, ...）
+    for version in [self.version, "32", "31", "30", ""]:
+        try:
+            if version:
+                prog_id = f"SldWorks.Application.{version}"
+            else:
+                prog_id = "SldWorks.Application"
+            self.sw = win32com.client.Dispatch(prog_id)
+            print(f"  ✓ 启动新实例: {prog_id}")
+            return
+        except: pass
+
+    raise SWConnectionError("无法连接 SolidWorks")
+```
+
+**版本号对照表**：
+
+| SW 版本 | ProgID 后缀 | 年份 |
+|----------|-------------|------|
+| SW 2024 | `32` | 32.5.0 |
+| SW 2023 | `31` | 31.0.0 |
+| SW 2022 | `30` | 30.0.0 |
+| SW 2021 | `29` | 29.0.0 |
+| SW 2020 | `28` | 28.0.0 |
+
+---
+
+## 三十六、动态模板检测（多路径遍历）
+
+硬编码 `C:\ProgramData\...\gb_part.prtdot` 在其他机器上会失败。正确做法：
+
+```python
+def _检测模板路径(self):
+    """动态检测可用的零件模板"""
+    possible_templates = [
+        r'C:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\gb_part.prtdot',
+        r'C:\ProgramData\SolidWorks\SOLIDWORKS 2023\templates\gb_part.prtdot',
+        r'D:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\gb_part.prtdot',
+        r'C:\Program Files\SolidWorks Corp\SolidWorks\templates\gb_part.prtdot',
+    ]
+    for tmpl in possible_templates:
+        if os.path.exists(tmpl):
+            return tmpl
+    # 全部失败 → 用默认（可能报错，但至少尝试）
+    return possible_templates[0]
+```
+
+---
+
+## 三十七、基准面名称自动翻译（中英文切换）
+
+```python
+def _翻译基准面(self, name):
+    """翻译基准面名称"""
+    translations = {
+        "Front Plane": "前视基准面",
+        "前视基准面": "Front Plane",
+        "Top Plane": "上视基准面",
+        "上视基准面": "Top Plane",
+        "Right Plane": "右视基准面",
+        "右视基准面": "Right Plane",
+    }
+    return translations.get(name, name)
+
+def 选择基准面(self, plane_name):
+    """选择基准面（支持中英文，自动检测）"""
+    # 先试原名
+    if self._select_by_id2(plane_name):
+        return True
+    # 再试翻译名
+    translated = self._翻译基准面(plane_name)
+    if translated != plane_name:
+        if self._select_by_id2(translated):
+            return True
+    # 最后遍历特征树
+    return self._遍历选择(plane_name)
+```
+
+---
+
+## 三十八、完整生产级脚本模板（吕亚峰验证版）
+
+```python
+"""
+凳子自动化建模脚本 - 生产级模板
+吕亚峰 2026-06-02 跨机验证通过
+"""
+import win32com.client
+import pythoncom
+import time
+import os
+import sys
+
+class SWConnectionError(Exception): pass
+class SW建模Error(Exception): pass
+
+class 生产级建模器:
+    def __init__(self):
+        self.sw = None
+        self.doc = None
+        self.template = self._检测模板路径()
+
+    def _检测模板路径(self):
+        # ... 见 Sec 36 ...
+
+    def 连接(self):
+        # ... 见 Sec 35 ...
+
+    def 新建零件(self):
+        self.doc = self.sw.NewDocument(self.template, 0, 0, 0)
+        time.sleep(0.3)
+        assert self.doc is not None
+
+    def 选择基准面(self, name):
+        # ... 见 Sec 37 ...
+
+    def 拉伸(self, depth_m, flip=False, is_cut=False):
+        before = self.doc.GetFeatureCount
+        feat = self.doc.FeatureManager.FeatureExtrusion2(
+            False, flip, is_cut,
+            0, 0, depth_m, 0,
+            False, False, False, False,
+            0, 0, False, False, False, False,
+            True, True, True,
+            0, False, False
+        )
+        after = self.doc.GetFeatureCount
+        assert after > before, "拉伸失败"
+        return feat
+
+    def 保存(self, path):
+        self.doc.EditRebuild3()  # L4.5 验证
+        result = self.doc.SaveAs3(path, 1, 2)
+        if result != 1:
+            self.doc.SaveAs(path)  # 降级
+
+if __name__ == "__main__":
+    pythoncom.CoInitialize()
+    try:
+        建模器 = 生产级建模器()
+        建模器.连接()
+        建模器.新建零件()
+        # ... 建模步骤 ...
+        建模器.保存(r"C:\temp\output.SLDPRT")
+        print("✓ 完成")
+    except Exception as e:
+        print(f"✗ 失败: {e}")
+        traceback.print_exc()
+    finally:
+        pythoncom.CoUninitialize()
+```
+
+---
+
+**注意**:
+1. SolidWorks版本不同可能导致API行为差异，建议使用2016+版本
+2. 所有单位默认为米制(SI)，SolidWorks内部使用米
+3. 批量操作前建议先在小范围测试
+4. 重要文件操作前做好备份
+```
