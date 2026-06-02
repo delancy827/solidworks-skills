@@ -511,6 +511,8 @@ git push origin feature/amazing-feature
 - **89.5°三级验证链**：开放轮廓(0.5000°) → 闭合梯形(0.5000°) → 单轮廓凹口(面数=9) 全部通过
 - **学术诚信保障**：实体模型真实反映89.5°，非工程图标注造假
 - **课设交付**：`PunchUShape_27_SingleProfile.cs` — 学号27号完整生产级脚本
+- **凸模实心块**：`Step2_PunchBlock_27.cs` — Step2凸模基础件（53×30mm矩形拉伸）
+- **API探测工具**：`Probe_AllFeatureCut_Investigation.cs` — FeatureCut全系反射参数探测
 
 ### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)
 

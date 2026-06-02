@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-06-02（晚间补充：冲压课设完整脚本集 + 切除API反射探测）
+
+### 新增文件
+- 📐 **Step2_PunchBlock_27.cs** — 凸模实心块完整脚本（53×30mm矩形拉伸，Step2基础件）
+- 🔬 **Probe_AllFeatureCut_Investigation.cs** — FeatureCut/FeatureExtrusion 全系API反射参数探测脚本
+
+### 课设完整流程体系
+- Step1: 凹模（凹模_27号.SLDPRT，Model目录）
+- Step2: 凸模实心块（Step2_PunchBlock_27.cs）
+- Step3: 凸模U形槽89.5°回弹补偿（PunchUShape_27_SingleProfile.cs — 单轮廓凹口法）
+- Step4-5: 装配体+工程图（待完成）
+
+### solidworks-automation SKILL.md 更新要点
+- 补充单轮廓凹口法完整方法论（Section 39）
+- 补充89.5°三级验证链（Section 40）
+- 补充SW 2024 Standalone COM 切除API终局报告（Section 41）
+- 补充课设实战参数化脚本模板（Section 42）
+
+---
+
 ## 2026-06-02（架构级升级：三大铁律 + W-A-R 闭环断言 + system_directives）
 
 ### solidworks-automation v4.7.0 → v4.8.0（架构级）
