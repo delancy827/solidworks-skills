@@ -1,7 +1,0 @@
-﻿=== Pin Shaft - Step Cylinder Build ===
-OK: 新建零件
-OK Step1-头部Φ30×10 特征:19->20
-OK Step1 实体数:1
-OK Step2-杆身Φ18×50 特征:21->22
-OK Step2 实体数:1
-=== ALL DONE - 阶梯销轴生成完成 ===
