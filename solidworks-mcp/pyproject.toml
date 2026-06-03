@@ -1,0 +1,22 @@
+[project]
+name = "solidworks-mcp"
+version = "1.0.0"
+description = "SolidWorks MCP Server — AI Agent 安全操控 SolidWorks (三大铁律 + W-A-R 闭环验证 + 多角度截图)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = [
+    "mcp[cli]>=1.27.0",
+    "pywin32>=311",
+    "psutil>=5.9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
