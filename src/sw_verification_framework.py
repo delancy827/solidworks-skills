@@ -184,7 +184,7 @@ class SWAutomationWithVerification:
             print("✓ 启动新的SolidWorks实例")
         
         self.sw_app.Visible = True
-        self.sw_app.UserControl = False
+        self.sw_app.UserControl = True  # Python自动化必须True，防止SW被GC回收
         self.validator.verify_connection(self.sw_app)
         return self.sw_app
     
@@ -291,12 +291,22 @@ class SWAutomationWithVerification:
         self.close_sketch()
         
         # 执行拉伸
+        # FeatureExtrusion2: 23参数签名 (SW 2024)
+        # Sd,Flip,Dir,T1,T2,D1,D2,Dchk1,Dchk2,Ddir1,Ddir2,Dang1,Dang2,
+        # Ofr,Ofc,Tf1,Tf2,Merge,UseFeatScope,UseAutoSelect,
+        # StartOffset,IsAutoStartOffset,FlipStartOffset
         feat = self.doc.FeatureManager.FeatureExtrusion2(
-            False, False, False, 0, 0,
-            depth / 1000.0, 0,  # SW内部单位是米
-            False, False, False, False,
-            0, 0, False, False, False,
-            False, True, True, 0, 0, False
+            False, False, False,  # Sd, Flip, Dir
+            0, 0,                 # T1, T2
+            depth / 1000.0, 0,    # D1, D2 (SW内部单位是米)
+            False, False,         # Dchk1, Dchk2
+            False, False,         # Ddir1, Ddir2
+            0, 0,                 # Dang1, Dang2
+            False, False,         # Ofr, Ofc
+            False, False,         # Tf1, Tf2
+            False,                # Merge
+            True, True,           # UseFeatScope, UseAutoSelect
+            0, False, False       # StartOffset, IsAutoStartOffset, FlipStartOffset
         )
         
         # 验证

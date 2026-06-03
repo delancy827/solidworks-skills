@@ -7,7 +7,9 @@ class Program
 {
     static void Main()
     {
-        string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\com_status.log";
+        string logPath = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop),
+            "com_status.log");
         System.IO.StreamWriter log = new System.IO.StreamWriter(logPath, false, System.Text.Encoding.UTF8);
         log.AutoFlush = true;
         Console.SetOut(log);

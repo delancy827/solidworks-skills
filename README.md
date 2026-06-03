@@ -19,7 +19,7 @@
 - [安装方法 | Installation](#安装方法-installation)
 - [使用示例 | Usage Examples](#使用示例-usage-examples)
 - [技术细节 | Technical Details](#技术细节-technical-details)
-- [贡献指南 | Contributing](#贡献指南-contributing)
+- [贡献指南 | Contributing](CONTRIBUTING.md)
 - [常见问题 | FAQ](#常见问题-faq)
 - [更新日志 | Changelog](#更新日志-changelog)
 
@@ -116,7 +116,7 @@ solidworks-skills/
 │  │  ├── 错误处理与调试技巧
 │  │  └── 代码示例（4 个完整脚本）
 │  └── examples/         # 可运行示例代码
-│    ├── create_part.py     # 基础零件建模
+│    ├── 01_basic_part.py     # 基础零件建模
 │    ├── parametric_design.py  # 参数化设计
 │    ├── batch_export.py     # 批量导出
 │    └── advanced_features.py  # 高级特征建模
@@ -184,7 +184,7 @@ doc.FeatureManager.FeatureExtrusion2(
 **初学者（0-1 周）：**
 1. 安装 Skill → 让 AI 帮你建一个简单零件（方块、圆柱）
 2. 学习 SKILL.md 中的"API 基础"章节
-3. 运行 `examples/create_part.py` 理解基本流程
+3. 运行 `examples/01_basic_part.py` 理解基本流程
 
 **进阶（1-4 周）：**
 1. 尝试参数化设计 → 修改 Excel 表格，模型自动更新
@@ -313,7 +313,7 @@ doc = sw.NewDocument("C:\\ProgramData\\SolidWorks\\SOLIDWORKS 2024\\templates\\g
 boolstatus = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
 
 # 创建草图并拉伸
-# ... (完整代码见 examples/create_part.py)
+# ... (完整代码见 examples/01_basic_part.py)
 ```
 
 ---

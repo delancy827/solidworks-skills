@@ -152,8 +152,8 @@ class Program
     static void Fail(string msg)
     {
         Console.WriteLine("FAIL: " + msg);
-        if (swDoc != null) swApp.CloseDoc(swDoc.GetTitle());
-        log.Close();
+        try { if (swDoc != null) swApp.CloseDoc(swDoc.GetTitle()); } catch { }
+        try { log.Close(); } catch { }
         throw new Exception(msg);
     }
 }

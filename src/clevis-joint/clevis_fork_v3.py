@@ -111,16 +111,20 @@ class SWAuto:
         depth = depth_mm / 1000.0
 
         # 使用之前成功过的参数格式
+        # FeatureExtrusion2 正确签名：23个参数 (SW 2024)
+        # [Sd][Flip][Dir][T1][T2][D1][D2][Dchk1][Dchk2][Ddir1][Ddir2][Dang1][Dang2]
+        # [Ofr][Ofc][Tf1][Tf2][Merge][UseFeatScope][UseAutoSelect]
+        # [StartOffset][IsAutoStartOffset][FlipStartOffset]
         feat = self.doc.FeatureManager.FeatureExtrusion2(
-            True, False, False,   # Sd=True, Flip, Dir
+            True, False, False,   # Sd, Flip, Dir
             0, 0,                 # T1, T2
             depth, 0.0,           # D1, D2
             False, False,         # Dchk1, Dchk2
             False, False,         # Ddir1, Ddir2
-            False, False,         # Tf1, Tf2
             0.0, 0.0,             # Dang1, Dang2
             False,                # Ofr
             False,                # Ofc
+            False, False,         # Tf1, Tf2
             True,                 # Merge
             True, True,           # UseFeatScope, UseAutoSelect
             0.0,                  # StartOffset

@@ -28,7 +28,7 @@ class SWAuto:
             raise SWVerificationError(f"无法连接SW: {e}")
 
         self.sw.Visible = True
-        self.sw.UserControl = False
+        self.sw.UserControl = True  # Python自动化必须True，防止SW被GC回收
 
         # 验证连接 (使用可用的属性)
         try:

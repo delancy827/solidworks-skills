@@ -237,16 +237,22 @@ namespace StampingDie
             Console.WriteLine("  （圆角特征待后续优化添加）");
 
             // ========== 保存 ==========
-            string finalPath = "C:/temp/Punch_27_UShape_Final.SLDPRT";
+            string tempDir = System.IO.Path.GetTempPath();
+            string finalPath = System.IO.Path.Combine(tempDir, "Punch_27_UShape_Final.SLDPRT");
             int saveResult = Part.SaveAs3(finalPath, 0, 0);
             Console.WriteLine("\n[保存] " + (saveResult == 1 ? "✅ 成功" : "❌ 失败") + " -> " + finalPath);
 
-            // 同时保存到课设目录
-            string classDir = "D:/冲压课设1/181班27号";
-            System.IO.Directory.CreateDirectory(classDir);
-            string classPath = classDir + "/凸模_27号_U形槽.SLDPRT";
-            Part.SaveAs3(classPath, 0, 0);
-            Console.WriteLine("[保存] 课设目录 -> " + classPath);
+            // 同时保存到课设目录（如存在）
+            string classDir = System.IO.Path.Combine(
+                System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop),
+                "冲压课设", "181班27号");
+            if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(classDir)))
+            {
+                System.IO.Directory.CreateDirectory(classDir);
+                string classPath = System.IO.Path.Combine(classDir, "凸模_27号_U形槽.SLDPRT");
+                Part.SaveAs3(classPath, 0, 0);
+                Console.WriteLine("[保存] 课设目录 -> " + classPath);
+            }
 
             // 文件信息
             if (System.IO.File.Exists(finalPath))

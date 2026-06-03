@@ -140,7 +140,7 @@ def run_visual_qa():
         
         # 截图保存
         save_path = os.path.join(SAVE_DIR, filename)
-        success = capture_screenshot(doc, filename)
+        success = capture_screenshot(doc, save_path)  # 使用完整路径而非仅文件名
         if not success:
             # 尝试SaveAs直接保存
             try:

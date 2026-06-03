@@ -83,11 +83,13 @@ def main():
 
         doc.SketchManager.InsertSketch(True)
 
+        # FeatureExtrusion2: 23参数签名 [Sd][Flip][Dir][T1][T2][D1][D2][Dchk1][Dchk2][Ddir1][Ddir2]
+        # [Dang1][Dang2][Ofr][Ofc][Tf1][Tf2][Merge][UseFeatScope][UseAutoSelect][StartOffset][IsAutoStartOffset][FlipStartOffset]
         feat = doc.FeatureManager.FeatureExtrusion2(
             False, False, False, 0, 1, TOT_H, 0.005,
             False, False, False, False, 0.0, 0.0,
             False, False, False, False,
-            False, False, False, False, False, False, False)
+            False, False, False, 0.0, False, False)
         print(f"  底座: {'OK' if feat else 'FAIL'}")
         doc.ForceRebuild3(False)
         time.sleep(0.3)
@@ -107,7 +109,7 @@ def main():
             True, False, False, 0, 1, TH_DEPTH, 0.0,
             False, False, False, False, 0.0, 0.0,
             False, False, False, False,
-            False, False, False, False, False, False, False)
+            False, False, False, 0.0, False, False)
         print(f"  M6孔: {'OK' if feat else 'FAIL'}")
         doc.ForceRebuild3(False)
         time.sleep(0.3)
@@ -127,7 +129,7 @@ def main():
             True, False, False, 0, 1, 0.0, 0.0,
             False, False, False, False, 0.0, 0.0,
             False, False, False, False,
-            False, False, False, False, False, False, False)
+            False, False, False, 0.0, False, False)
         print(f"  大圆孔: {'OK' if feat else 'FAIL'}")
         doc.ForceRebuild3(False)
         time.sleep(0.3)
@@ -159,14 +161,14 @@ def main():
                 False, False, False, 0, 1, 0.020, 0.0,
                 False, False, False, False, 0.0, 0.0,
                 False, False, False, False,
-                False, False, False, False, False, False, False)
+                False, False, False, 0.0, False, False)
             print(f"    吊耳: {'OK' if feat else 'FAIL'}")
             doc.ForceRebuild3(False)
             time.sleep(0.3)
 
         # === 保存 ===
         print("\n[5] 保存...")
-        save_path = r'C:\Users\彭凯阳\Desktop\bracket_fixed_20260601.SLDPRT'
+        save_path = os.path.join(os.environ.get('TEMP', '.'), 'bracket_fixed_20260601.SLDPRT')
         try:
             doc.SaveAs(save_path)
             print(f"  保存: {save_path}")

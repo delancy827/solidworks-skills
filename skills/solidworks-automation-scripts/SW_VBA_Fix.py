@@ -45,7 +45,7 @@ VBA_CODE = '''Sub SWRebuild()
     swSketchMgr.CreateLine 0.038, 0.128, 0, -0.038, 0.128, 0
 
     swSketchMgr.InsertSketch True
-    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.128, 0.005, False, False, False, False, 0, 0, False, False, False, False, False, False, False, False, False, False, False)
+    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.128, 0.005, False, False, False, False, 0, 0, False, False, False, False, False, False, False, 0, False, False)
     swDoc.ForceRebuild3 False
 
     ' === 顶部M6螺纹孔 ===
@@ -54,7 +54,7 @@ VBA_CODE = '''Sub SWRebuild()
     swSketchMgr.CreateCircle -0.015, 0, 0, -0.015 + 0.003, 0, 0
     swSketchMgr.CreateCircle 0.015, 0, 0, 0.015 + 0.003, 0, 0
     swSketchMgr.InsertSketch True
-    Set feat = swFeatMgr.FeatureExtrusion2(True, False, False, 0, 1, 0.015, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, False, False, False, False)
+    Set feat = swFeatMgr.FeatureExtrusion2(True, False, False, 0, 1, 0.015, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, 0, False, False)
     swDoc.ForceRebuild3 False
 
     ' === 大圆孔 ===
@@ -62,7 +62,7 @@ VBA_CODE = '''Sub SWRebuild()
     swSketchMgr.InsertSketch True
     swSketchMgr.CreateCircle 0, 0.064, 0, 0.025, 0.064, 0
     swSketchMgr.InsertSketch True
-    Set feat = swFeatMgr.FeatureExtrusion2(True, False, False, 0, 1, 0, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, False, False, False, False)
+    Set feat = swFeatMgr.FeatureExtrusion2(True, False, False, 0, 1, 0, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, 0, False, False)
     swDoc.ForceRebuild3 False
 
     ' === 左侧吊耳 ===
@@ -71,7 +71,7 @@ VBA_CODE = '''Sub SWRebuild()
     swSketchMgr.CreateCornerRectangle -0.050, 0.055, 0, -0.035, 0.015, 0
     swSketchMgr.CreateCircle -0.0425, 0.035, 0, -0.0425 + 0.0045, 0.035, 0
     swSketchMgr.InsertSketch True
-    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.020, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, False, False, False, False)
+    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.020, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, 0, False, False)
     swDoc.ForceRebuild3 False
 
     ' === 右侧吊耳 ===
@@ -80,7 +80,7 @@ VBA_CODE = '''Sub SWRebuild()
     swSketchMgr.CreateCornerRectangle 0.035, 0.055, 0, 0.050, 0.015, 0
     swSketchMgr.CreateCircle 0.0425, 0.035, 0, 0.0425 + 0.0045, 0.035, 0
     swSketchMgr.InsertSketch True
-    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.020, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, False, False, False, False)
+    Set feat = swFeatMgr.FeatureExtrusion2(False, False, False, 0, 1, 0.020, 0, False, False, False, False, 0, 0, False, False, False, False, False, False, False, 0, False, False)
     swDoc.ForceRebuild3 False
 
     ' === 保存 ===

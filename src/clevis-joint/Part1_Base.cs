@@ -11,7 +11,8 @@ class Program
     static SldWorks swApp;
     static ModelDoc2 swDoc;
     static PartDoc partDoc;
-    static string outDir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压作业";
+    static string outDir = System.IO.Path.Combine(
+        System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop), "sw_output");
     static string sldprt = "";
 
     static void Main()
@@ -150,8 +151,8 @@ class Program
 
     static void Fail(string msg) {
         Console.WriteLine("FAIL: " + msg);
-        if (swDoc != null) swApp.CloseDoc(swDoc.GetTitle());
-        log.Close();
+        try { if (swDoc != null) swApp.CloseDoc(swDoc.GetTitle()); } catch { }
+        try { log.Close(); } catch { }
         throw new Exception(msg);
     }
 }

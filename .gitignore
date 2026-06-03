@@ -3,6 +3,9 @@
 *.pdb
 *.vshost.exe
 *.vshost.exe.config
+*.obj
+*.dll
+!SolidWorks.Interop.*.dll
 
 # SW Interop DLL（可以从SW安装目录引用）
 SolidWorks.Interop.sldworks.dll
@@ -11,17 +14,27 @@ SolidWorks.Interop.swconst.dll
 # 日志文件
 *.log
 log.txt
+pin_log.txt
 stage2_error.log
 
 # Python缓存
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+dist/
+build/
 
 # Visual Studio
 .vs/
 *.suo
 *.user
+bin/
+obj/
+
+# IDE特定配置
+.workbuddy/
+.codebuddy/
 
 # 临时文件
 *.tmp
@@ -31,3 +44,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# SolidWorks输出
+*.sldprt
+*.sldasm
+*.slddrw
