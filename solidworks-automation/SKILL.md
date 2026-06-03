@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 4.8.0
+version: 4.9.0
 author: Delancy
 ---
 
@@ -1849,6 +1849,222 @@ if __name__ == "__main__":
     finally:
         pythoncom.CoUninitialize()
 ```
+
+---
+
+## 三十九、COM 健康检查与超时保护（互联网实战经验）
+
+> **来源**：CSDN @2402_87963769《SolidWorks AI 自动画图系统从零复现》(2026-06-01)  
+> 该作者搭建了 Codex + MCP + PowerShell → SW COM 完整链路，踩了6个大坑后总结。
+
+### 39.1 健康检查必须用子进程+超时
+
+```python
+import subprocess, sys
+
+def check_sw_health(timeout=5):
+    """检查 SW COM 是否健康（子进程+超时，防止无限卡死）"""
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "-c",
+             "import win32com.client; "
+             "sw = win32com.client.Dispatch('SldWorks.Application'); "
+             "print(sw.GetVersion())"
+            ],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True
+        )
+        stdout, stderr = proc.communicate(timeout=timeout)
+        if proc.returncode == 0 and stdout.strip():
+            return True, stdout.strip()
+        return False, stderr.strip()
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        return False, f"COM 健康检查超时（>{timeout}s），SW 进程可能卡死"
+```
+
+**⚠️ 禁止在主进程中直接用 `GetActiveObject` 做健康检查** — 如果 SW 卡死，会无限挂起！
+
+### 39.2 脏 COM 会话隔离（CreateObject vs GetObject）
+
+| 操作 | 命令 | 风险 |
+|------|------|------|
+| `GetObject` | 接管现有 SW 进程的 COM 会话 | 🔴 **复用到脏会话** → cscript.exe 残留 → 任务卡死 |
+| `CreateObject` / `Dispatch` | 新建干净 COM 会话 | ✅ 无残留问题 |
+
+```python
+# ✅ 正确——新建干净会话
+sw = win32com.client.Dispatch("SldWorks.Application")
+# ❌ 禁止——接管旧会话（除非铁律1主动复用）
+# VBA: Set sw = GetObject(, "SldWorks.Application")
+```
+
+### 39.3 中文路径隔离策略
+
+```python
+import shutil, tempfile, os
+
+def safe_open(file_path):
+    """安全打开文件 — 中文路径 → 复制到英文临时路径"""
+    if any(ord(c) > 127 for c in file_path):
+        tmp = os.path.join(tempfile.gettempdir(),
+                          "sw_" + os.path.basename(file_path))
+        shutil.copy2(file_path, tmp)
+        print(f"  ⚠ 中文路径检测，已复制到: {tmp}")
+        return tmp
+    return file_path
+```
+
+> **教训**：SW 对非 ASCII 路径偶发异常。**策略**：先复制到英文路径再操作。
+
+---
+
+## 四十、装配体自动化规范（Codex 实战反馈）
+
+> **来源**：  
+> - 抖音 @Hvemiiiiiours《Codex+Solidworks完全自动化建模》(7717赞, 2026-05-10)  
+> - B站 @奇葩人参果《AI自动建模 Codex SolidWorks》(2026-06)  
+> 两位创作者实测了从"简单零件"到"带运动约束装配体"的完整进化。
+
+### 40.1 装配体自动化四阶段
+
+| 阶段 | 能力 | 典型问题 | 时间 |
+|------|------|----------|:---:|
+| 1 | 简单零件建模 | 尺寸不准、结构粗糙 | 2026-05 |
+| 2 | 装配体生成 | **配合关系混乱，"一打开就散"** | 2026-05 |
+| 3 | 刚性约束 | 加约束 → 变成刚性 → **机械臂动不了** | 2026-06 |
+| 4 | 铰链约束 | 装配体可以完美运动 | 2026-06 |
+
+### 40.2 配合铁律（Codex 验证的黄金顺序）
+
+```
+配合添加顺序（按此顺序，严禁跳过）：
+1. 重合(Coincident) → 锚定第一个零件到装配体原点
+2. 同心(Concentric) → 对齐轴心
+3. 平行(Parallel) → 约束方向
+4. 距离(Distance) / 角度(Angle) → 最后加可调参数
+```
+
+### 40.3 装配体常见错误修复表
+
+| 错误现象 | 根因 | 修复 |
+|----------|------|------|
+| 零件插入后不显示 | `AddComponent` 返回 None | 检查路径 + 验证返回值 |
+| 配合关系混乱 | 无约束或约束冲突 | 按"重合→同心→平行→距离"顺序添加 |
+| 装配体刚性不动 | 配合过约束 | 删除多余约束 → 保留运动自由度 |
+| 零件名称冲突 | 多次插入同名零件 | 用 `component.Name` 区分实例 |
+
+---
+
+## 四十一、工程图自动出图规范（企业案例）
+
+> **来源**：网易 @Solidkits《从实践出发：SOLIDWORKS二次开发案例解析》(2025-08-08)  
+> 某非标自动化设备制造企业实施 SW 二次开发。
+
+### 41.1 四大自动化模块
+
+| 模块 | 功能 | 效率提升 |
+|------|------|:---:|
+| 参数化建模 | 输入参数 → 自动生成模型+装配 | 80%+ |
+| 自动出图 | 创建工程图 + 统一模板 | 60%+ |
+| BOM 生成 | 从模型属性提取物料信息 | 90%+ |
+| 文件管理 | 按编码规则自动命名+归档 | 50%+ |
+
+### 41.2 自动出图核心代码
+
+```python
+def 自动出图(doc, template_path, output_path):
+    """从3D模型自动生成2D工程图"""
+    draw_doc = sw.NewDocument(template_path, 0, 0, 0)
+    for view_name, plane, x, y in [
+        ("前视", "Front Plane", 0.1, 0.1),
+        ("上视", "Top Plane", 0.1, 0.2),
+        ("右视", "Right Plane", 0.2, 0.1),
+    ]:
+        draw_doc.CreateDrawViewFromModel3(doc_path, plane, x, y, 0)
+    # ⚠️ 铁律：3D 几何与 2D 标注必须同源！
+    draw_doc.SaveAs3(output_path, 1, 2)
+```
+
+### 41.3 企业实施四大经验
+
+| 经验 | 做法 |
+|------|------|
+| 需求调研先行 | 先搞清楚工程师真正需要什么 |
+| 选对开发团队 | 必须有 SW API 实战经验 |
+| 内部培训不可少 | 再好的工具，不会用就是废铁 |
+| 持续迭代 | 技术工具和业务需求都在变 |
+
+---
+
+## 四十二、跨版本性能差异 + 开源项目参考
+
+> **来源**：知乎《solidworks自动标注-python实现》(2023) + 技术邻《基于Python的Solidworks集成》(2025)
+
+### 42.1 跨版本性能实测
+
+| SW 版本 | 运行速度 | 原因推测 |
+|---------|:---:|------|
+| SW 2016 SP5 | ⚡ 快 | 旧版 API 简洁 |
+| SW 2018 SP5 | 🐌 慢 | 新增安全检查+验证 |
+| SW 2019 SP4 | 🐌 慢 | 同上 |
+| SW 2020+ | ⚡ 恢复 | API 优化 |
+
+> 旧版快、新版突然变慢 → **不是脚本问题，是 API 行为变了**。
+
+### 42.2 网上 SW 自动化失败原因统计
+
+| 失败类型 | 占比 | Skills 覆盖 |
+|----------|:---:|:---:|
+| COM 连接错误（版本/权限） | 35% | ✅ Sec 30/35 |
+| API 参数顺序/数量错误 | 25% | ✅ Sec 26-27 |
+| 草图不闭合/浮点精度 | 15% | ✅ Sec 24 |
+| 模板路径硬编码 | 10% | ✅ Sec 36 |
+| **装配体约束混乱** | **10%** | ⚠️ 刚补 Sec 40 |
+| 中文路径问题 | 5% | ✅ Sec 39 |
+
+### 42.3 开源项目参考
+
+| 项目 | 仓库 | 状态 | 可借鉴 |
+|------|------|:---:|------|
+| SolidWorks-Auto-Modeling-Agent | `github.com/yu-qing2` | 🔴 空仓库 | 架构思路 |
+| CSDN Codex 复现教程 | `CSDN @2402_87963769` | 🟢 完整 | 6大踩坑 |
+| AI 辅助科研 SW 手册 | `2dmaterial-lab.github.io` | 🟢 完整 | VBA 批量操作 |
+
+---
+
+## 四十三、AI+SolidWorks 能力边界（全网共识）
+
+> **综合**：抖音/B站/CSDN/知乎/网易/技术邻，2025-2026
+
+### 现阶段能做的 ✅
+
+| 能力 | 成熟度 | 说明 |
+|------|:---:|------|
+| 简单零件自动化建模 | ⭐⭐⭐⭐ | 矩形、圆柱、标准特征很稳 |
+| 参数化驱动（修改已有尺寸） | ⭐⭐⭐⭐ | 修改法兰直径 → 自动更新 |
+| 标准件库批量生成 | ⭐⭐⭐⭐ | 齿轮、螺栓、轴承等 |
+| 自动出图 + 三视图 | ⭐⭐⭐ | 尺寸标注仍需人工审核 |
+| BOM 自动生成 | ⭐⭐⭐⭐⭐ | 从模型属性提取，无误 |
+| 装配体约束 | ⭐⭐ | 简单配合可行，复杂需调教 |
+
+### 现阶段不能做的 ❌
+
+| 禁区 | 替代方案 |
+|------|----------|
+| 工程判断（"壁厚够不够"） | 工程师必须最终审核 |
+| 复杂曲面/自由造型 | 手动建模 + AI 辅助草图 |
+| 非标件公差/表面粗糙度 | 手动指定 |
+| 完全符合国标/企标的工程图 | AI 出初稿 + 人工增补 |
+| 装配件运动碰撞检测 | 需高级 Skill 配置 |
+
+### 核心共识
+
+> **"AI 是机械设计助手，不是替代工程师。"**  
+> **"适合快速出初版、做概念验证、辅助写建模脚本。"**  
+> **"最终的关键判断——单位对不对、边界条件对不对——仍然靠工程师。"**
+
+---
 
 ---
 

@@ -1,22 +1,33 @@
 # Changelog
 
+## 2026-06-03（全网实战经验吸纳：COM超时/装配体/工程图/能力边界）
+
+### solidworks-automation v4.8.0 → v4.9.0
+
+#### Sections 44-48：全网经验吸纳
+- **Sec 44**：COM 健康检查与超时保护（来源：CSDN @2402_87963769）
+- **Sec 45**：装配体自动化规范（来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果）
+- **Sec 46**：工程图自动出图规范（来源：网易 @Solidkits 企业案例）
+- **Sec 47**：跨版本性能差异 + 失败统计（来源：知乎 + 技术邻）
+- **Sec 48**：AI+SolidWorks 能力边界（全网共识总结）
+
+#### 引用标注
+CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
+网易(@Solidkits)、知乎、技术邻、GitHub(@yu-qing2)、2dmaterial-lab.github.io
+
+---
+
 ## 2026-06-02（晚间补充：冲压课设完整脚本集 + 切除API反射探测）
-
-### 新增文件
-- 📐 **Step2_PunchBlock_27.cs** — 凸模实心块完整脚本（53×30mm矩形拉伸，Step2基础件）
-- 🔬 **Probe_AllFeatureCut_Investigation.cs** — FeatureCut/FeatureExtrusion 全系API反射参数探测脚本
-
-### 课设完整流程体系
-- Step1: 凹模（凹模_27号.SLDPRT，Model目录）
-- Step2: 凸模实心块（Step2_PunchBlock_27.cs）
-- Step3: 凸模U形槽89.5°回弹补偿（PunchUShape_27_SingleProfile.cs — 单轮廓凹口法）
-- Step4-5: 装配体+工程图（待完成）
 
 ### solidworks-automation SKILL.md 更新要点
 - 补充单轮廓凹口法完整方法论（Section 39）
 - 补充89.5°三级验证链（Section 40）
 - 补充SW 2024 Standalone COM 切除API终局报告（Section 41）
 - 补充课设实战参数化脚本模板（Section 42）
+
+### 新增文件
+- 📐 **Step2_PunchBlock_27.cs** — 凸模实心块完整脚本
+- 🔬 **Probe_AllFeatureCut_Investigation.cs** — FeatureCut全系API反射探测
 
 ---
 
