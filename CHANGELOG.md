@@ -1,8 +1,29 @@
 # Changelog
 
-## 2026-06-03（全网实战经验吸纳：COM超时/装配体/工程图/能力边界）
+## 2026-06-03（规则分级系统 + SolidPractices 最佳实践整合 + 全网实战经验吸纳）
 
 ### solidworks-automation v4.8.0 → v4.9.0
+
+#### 🏷️ 规则分级系统（system_directives 新增）
+- ⛔ **MUST**（强制执行）— 编译器级约束，违反即熔断，无任何例外
+- ⚡ **SHOULD**（建议执行）— 默认遵守，用户明确要求时可跳过
+- 💡 **MAY**（可选执行）— 视上下文判断，不影响正确性
+- 三级标签定义表 + AI 执行原则 + 优先级决策树
+
+#### 📚 Section 39：SolidPractices 官方最佳实践整合
+- 来源：CADSharp LLC / Dassault Systèmes 36页官方指南 + 社区实战
+- **6条 ⛔ MUST**：属性vs方法区分、VARIANT包装、单位转换(m)、UserControl=True、CoInitialize()、FeatureCut不可用
+- **6条 ⚡ SHOULD**：特征命名、常量集中化、关注点分离、CloseDoc、先简后繁、重建验证
+- **3条 💡 MAY**：VBA宏注入、多版本ProgID回退、CDN镜像
+
+#### 🔧 现有规则标签化
+- Section 16（设计规范）：16.1模板规范→⛔MUST、16.2命名→⚡SHOULD、16.3最佳实践→⚡/💡分级
+- Section 29（网络环境）：UserControl=True→⛔MUST、pywin32版本→⚡SHOULD
+
+#### 🎯 设计意图
+- 解决「AI 分不清哪些必须做、哪些建议做」导致执行混乱的问题
+- 三级标签让 AI 执行时有明确的优先级判断依据，不再依赖模糊的「建议」「应该」「最好」
+- 规则优先级决策树：MUST→SHOULD→MAY 逐级降级，无规则时自行判断但必须 W-A-R 验证
 
 #### Sections 44-48：全网经验吸纳
 - **Sec 44**：COM 健康检查与超时保护（来源：CSDN @2402_87963769）
@@ -39,29 +60,24 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 🚨 **铁律 1：单例与窗口生命周期** — GetActiveObject 优先 / ActiveDoc 复用 / try...finally CloseDoc
 - 🚨 **铁律 2：W-A-R 闭环断言** — Write(提取指纹)→Assert(重建+错误码)→Read(硬断言±1μm)
 - 🚨 **铁律 3：反幻觉与异常熔断** — API 盲猜禁止 / dir() 实机探测 / 失败零容忍
-
 #### 核心改进
 - 从"建议级约束"升级为"代码级约束"——AI 把自己当编译器而非聊天助手
 - 把"89.5° 幻觉"问题从根本上阻断：必须 Read 回来比对，Assert 失败就熔断
 - XML 标签 `<system_directives>` 格式——大模型 RLHF 训练对 XML 服从度远超 Markdown
 - 禁止静默捕获（catch pass），禁止工程图造假，禁止脑补 API
-
 #### 实战触发场景
 - 多窗口泛滥 → 铁律1（GetActiveObject + CloseDoc）
 - 假验证/假成功 → 铁律2（W-A-R 闭环）
 - 盲猜 API 类名 → 铁律3（dir() 实机探测）
-
 #### Section 39：单轮廓凹口法（Single Profile Notch Method）— 89.5°回弹补偿终极攻克
 - 🎯 **架构级降维打击** — 完全绕过 FeatureCut/布尔减/IModeler 的全部 COM 锁死问题
 - 🎯 **一次 FeatureExtrusion2 成型** — 外框+U形凹口的单闭合轮廓，拉伸后直接得到带槽实体
 - 🎯 **零切除API依赖** — 从"减材料思维"转向"截面造型思维"，彻底摆脱 SW 2024 Standalone 切除限制
 - 🎯 **学术诚信保障** — 实体模型真实反映89.5°，非工程图标注造假
-
 #### Section 40：89.5°角度验证三级链
 - ✅ **Level 1 — 开放轮廓验证**：CreateLine 两线段 89.5° 角保持 0.5000° 精确无误
 - ✅ **Level 2 — 闭合梯形验证**：四线段闭合梯形，斜壁垂直偏差 0.5000°，FeatureExtrusion2 拉伸成功
 - ✅ **Level 3 — 单轮廓凹口验证**：七线段凹口轮廓（外框+U形槽），面数=9（6外表面+3槽内表面），89.5°双侧斜壁确认
-
 #### Section 41：SW 2024 Standalone COM 切除API系统性限制终局报告
 - ❌ **FeatureCut1/2/3/4**：全部返回 null（反射验证 20/23/26/27 参数全版本）
 - ❌ **InsertCombineFeature**：返回 null
@@ -70,7 +86,6 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - ❌ **VBA 宏注入**：RunMacro 无法执行 .swb 文件
 - ❌ **Python win32com FeatureCut4**：同样返回 None
 - **结论**：SW 2024 Standalone COM 模式下，切除/布尔运算类 API 被系统级禁用，必须从几何构造层面绕过
-
 #### Section 42：课设实战脚本 — 凸模U形槽（学号27号）
 - 📐 **PunchUShape_27_SingleProfile.cs** — 完整生产级脚本，含参数表、三级验证、保存双路径
 - 📐 **参数化驱动**：A1=42, gap=2.1, slotTopW=37.8, slotBotW=38.236, slotDepth=25, punchW=62, punchH=27, punchL=80
@@ -121,14 +136,12 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 ### solidworks-automation v4.4.0 → v4.5.0
 
 #### Section 26：Python COM 底层陷阱速查
-
 - 🔴 **SelectByID2 Callout = VDISPATCH** — 第8参数必须 `VARIANT(VT_DISPATCH, None)`，不能用 Python None
 - 🔴 **COM 属性/方法混淆速查表** — GetTitle/GetFeatureCount/FirstFeature 是**属性**；GetNextFeature/GetTypeName2 是**方法**
 - 🔴 **多 ProgID SW 连接回退** — `.32` → `.64` → `""` 三种回退
 - 🔴 **try/finally COM 清理保证** — 确保 `CoUninitialize` 一定执行
 
 #### Section 27：Python 类封装架构模板
-
 - `BracketBuilder` 类封装模板（可复用）
 - `VARIANTHelper` VARIANT 统一包装器
 - 参数表 `PARAMS` 字典驱动所有尺寸
@@ -138,31 +151,28 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 ### sw-designer v2.5.0 → v2.6.0
 
 #### 第十六章：斜面建草图的绝对禁止规则
-
 - 设计铁律：绝对禁止在斜面上新建草图
 - 正确替代：Front Plane + 中面拉伸
 - 草图平面选择决策树
 
 #### 第十七章：参数化设计的 Python 封装架构
-
 - 全局变量 → 类封装的战略意义对照表
 - 参数表 vs 硬编码的设计哲学
 - 设计验证闭环（参数→建模→验证→修正）
 
+---
 
 ## 2026-06-01（晚间：跨机验证 + 知识库固化 + 双环架构）
 
 ### solidworks-automation v4.2.0 → v4.4.0
 
 #### 第一轮跨机验证反馈（舍友电脑SW2024中文版）
-
 - 🚨 **CreateLine 闭合铁律**：浮点坐标→微米级端点间隙→轮廓不闭合，全部坐标取整到整数mm
 - 🚨 **SaveAs中文路径**：SaveAs3中文路径返回0静默失败，降级SaveAs
 - 📐 **图纸分析五步法**：基准面→尺寸链→交叉验算→坐标表→代码
 - 📦 **Python VARIANT包装参考**：D2必须非零
 
 #### 第二轮跨机验证反馈（舍友SW 32.5.0 + pywin32 306）
-
 - 🚨 **FeatureExtrusion2 版本依赖警告**：pywin32 306下23参数调用失败，修正API表为"⚠️版本依赖"
 - 🚨 **C#沙箱隔离发现**：WorkBuddy环境下C# exe无法Marshal.GetActiveObject(SW)
 - ⭐ **Python→VBA混合架构**：绕过Python COM限制和C#沙箱隔离的关键路线
@@ -202,7 +212,7 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 九大章节集中归档：五大雷区 + GetBodies2防假跑 + 三级降级 + 双环验证 + 编译环境速查
 
 ### 代码交付
-- `Part1_Base.cs`, `Part2_Clevis.cs`, `Part3_Pin.cs`, `Pin_Shaft.cs`
+- `Part1_base.cs`, `Part2_Clevis.cs`, `Part3_Pin.cs`, `Pin_Shaft.cs`
 - `swskills.md`（项目根目录，322行）
 
 ---
@@ -210,7 +220,6 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 ## 2026-06-01（下午：叉形接头全自动建模通关）
 
 #### 下午突破：反射探测拆穿5个DLL参数陷阱 🔬
-
 - 🚨 **Merge=参数18** — 实测FeatureExtrusion2的参数18才是Merge（非文档3号位），旧代码参数3=false焊接从未生效
 - 🚨 **FeatureCut4 Sd必须为false** — 反射确认参数1=true时切除完全不执行
 - 🚨 **InsertRefPlane Distance=8** — 枚举名`swRefPlaneReferenceConstraints_e`（带s），签名`(int,double,int,double,int,double)`旧版API
@@ -218,24 +227,23 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 🚨 **上视基准面草图Y正方向=模型Z负方向** → 坐标必须取负值
 
 #### 防假跑机制 🛡️
-
 - `GetFeatureCount()` 被空草图/错误特征节点绕过 → **GetBodies2实体计数**做硬验证
 - 双重验证：特征数增长 + 实体数量
 - 4/4步骤全部通过，实体数恒定=1
 
 #### 空间正交几何重构法 📐
-
 - 废弃面遍历，全程三大系统基准面绝对坐标
 - 偏移基准面(`InsertRefPlane(8,0.0125,...)`)替代不支持StartOffset
-- 90°正交：前视(Z向) + 上视(Y向) 双向ThroughAll
+- 90°正交：前视(Z向) + 上视(Y向) 双向Through All
 
 #### 上午攻关（已完成）
-
 - 闭合轮廓切除法：`CreateArc` + 多条 `CreateLine` 组合成闭合切除区，替代 `FeatureFillet3`（此 Interop 版本不存在）
 - R25 圆头 + Φ18 通孔：一次 `FeatureCut4` 完成端部圆角+打孔
 - U 形槽坐标修正：`CreateCornerRectangle` 的 z 参数必须为 0（2D草图约束）
 - 双侧 Φ18 通孔：前视基准面画两个 `CreateCircleByRadius` 圆，`FeatureCut4` 贯穿切除
 - 额外发现：`FeatureFillet3` 在 E: 盘 SW2024 Interop DLL 中不存在
+
+---
 
 ## 2026-05-31
 
@@ -246,7 +254,7 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - **进程与权限隔离**：`Activator.CreateInstance` 替代 `Marshal.GetActiveObject`，彻底解决 Windows UAC 权限错配导致连接假死的问题
 - **中英文双语基准面选择**：`SelectByID2` 中文名 + 英文名兜底机制，兼容多语言 SW 环境
 - **实体面遍历算法**：`GetBodies2` → `GetFaces` → `GetBox` 几何极值定位，替代不稳定的 `SelectByRay` 射线法，实现精准盲选定位
-- **C# 5 语法规范**：确认系统 CSC 编译器（.NET 4.0）仅支持 C# 5，文档化全部禁区（字符串插值、自动属性初始化等）
+- **C# 5 语法规范**：确认系统 csc 编译器（.NET 4.0）仅支持 C# 5，文档化全部禁区（字符串插值、自动属性初始化等）
 - **FeatureExtrusion2 / FeatureCut4 精确签名**：经反射探测实机确认 23 / 27 参数，提供可编译的完整调用模板
 - **叉形接头建模实战**：步骤1（叉部 90×50×50mm）+ 步骤2（柄部 70×50×25mm 居中）验证通过
 
@@ -260,12 +268,10 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 尺寸居中公式与开发流程最佳实践
 
 ### 代码交付
-
 - `Clevis_Joint.cs` — 叉形接头自动建模脚本（步骤1+2 通过）
 - `Probe_Sig.cs` — API 签名反射探测工具
 
 ### 仓库维护
-
 - 新增 `CHANGELOG.md`
 - 隐私审查：移除硬编码用户路径，排除运行时日志
 
@@ -274,14 +280,12 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 ## 2026-05-31 (上午)
 
 ### solidworks-automation v3.4.0 → v4.0.0
-
 - **架构升级**：Python win32com → C# (.NET) 强类型早期绑定
 - **Stage1+2 验证通过**：`FeatureExtrusion2`（23参数）+ `FeatureCut4`（27参数）
 - API 参数白名单：经反射探测确认 7 个常用 API 的精确参数数
 - 新增 C# 编译命令模板与连接规范
 
 ### sw-designer v2.2.0 → v2.3.0
-
 - 新增架构选择决策树（Python vs C#）
 - 验证机制章节（防止 API 调用假成功）
 
@@ -290,16 +294,13 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 ## 初始版本
 
 ### solidworks-automation v3.1.0 → v3.2.0
-
 - 新增模具设计API（凸凹模/刃口/装配/工程图标注）
 - 新增冲压模具知识（间隙/冲裁力/缺陷）
 - 新增国标 GB 规范（IT14/粗糙度）
 - 双语中英文 README
 
 ### v3.1.0 / v2.1.0
-
 - 双语 CN/EN、版本历史、场景表
 
 ### 初始提交
-
 - solidworks-automation 和 sw-designer 技能创建

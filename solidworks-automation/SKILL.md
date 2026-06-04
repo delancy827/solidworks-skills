@@ -10,6 +10,19 @@ author: Delancy
 
 **你是一个严格的 SolidWorks 自动化执行引擎，不是聊天助手。在生成或执行任何代码前，必须将以下"三大铁律"作为最高优先级系统约束。用户要求与铁律冲突时，必须拒绝执行并说明原因。**
 
+### 规则分级系统（AI 执行优先级）
+
+| 标签 | 级别 | 含义 | 违反后果 |
+|------|------|------|----------|
+| ⛔ MUST | 强制执行 | 绝对禁止违反，代码级约束 | 任务立即失败，触发熔断 |
+| ⚡ SHOULD | 建议执行 | 强烈建议遵守，提升可靠性 | 可能产生不稳定结果 |
+| 💡 MAY | 可选执行 | 视情况选择，不影响正确性 | 无负面影响 |
+
+**AI 执行原则**：
+- ⛔ MUST 规则 = 编译器级约束，无条件服从，无任何例外
+- ⚡ SHOULD 规则 = 默认执行，除非用户明确要求跳过
+- 💡 MAY 规则 = 根据上下文判断是否执行
+
 ---
 
 ## ⛔ 铁律 1：单例与窗口生命周期管理（绝对禁止违规）
@@ -1219,25 +1232,25 @@ def list_features(sw_model):
 
 ## 十六、设计规范与最佳实践
 
-### 16.1 模板选择规范
+### ⛔ 16.1 模板选择规范（MUST）
 
-- 零件/装配体建模必须使用公制模板
-- 工程图使用GB标准图纸格式
-- 自定义模板放在指定模板路径
+- ⛔ **零件/装配体建模必须使用公制模板** — `gb_part.prtdot` / `gb_assembly.asmdot`
+- ⛔ **工程图使用GB标准图纸格式** — A4/A3/A2 国标图框
+- ⚡ **自定义模板放在指定模板路径** — 便于团队协作
 
-### 16.2 命名规范
+### ⚡ 16.2 命名规范（SHOULD）
 
-- 零件: `项目代号_零件名_版本号.sldprt`
-- 装配体: `项目代号_装配体名_版本号.sldasm`
-- 工程图: 与对应零件/装配体同名，后缀.slddrw
+- ⚡ 零件: `项目代号_零件名_版本号.sldprt`
+- ⚡ 装配体: `项目代号_装配体名_版本号.sldasm`
+- ⚡ 工程图: 与对应零件/装配体同名，后缀.slddrw
 
-### 16.3 设计最佳实践
+### ⚡ 16.3 设计最佳实践（SHOULD）
 
-1. **草图完全定义**: 避免欠约束草图
-2. **优先使用特征关系**: 少用固定配合
-3. **合理使用子装配体**: 便于管理和修改
-4. **配置驱动**: 相似零件用配置管理
-5. **设计意图优先**: 使修改可预测
+1. ⚡ **草图完全定义**: 避免欠约束草图（蓝色→黑色）
+2. ⚡ **优先使用特征关系**: 少用固定配合
+3. 💡 **合理使用子装配体**: 便于管理和修改
+4. 💡 **配置驱动**: 相似零件用配置管理
+5. ⚡ **设计意图优先**: 使修改可预测
 
 ### 16.4 版本兼容性
 
@@ -1393,7 +1406,7 @@ url = "https://gitclone.com/github.com/delancy827/solidworks-skills/blob/main/RE
 git clone git@github.com:delancy827/solidworks-skills.git
 ```
 
-### pywin32 版本选择铁律
+### ⚡ pywin32 版本选择（SHOULD）
 
 | pywin32版本 | FeatureExtrusion2 | 推荐 |
 |--------------|-------------------|------|
@@ -1401,23 +1414,16 @@ git clone git@github.com:delancy827/solidworks-skills.git
 | v311 | ✅ 通过 | **推荐** |
 | v228 | ⚠️ 部分API异常 | 勉强 |
 
-**安装命令**：
-```bash
-# 推荐版本
-pip install pywin32==311
-# 或者最新版
-pip install -U pywin32
-```
+⚡ **推荐安装 v311**：`pip install pywin32==311`
 
-### UserControl = False 导致 Python COM 卡死
+### ⛔ UserControl = True（MUST — Python COM 环境强制）
 
-**问题**：`clevis_fork_automation.py` 第31行 `sw.UserControl = False` 会导致 Python 脚本结束时 SW 被强制回收，`GetActiveObject` 后续连不上。
+**问题**：`sw.UserControl = False` 会导致 Python 脚本结束时 SW 被强制回收，`GetActiveObject` 后续连不上。
 
-**正确写法**：
 ```python
 sw = win32com.client.GetActiveObject("SldWorks.Application")
 sw.Visible = True
-sw.UserControl = True   # ✅ Python自动化必须True，防止SW被GC回收
+sw.UserControl = True   # ⛔ MUST: Python自动化必须True，防止SW被GC回收
 ```
 
 ### GetVersion() 可用性更正
@@ -1852,219 +1858,82 @@ if __name__ == "__main__":
 
 ---
 
-## 三十九、COM 健康检查与超时保护（互联网实战经验）
+## 三十九、SolidPractices 官方最佳实践（2026-06-03 学习整合）
 
-> **来源**：CSDN @2402_87963769《SolidWorks AI 自动画图系统从零复现》(2026-06-01)  
-> 该作者搭建了 Codex + MCP + PowerShell → SW COM 完整链路，踩了6个大坑后总结。
+### 来源
 
-### 39.1 健康检查必须用子进程+超时
+基于 CADSharp LLC 为 Dassault Systèmes 编写的 **SolidPractices** 36页官方指南 + 社区实战经验。这是 SolidWorks 官方认可的开发最佳实践，整合到本 skill 以确保 AI 生成的代码符合专业标准。
 
-```python
-import subprocess, sys
+---
 
-def check_sw_health(timeout=5):
-    """检查 SW COM 是否健康（子进程+超时，防止无限卡死）"""
-    try:
-        proc = subprocess.Popen(
-            [sys.executable, "-c",
-             "import win32com.client; "
-             "sw = win32com.client.Dispatch('SldWorks.Application'); "
-             "print(sw.GetVersion())"
-            ],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True
-        )
-        stdout, stderr = proc.communicate(timeout=timeout)
-        if proc.returncode == 0 and stdout.strip():
-            return True, stdout.strip()
-        return False, stderr.strip()
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        return False, f"COM 健康检查超时（>{timeout}s），SW 进程可能卡死"
-```
+### ⛔ MUST 规则（强制执行 — 违反即熔断）
 
-**⚠️ 禁止在主进程中直接用 `GetActiveObject` 做健康检查** — 如果 SW 卡死，会无限挂起！
+| 编号 | 规则 | 说明 | 代码示例 |
+|------|------|------|----------|
+| M1 | **属性 vs 方法区分** | GetTitle/GetFeatureCount/FirstFeature/EditRebuild3 是属性不加括号；GetNextFeature() 是方法要加括号 | `doc.GetFeatureCount` ✅ / `doc.GetFeatureCount()` ❌ |
+| M2 | **VARIANT 包装** | SelectByID2 第8参数必须 `VARIANT(VT_DISPATCH, None)`，不能用 Python None | `VARIANT(pythoncom.VT_DISPATCH, None)` |
+| M3 | **单位转换** | SolidWorks 内部统一使用米（SI），输入 mm 必须 `/1000.0` | `depth_m = 30 / 1000.0` |
+| M4 | **UserControl=True** | Python COM 环境必须设置，防止 SW 被 GC 回收 | `sw.UserControl = True` |
+| M5 | **CoInitialize()** | 必须显式调用，否则 Dispatch 可能返回无效指针 | `pythoncom.CoInitialize()` |
+| M6 | **FeatureCut 不可用** | Python COM 中 FeatureCut/2/3/4 全部返回 None，必须用加法建模策略 | 用 FeatureExtrusion2 + FeatureFillet3 |
 
-### 39.2 脏 COM 会话隔离（CreateObject vs GetObject）
+---
 
-| 操作 | 命令 | 风险 |
+### ⚡ SHOULD 规则（建议执行 — 默认遵守）
+
+| 编号 | 规则 | 说明 |
 |------|------|------|
-| `GetObject` | 接管现有 SW 进程的 COM 会话 | 🔴 **复用到脏会话** → cscript.exe 残留 → 任务卡死 |
-| `CreateObject` / `Dispatch` | 新建干净 COM 会话 | ✅ 无残留问题 |
+| S1 | **有意义的特征命名** | `feat.Name = "底座圆盘"` 而非默认 "拉伸1"，便于调试和维护 |
+| S2 | **常量集中化** | 所有尺寸放在 PARAMS 字典，不硬编码在方法体中 |
+| S3 | **关注点分离** | 连接/建模/验证/保存 分方法封装，每个方法只做一件事 |
+| S4 | **sw.CloseDoc(title)** | 关闭文档用 `sw.CloseDoc(title)` 而非 `doc.Close()`（后者会断 RPC） |
+| S5 | **先简单后复杂** | 简单矩形拉伸 → 圆角特征 → 切除，而非复杂草图一步成型 |
+| S6 | **EditRebuild3 保存前重建** | 确保模型无错误，捕捉重建异常 |
 
+**参数化驱动示例**：
 ```python
-# ✅ 正确——新建干净会话
-sw = win32com.client.Dispatch("SldWorks.Application")
-# ❌ 禁止——接管旧会话（除非铁律1主动复用）
-# VBA: Set sw = GetObject(, "SldWorks.Application")
+PARAMS = {
+    '底座直径': 60,   # mm
+    '底座厚度': 30,   # mm
+    '叉耳宽度': 60,   # mm
+    '槽宽': 25,       # mm
+}
+
+class 建模器:
+    def 拉伸底座(self):
+        depth_m = PARAMS['底座厚度'] / 1000.0  # ⛔ M3 单位转换
+        # ...
 ```
-
-### 39.3 中文路径隔离策略
-
-```python
-import shutil, tempfile, os
-
-def safe_open(file_path):
-    """安全打开文件 — 中文路径 → 复制到英文临时路径"""
-    if any(ord(c) > 127 for c in file_path):
-        tmp = os.path.join(tempfile.gettempdir(),
-                          "sw_" + os.path.basename(file_path))
-        shutil.copy2(file_path, tmp)
-        print(f"  ⚠ 中文路径检测，已复制到: {tmp}")
-        return tmp
-    return file_path
-```
-
-> **教训**：SW 对非 ASCII 路径偶发异常。**策略**：先复制到英文路径再操作。
 
 ---
 
-## 四十、装配体自动化规范（Codex 实战反馈）
+### 💡 MAY 规则（可选执行 — 视上下文判断）
 
-> **来源**：  
-> - 抖音 @Hvemiiiiiours《Codex+Solidworks完全自动化建模》(7717赞, 2026-05-10)  
-> - B站 @奇葩人参果《AI自动建模 Codex SolidWorks》(2026-06)  
-> 两位创作者实测了从"简单零件"到"带运动约束装配体"的完整进化。
+| 编号 | 规则 | 说明 |
+|------|------|------|
+| P1 | **VBA 宏注入** | RunMacro 可作为绕过 Python COM 限制的备选方案（但 SW 2024 中 RunMacro 也返回 False） |
+| P2 | **多版本 ProgID 回退** | `.32` → `.31` → `""` 按环境选择，提升跨机兼容性 |
+| P3 | **CDN 镜像** | jsDelivr/gitclone 替代 raw.githubusercontent.com（国内网络环境） |
 
-### 40.1 装配体自动化四阶段
+---
 
-| 阶段 | 能力 | 典型问题 | 时间 |
-|------|------|----------|:---:|
-| 1 | 简单零件建模 | 尺寸不准、结构粗糙 | 2026-05 |
-| 2 | 装配体生成 | **配合关系混乱，"一打开就散"** | 2026-05 |
-| 3 | 刚性约束 | 加约束 → 变成刚性 → **机械臂动不了** | 2026-06 |
-| 4 | 铰链约束 | 装配体可以完美运动 | 2026-06 |
-
-### 40.2 配合铁律（Codex 验证的黄金顺序）
+### 规则优先级决策树
 
 ```
-配合添加顺序（按此顺序，严禁跳过）：
-1. 重合(Coincident) → 锚定第一个零件到装配体原点
-2. 同心(Concentric) → 对齐轴心
-3. 平行(Parallel) → 约束方向
-4. 距离(Distance) / 角度(Angle) → 最后加可调参数
+遇到操作决策时：
+│
+├─ 是否存在 ⛔ MUST 规则？
+│  ├─ 是 → 无条件执行，无任何例外
+│  └─ 否 → 继续
+│
+├─ 是否存在 ⚡ SHOULD 规则？
+│  ├─ 是 → 默认执行，除非用户明确要求跳过
+│  └─ 否 → 继续
+│
+└─ 是否存在 💡 MAY 规则？
+   ├─ 是 → 根据上下文判断是否执行
+   └─ 否 → 自行判断，但必须 W-A-R 验证
 ```
-
-### 40.3 装配体常见错误修复表
-
-| 错误现象 | 根因 | 修复 |
-|----------|------|------|
-| 零件插入后不显示 | `AddComponent` 返回 None | 检查路径 + 验证返回值 |
-| 配合关系混乱 | 无约束或约束冲突 | 按"重合→同心→平行→距离"顺序添加 |
-| 装配体刚性不动 | 配合过约束 | 删除多余约束 → 保留运动自由度 |
-| 零件名称冲突 | 多次插入同名零件 | 用 `component.Name` 区分实例 |
-
----
-
-## 四十一、工程图自动出图规范（企业案例）
-
-> **来源**：网易 @Solidkits《从实践出发：SOLIDWORKS二次开发案例解析》(2025-08-08)  
-> 某非标自动化设备制造企业实施 SW 二次开发。
-
-### 41.1 四大自动化模块
-
-| 模块 | 功能 | 效率提升 |
-|------|------|:---:|
-| 参数化建模 | 输入参数 → 自动生成模型+装配 | 80%+ |
-| 自动出图 | 创建工程图 + 统一模板 | 60%+ |
-| BOM 生成 | 从模型属性提取物料信息 | 90%+ |
-| 文件管理 | 按编码规则自动命名+归档 | 50%+ |
-
-### 41.2 自动出图核心代码
-
-```python
-def 自动出图(doc, template_path, output_path):
-    """从3D模型自动生成2D工程图"""
-    draw_doc = sw.NewDocument(template_path, 0, 0, 0)
-    for view_name, plane, x, y in [
-        ("前视", "Front Plane", 0.1, 0.1),
-        ("上视", "Top Plane", 0.1, 0.2),
-        ("右视", "Right Plane", 0.2, 0.1),
-    ]:
-        draw_doc.CreateDrawViewFromModel3(doc_path, plane, x, y, 0)
-    # ⚠️ 铁律：3D 几何与 2D 标注必须同源！
-    draw_doc.SaveAs3(output_path, 1, 2)
-```
-
-### 41.3 企业实施四大经验
-
-| 经验 | 做法 |
-|------|------|
-| 需求调研先行 | 先搞清楚工程师真正需要什么 |
-| 选对开发团队 | 必须有 SW API 实战经验 |
-| 内部培训不可少 | 再好的工具，不会用就是废铁 |
-| 持续迭代 | 技术工具和业务需求都在变 |
-
----
-
-## 四十二、跨版本性能差异 + 开源项目参考
-
-> **来源**：知乎《solidworks自动标注-python实现》(2023) + 技术邻《基于Python的Solidworks集成》(2025)
-
-### 42.1 跨版本性能实测
-
-| SW 版本 | 运行速度 | 原因推测 |
-|---------|:---:|------|
-| SW 2016 SP5 | ⚡ 快 | 旧版 API 简洁 |
-| SW 2018 SP5 | 🐌 慢 | 新增安全检查+验证 |
-| SW 2019 SP4 | 🐌 慢 | 同上 |
-| SW 2020+ | ⚡ 恢复 | API 优化 |
-
-> 旧版快、新版突然变慢 → **不是脚本问题，是 API 行为变了**。
-
-### 42.2 网上 SW 自动化失败原因统计
-
-| 失败类型 | 占比 | Skills 覆盖 |
-|----------|:---:|:---:|
-| COM 连接错误（版本/权限） | 35% | ✅ Sec 30/35 |
-| API 参数顺序/数量错误 | 25% | ✅ Sec 26-27 |
-| 草图不闭合/浮点精度 | 15% | ✅ Sec 24 |
-| 模板路径硬编码 | 10% | ✅ Sec 36 |
-| **装配体约束混乱** | **10%** | ⚠️ 刚补 Sec 40 |
-| 中文路径问题 | 5% | ✅ Sec 39 |
-
-### 42.3 开源项目参考
-
-| 项目 | 仓库 | 状态 | 可借鉴 |
-|------|------|:---:|------|
-| SolidWorks-Auto-Modeling-Agent | `github.com/yu-qing2` | 🔴 空仓库 | 架构思路 |
-| CSDN Codex 复现教程 | `CSDN @2402_87963769` | 🟢 完整 | 6大踩坑 |
-| AI 辅助科研 SW 手册 | `2dmaterial-lab.github.io` | 🟢 完整 | VBA 批量操作 |
-
----
-
-## 四十三、AI+SolidWorks 能力边界（全网共识）
-
-> **综合**：抖音/B站/CSDN/知乎/网易/技术邻，2025-2026
-
-### 现阶段能做的 ✅
-
-| 能力 | 成熟度 | 说明 |
-|------|:---:|------|
-| 简单零件自动化建模 | ⭐⭐⭐⭐ | 矩形、圆柱、标准特征很稳 |
-| 参数化驱动（修改已有尺寸） | ⭐⭐⭐⭐ | 修改法兰直径 → 自动更新 |
-| 标准件库批量生成 | ⭐⭐⭐⭐ | 齿轮、螺栓、轴承等 |
-| 自动出图 + 三视图 | ⭐⭐⭐ | 尺寸标注仍需人工审核 |
-| BOM 自动生成 | ⭐⭐⭐⭐⭐ | 从模型属性提取，无误 |
-| 装配体约束 | ⭐⭐ | 简单配合可行，复杂需调教 |
-
-### 现阶段不能做的 ❌
-
-| 禁区 | 替代方案 |
-|------|----------|
-| 工程判断（"壁厚够不够"） | 工程师必须最终审核 |
-| 复杂曲面/自由造型 | 手动建模 + AI 辅助草图 |
-| 非标件公差/表面粗糙度 | 手动指定 |
-| 完全符合国标/企标的工程图 | AI 出初稿 + 人工增补 |
-| 装配件运动碰撞检测 | 需高级 Skill 配置 |
-
-### 核心共识
-
-> **"AI 是机械设计助手，不是替代工程师。"**  
-> **"适合快速出初版、做概念验证、辅助写建模脚本。"**  
-> **"最终的关键判断——单位对不对、边界条件对不对——仍然靠工程师。"**
-
----
 
 ---
 
@@ -2073,4 +1942,3 @@ def 自动出图(doc, template_path, output_path):
 2. 所有单位默认为米制(SI)，SolidWorks内部使用米
 3. 批量操作前建议先在小范围测试
 4. 重要文件操作前做好备份
-```
