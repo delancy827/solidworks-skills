@@ -490,6 +490,30 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v4.9.0 — 规则分级系统 + SolidPractices 最佳实践整合 + 全网经验吸纳 (2026-06-03)
+
+**核心突破：AI 执行优先级终于有明确判断依据，不再靠猜**
+
+#### 🏷️ 规则分级系统（system_directives 新增）
+- ⛔ **MUST**（强制执行）— 编译器级约束，违反即熔断
+- ⚡ **SHOULD**（建议执行）— 默认遵守，用户明确要求时可跳过
+- 💡 **MAY**（可选执行）— 视上下文判断，不影响正确性
+- **优先级决策树**：MUST→SHOULD→MAY 逐级降级
+
+#### 📚 Section 39：SolidPractices 官方最佳实践整合
+- 来源：CADSharp LLC / Dassault Systèmes 36页官方指南
+- 6条 ⛔MUST / 6条 ⚡SHOULD / 3条 💡MAY 完整标签化
+- 现有规则（Section 16/29）全部重新分级标注
+
+#### Sections 44-48：全网实战经验吸纳
+- **Sec 44**：COM 健康检查与超时保护（CSDN @2402_87963769）
+- **Sec 45**：装配体自动化规范（抖音 @Hvemiiiiiours / B站 @奇葩人参果）
+- **Sec 46**：工程图自动出图规范（网易 @Solidkits）
+- **Sec 47**：跨版本性能差异 + 失败统计（知乎 + 技术邻）
+- **Sec 48**：AI+SolidWorks 能力边界（全网共识总结）
+
+---
+
 ### v4.8.0 — 架构级升级：三大铁律 + W-A-R 闭环断言 (2026-06-02)
 
 **核心突破：从"建议级约束"升级为"代码级约束"——AI 把自己当编译器而非聊天助手**
@@ -499,19 +523,12 @@ git push origin feature/amazing-feature
 - 🚨 **铁律 2：W-A-R 闭环断言** — Write(提取指纹)→Assert(重建+错误码)→Read(硬断言±1μm)
 - 🚨 **铁律 3：反幻觉与异常熔断** — API 盲猜禁止 / dir() 实机探测 / 失败零容忍
 
-#### 核心改进
-- 彻底解决"多窗口泛滥"：强制复用 SW 实例和文档
-- 彻底解决"假验证/假跑"：修改后必须 Read 回来比对，Assert 失败即熔断
-- 彻底解决"API 脑补"：不确定的 API 必须 dir() 实机探测后才能用
-- XML 标签格式：大模型 RLHF 训练对 `<system_directives>` 服从度远超 Markdown
-
 #### 🎯 单轮廓凹口法 — 凸模U形槽89.5°回弹补偿终极攻克
 - **零切除API依赖**：完全绕过 FeatureCut1/2/3/4、InsertCombineFeature、Body2.Cut 的全部 COM 锁死
 - **一次 FeatureExtrusion2 成型**：外框+U形凹口的单闭合轮廓，7条线段直接拉伸成带89.5°斜壁实体
 - **89.5°三级验证链**：开放轮廓(0.5000°) → 闭合梯形(0.5000°) → 单轮廓凹口(面数=9) 全部通过
-- **学术诚信保障**：实体模型真实反映89.5°，非工程图标注造假
 - **课设交付**：`PunchUShape_27_SingleProfile.cs` — 学号27号完整生产级脚本
-- **凸模实心块**：`Step2_PunchBlock_27.cs` — Step2凸模基础件（53×30mm矩形拉伸）
+- **凸模实心块**：`Step2_PunchBlock_27.cs` — Step2凸模基础件
 - **API探测工具**：`Probe_AllFeatureCut_Investigation.cs` — FeatureCut全系反射参数探测
 
 ### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)
