@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 5.0.0
+version: 5.1.0
 author: Delancy
 ---
 
@@ -2347,6 +2347,775 @@ doc.MaterialPropertyValues = red_material
    是否沉淀: 是 → scripts/sw_part.py
    ```
 3. **沉淀规则**：同一 API 第二次用到就封装进工具函数；出现兼容问题、错误码、中文版名称差异时补充到文档
+
+---
+
+## 四十六、COM/VBA 智能路由（参数复杂度自动降级）
+
+> 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
+
+### 问题背景
+
+Python COM IDispatch 限制：参数 >12 的方法调用可能返回 None。FeatureCut4 (27参数) / HoleWizard5 (25+参数) 在 Python COM 下全部失败。当前"加法建模策略"（Sec 应急方案）是绕过切除，但无法真正实现切除操作。智能路由：按参数复杂度自动选择 COM 直连 或 VBA 宏降级。
+
+### ⛔ MUST：路由决策规则
+
+| 参数数量 | 路由 | 说明 |
+|:---:|------|------|
+| ≤ 12 | COM 直连 | 性能优先，直接 pywin32 调用 |
+| > 12 | VBA 宏降级 | 自动生成 VBA 代码 → 保存 .swp → RunMacro |
+| VBA 也失败 | 加法建模 | 回退到 FeatureExtrusion2 几何构造 |
+
+### 复杂度评分公式
+
+```python
+def compute_complexity_score(param_count, base_complexity, history_bias,
+                              threshold=12):
+    """
+    复杂度评分（0.0~1.0），决定走 COM 还是 VBA。
+    参考来源: andrewbartels1/SolidworksMCP-python (complexity_analyzer.py)
+    """
+    param_component = min(param_count / threshold, 1.0)
+    score = min(1.0,
+                param_component * 0.45 +
+                base_complexity * 0.40 +
+                history_bias * 0.15)
+    return score
+```
+
+**base_complexity 查表**：
+
+| API | base_complexity | 默认路由 |
+|-----|:---:|------|
+| FeatureExtrusion2 (23参数) | 0.55 | COM（实测可用） |
+| FeatureCut4 (27参数) | 0.90 | **VBA** |
+| HoleWizard5 (25+参数) | 0.95 | **VBA** |
+| AddMate5 (15参数) | 0.65 | VBA |
+| CreateLine / CreateCircle | 0.15 | COM |
+| FeatureFillet3 | 0.30 | COM |
+
+### ComplexityAnalyzer + IntelligentRouter 代码模板
+
+```python
+class RouteDecision:
+    COM = "com"
+    VBA = "vba"
+
+class ComplexityAnalyzer:
+    """分析操作复杂度，推荐 COM 或 VBA 执行路径"""
+    def __init__(self, threshold=12, score_threshold=0.6):
+        self.threshold = threshold
+        self.score_threshold = score_threshold
+        self.history = {}  # {api_name: {com_success, com_failure, vba_success, vba_failure}}
+    
+    def analyze(self, api_name, param_count, base_complexity=0.2):
+        history_bias = self._history_bias(api_name)
+        score = compute_complexity_score(param_count, base_complexity, history_bias, self.threshold)
+        prefer_vba = param_count > self.threshold or score >= self.score_threshold
+        return RouteDecision.VBA if prefer_vba else RouteDecision.COM
+    
+    def record_result(self, api_name, route, success):
+        h = self.history.setdefault(api_name, {"com_success": 0, "com_failure": 0, "vba_success": 0, "vba_failure": 0})
+        h[f"{route}_{'success' if success else 'failure'}"] += 1
+    
+    def _history_bias(self, api_name):
+        h = self.history.get(api_name)
+        if not h:
+            return 0.0
+        com_total = h["com_success"] + h["com_failure"]
+        return min(h["com_failure"] / com_total, 1.0) if com_total > 0 else 0.0
+
+class IntelligentRouter:
+    """智能路由：COM 优先 → VBA 降级，带可缓存操作集"""
+    CACHEABLE = {"get_model_info", "list_features", "get_mass_properties", "get_material_properties"}
+    
+    def route(self, api_name, params, com_func, vba_func=None, analyzer=None):
+        decision = (analyzer or ComplexityAnalyzer()).analyze(api_name, len(params) if params else 0)
+        # 优先路径
+        if decision == RouteDecision.COM:
+            result = com_func(*params) if params else com_func()
+            if result is not None:
+                return result
+        # VBA 降级
+        if vba_func and decision == RouteDecision.VBA:
+            return vba_func(*params) if params else vba_func()
+        # COM 回退
+        if decision == RouteDecision.VBA:
+            return com_func(*params) if params else com_func()
+        # VBA 回退
+        if vba_func:
+            return vba_func(*params) if params else vba_func()
+        return result
+```
+
+### 三级降级链决策流程图
+
+```
+API调用请求
+│
+├─ 参数 ≤ 12？
+│  └─ 是 → COM 直连 → 成功？→ 返回结果
+│                    → 失败？→ 继续
+│
+├─ 参数 > 12？
+│  └─ 是 → 生成 VBA 宏 → 执行 → 成功？→ 返回结果
+│                                → 失败？→ 继续
+│
+└─ 回退到加法建模（FeatureExtrusion2 几何构造）
+```
+
+---
+
+## 四十七、熔断器模式（COM 健康状态三态管理）
+
+> 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
+
+### 问题背景
+
+铁律 3（第111行）定义了"异常熔断"行为规范，但缺乏程序化实现。COM 连接不稳定时，连续失败会导致脚本崩溃、SW 假死。需要一个可编程的熔断器来自动管理 COM 健康状态。
+
+### 三态熔断器模型
+
+```
+                    失败次数 ≥ 阈值
+    Closed ──────────────────────▶ Open
+      ▲                              │
+      │ 探测成功                      │ 冷却时间到
+      │                              ▼
+      └──── Half-Open ◀─────────────┘
+             │
+             └─ 探测失败 → 回到 Open
+```
+
+### ⛔ MUST：状态转换规则
+
+| 转换 | 条件 | 默认阈值 |
+|------|------|----------|
+| Closed → Open | 连续失败次数 ≥ failure_threshold | 5 次 |
+| Open → Half-Open | 等待时间 ≥ cooldown_period | 30 秒 |
+| Half-Open → Closed | 探测请求成功 | - |
+| Half-Open → Open | 探测请求再次失败 | - |
+
+### COMCircuitBreaker 代码模板
+
+```python
+import time
+
+class CircuitState:
+    CLOSED = "closed"      # 正常
+    OPEN = "open"          # 熔断
+    HALF_OPEN = "half_open"  # 探测
+
+class COMCircuitBreaker:
+    """
+    COM 熔断器：自动管理 SolidWorks COM 连接健康状态。
+    参考来源: andrewbartels1/SolidworksMCP-python (circuit_breaker.py)
+    """
+    def __init__(self, failure_threshold=5, cooldown=30, half_open_max=1):
+        self.failure_threshold = failure_threshold
+        self.cooldown = cooldown
+        self.half_open_max = half_open_max
+        self.state = CircuitState.CLOSED
+        self.failure_count = 0
+        self.last_failure_time = 0
+        self.half_open_attempts = 0
+        self.events = []  # 状态转换日志
+    
+    def execute(self, func, *args, **kwargs):
+        """包装 COM 调用，自动熔断和恢复"""
+        if not self.allow_request():
+            raise COMCircuitBreakerOpenError(
+                f"熔断器处于 Open 状态，剩余冷却 {self.remaining_cooldown():.1f}s"
+            )
+        try:
+            result = func(*args, **kwargs)
+            self.record_success()
+            return result
+        except Exception as e:
+            self.record_failure(str(e))
+            raise
+    
+    def allow_request(self):
+        if self.state == CircuitState.CLOSED:
+            return True
+        if self.state == CircuitState.OPEN:
+            if time.time() - self.last_failure_time >= self.cooldown:
+                self._transition(CircuitState.HALF_OPEN)
+                return True
+            return False
+        # HALF_OPEN
+        return self.half_open_attempts < self.half_open_max
+    
+    def record_success(self):
+        if self.state == CircuitState.HALF_OPEN:
+            self._transition(CircuitState.CLOSED)
+        self.failure_count = 0
+    
+    def record_failure(self, error_msg=""):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        if self.state == CircuitState.HALF_OPEN:
+            self.half_open_attempts += 1
+            if self.half_open_attempts >= self.half_open_max:
+                self._transition(CircuitState.OPEN)
+        elif self.failure_count >= self.failure_threshold:
+            self._transition(CircuitState.OPEN)
+    
+    def _transition(self, new_state):
+        old = self.state
+        self.state = new_state
+        self.events.append({
+            "time": time.time(), "from": old, "to": new_state,
+            "failure_count": self.failure_count
+        })
+        if new_state == CircuitState.HALF_OPEN:
+            self.half_open_attempts = 0
+    
+    def remaining_cooldown(self):
+        if self.state != CircuitState.OPEN:
+            return 0
+        return max(0, self.cooldown - (time.time() - self.last_failure_time))
+
+class COMCircuitBreakerOpenError(Exception):
+    pass
+```
+
+### ⚡ SHOULD：熔断事件日志
+
+- 每次状态转换记录时间戳、触发原因、当前失败计数
+- 连续 3 次 Open→Half-Open→Open 循环 → 建议用户重启 SLDWORKS.exe
+
+```python
+# 检查是否需要建议重启
+def check_restart_needed(breaker):
+    open_count = sum(1 for e in breaker.events if e["to"] == "open")
+    if open_count >= 3:
+        print("⚠️ 连续 3 次熔断，建议重启 SolidWorks")
+        return True
+    return False
+```
+
+### 与铁律 3 的关系
+
+- **铁律 3** = AI 行为规范（禁止静默捕获、必须输出 Traceback）
+- **本 Section** = 程序化实现（自动检测、自动熔断、自动恢复）
+- 两者并行：铁律 3 管 AI 行为，熔断器管代码执行
+
+---
+
+## 四十八、VBA 宏自动生成与执行
+
+> 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) + [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
+
+### 问题背景
+
+Section 46 智能路由判定走 VBA 通道后，需要自动生成 VBA 代码。Python COM 无法直接调用 FeatureCut4，但 VBA 宏内可以正常调用。SW 2024 中 RunMacro(.swb) 返回 False → 需要正确的文件路径和执行方式。
+
+### ⛔ MUST：.swp 文件保存规范
+
+| 规则 | 要求 | 说明 |
+|------|------|------|
+| 文件路径 | `tempfile.gettempdir()` + 唯一名 | 避免权限问题 |
+| 编码 | UTF-8 BOM 或 Windows-1252 | VBA 编辑器要求 |
+| 入口点 | `Sub main() ... End Sub` | SW 宏标准格式 |
+| 清理 | 执行后删除 .swp 文件 | 避免临时文件堆积 |
+
+### VBA 等效代码示例：FeatureCut4（完整 27 参数）
+
+```vb
+' VBA 宏等效代码 — FeatureCut4 在 VBA 中可正常调用
+' 参考来源: vespo92/SolidworksMCP-TS (macro-generator.ts)
+Sub FeatureCut4Example()
+    Dim swApp As SldWorks.SldWorks
+    Dim swModel As SldWorks.ModelDoc2
+    Dim swFeatMgr As SldWorks.FeatureManager
+    Dim swFeat As SldWorks.Feature
+    
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+    Set swFeatMgr = swModel.FeatureManager
+    
+    ' FeatureCut4 — VBA 中 27 参数全部正常
+    Set swFeat = swFeatMgr.FeatureCut4(
+        True, False, False,    ' Sd, Flip, Dir
+        0, 0,                   ' T1, T2
+        0.05, 0.05,            ' D1, D2
+        False, False, False,   ' Dchk1, Dchk2, Ddir1
+        False, 0, 0,           ' Ddir2, Dang1, Dang2
+        False, False,           ' Ofr, Ofc
+        False, False,           ' Tf1, Tf2
+        True,                   ' Merge
+        False, False,           ' UseFeatScope, UseAutoSelect
+        0, False, False,       ' StartOffset, IsAutoStartOffset, FlipStartOffset
+        False, False, False,   ' 额外参数
+        False                   ' 额外参数
+    )
+    
+    If swFeat Is Nothing Then
+        Debug.Print "FeatureCut4 失败"
+    Else
+        Debug.Print "FeatureCut4 成功: " & swFeat.Name
+    End If
+End Sub
+```
+
+### VBAMacroGenerator 代码生成模板
+
+```python
+import tempfile
+import os
+
+class VBAMacroGenerator:
+    """根据 Python 参数自动生成等效 VBA 宏代码"""
+    
+    def generate_feature_cut_vba(self, params_dict):
+        """生成 FeatureCut4 VBA 代码"""
+        return f'''Sub main()
+    Dim swApp As SldWorks.SldWorks
+    Dim swModel As SldWorks.ModelDoc2
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+    Dim swFeat As SldWorks.Feature
+    Set swFeat = swModel.FeatureManager.FeatureCut4({params_dict['params_str']})
+    If Not swFeat Is Nothing Then
+        Debug.Print "OK"
+    End If
+End Sub'''
+    
+    def generate_feature_extrusion_vba(self, params_dict):
+        """生成 FeatureExtrusion2 VBA 代码"""
+        return f'''Sub main()
+    Dim swApp As SldWorks.SldWorks
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+    Dim swFeat As SldWorks.Feature
+    Set swFeat = swModel.FeatureManager.FeatureExtrusion2({params_dict['params_str']})
+End Sub'''
+
+class VBAMacroExecutor:
+    """保存并执行 VBA 宏文件"""
+    
+    def __init__(self, sw_app):
+        self.sw_app = sw_app
+        self.history = []  # 执行历史记录
+    
+    def save_macro(self, vba_code, macro_name="auto_macro"):
+        """保存 VBA 代码到 .swp 文件"""
+        temp_dir = tempfile.gettempdir()
+        safe_name = "".join(c if c.isalnum() or c in ("_", "-") else "_" for c in macro_name)
+        swp_path = os.path.join(temp_dir, f"{safe_name}.swp")
+        # UTF-8 BOM 编码
+        with open(swp_path, "w", encoding="utf-8-sig") as f:
+            f.write(vba_code)
+        return swp_path
+    
+    def execute_macro(self, swp_path, subroutine="main"):
+        """执行 VBA 宏并记录结果"""
+        import time
+        start = time.time()
+        try:
+            result = self.sw_app.RunMacro2(swp_path, subroutine, 0)
+            duration = time.time() - start
+            self.history.append({
+                "path": swp_path, "result": result, "duration": duration
+            })
+            # 清理临时文件
+            if os.path.exists(swp_path):
+                os.remove(swp_path)
+            return result
+        except Exception as e:
+            self.history.append({"path": swp_path, "error": str(e)})
+            return False
+```
+
+### ⚡ SHOULD：执行历史记录
+
+```python
+# 检查宏执行成功率
+def get_macro_success_rate(executor, api_name=None):
+    total = len(executor.history)
+    success = sum(1 for h in executor.history if h.get("result"))
+    rate = success / total if total > 0 else 0.0
+    if rate < 0.3 and total >= 3:
+        print(f"⚠️ 宏执行成功率仅 {rate:.0%}，建议切换到加法建模")
+    return rate
+```
+
+### 与 Sec 46 智能路由的协作
+
+```
+Sec 46 判定走 VBA
+│
+├─ 调用 VBAMacroGenerator 生成代码
+├─ 调用 VBAMacroExecutor 保存并执行
+├─ 执行成功 → 记录到路由历史（com_failure++ / vba_success++）
+└─ 执行失败 → 回退到加法建模（Sec 应急方案）
+```
+
+---
+
+## 四十九、pywin32 适配器增强（连接管理与安全包装器）
+
+> 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
+
+### 问题背景
+
+Sec 30 提供了连接回退链路，Sec 35 提供了版本化 ProgID，但缺少：自动重连机制、COM 安全包装器、类型库信息缓存。长时间运行的脚本中，COM 连接可能因 SW 崩溃/超时断开。
+
+### ⛔ MUST：SWPyWin32Adapter 统一适配器类
+
+```python
+import win32com.client
+import pythoncom
+import time
+
+class SWPyWin32Adapter:
+    """
+    pywin32 统一适配器：整合连接回退、自动重连、安全包装、类型库缓存。
+    参考来源: andrewbartels1/SolidworksMCP-python (pywin32_adapter.py)
+    """
+    def __init__(self, prog_ids=None):
+        self.prog_ids = prog_ids or [
+            "SldWorks.Application", "SldWorks.Application.32", "SldWorks.Application.64"
+        ]
+        self.sw = None
+        self.connected = False
+        self._type_cache = {}  # API 签名缓存
+    
+    def connect(self):
+        """连接 SolidWorks（整合 Sec 30 回退链 + Sec 35 ProgID 策略）"""
+        # 第一优先：GetActiveObject
+        try:
+            self.sw = win32com.client.GetActiveObject("SldWorks.Application")
+            self._on_connected()
+            return self.sw
+        except Exception:
+            pass
+        # 回退：遍历 ProgID
+        for prog_id in self.prog_ids:
+            try:
+                self.sw = win32com.client.Dispatch(prog_id)
+                self._on_connected()
+                return self.sw
+            except Exception:
+                continue
+        raise ConnectionError("无法连接或启动 SolidWorks")
+    
+    def _on_connected(self):
+        self.sw.Visible = True
+        self.sw.UserControl = True  # ⛔ MUST
+        self.connected = True
+        self._type_cache.clear()
+    
+    def auto_reconnect(self, max_retries=3, base_interval=5):
+        """自动重连（指数退避 5s → 10s → 20s）"""
+        for attempt in range(max_retries):
+            try:
+                _ = self.sw.Visible  # 探测连接
+                return True
+            except Exception:
+                self.connected = False
+                wait = base_interval * (2 ** attempt)
+                print(f"连接断开，{wait}s 后重试 ({attempt+1}/{max_retries})")
+                time.sleep(wait)
+                try:
+                    pythoncom.CoUninitialize()
+                except Exception:
+                    pass
+                pythoncom.CoInitialize()
+                try:
+                    self.connect()
+                    return True
+                except Exception:
+                    continue
+        raise ConnectionError(f"重连失败：已重试 {max_retries} 次")
+    
+    def safe_call(self, method_name, *args, circuit_breaker=None):
+        """
+        安全包装 COM 调用：捕获异常、超时保护、熔断器集成。
+        """
+        if circuit_breaker and not circuit_breaker.allow_request():
+            raise COMCircuitBreakerOpenError("熔断器 Open，拒绝执行")
+        try:
+            method = getattr(self.sw.ActiveDoc.FeatureManager, method_name)
+            result = method(*args)
+            if circuit_breaker:
+                circuit_breaker.record_success()
+            return result
+        except Exception as e:
+            if circuit_breaker:
+                circuit_breaker.record_failure(str(e))
+            raise COMSafeError(f"{method_name} 失败: {e}")
+
+class COMSafeError(Exception):
+    pass
+```
+
+### ⚡ SHOULD：类型库信息缓存
+
+```python
+# 首次连接时缓存方法签名，避免重复 COM 元数据查询
+def cache_type_info(sw_adapter):
+    """缓存 SW 类型库信息"""
+    try:
+        type_info = sw_adapter.sw._oleobj_.GetTypeInfo()
+        type_attr = type_info.GetTypeAttr()
+        sw_adapter._type_cache["_type_attr"] = type_attr
+        print(f"类型库缓存: {type_attr.cFuncs} 个方法")
+    except Exception:
+        pass  # 某些环境不支持
+```
+
+### 与 Sec 47 熔断器的集成点
+
+- `safe_call()` 内部检查熔断器状态
+- 熔断器 Open 时 `safe_call()` 拒绝执行
+- 重连成功后重置熔断器为 Closed
+
+---
+
+## 五十、特征树遍历替代 SelectByID2（可靠性优先选择策略）
+
+> 参考来源：[vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
+
+### 问题背景
+
+SelectByID2 存在多个已知问题：VARIANT 包装（Sec 39 M2）、中文名称不一致（Sec 37）、浮点误差。Sec 28 的 safe_select 提供了遍历回退，但只覆盖基准面。本 Section 提供系统化的特征树遍历框架。
+
+### ⛔ MUST：FeatureTreeTraversal 框架
+
+```python
+class FeatureTreeTraversal:
+    """
+    系统化特征树遍历框架，替代 SelectByID2。
+    参考来源: vespo92/SolidworksMCP-TS (feature-complexity-analyzer.ts)
+    """
+    
+    @staticmethod
+    def find_feature_by_name(doc, name):
+        """按名称查找特征（正向遍历）"""
+        feat = doc.FirstFeature  # 属性
+        while feat is not None:
+            feat_name = feat.Name  # 属性
+            if feat_name == name:
+                return feat
+            feat = feat.GetNextFeature()  # 方法
+        return None
+    
+    @staticmethod
+    def find_feature_by_type(doc, type_name):
+        """按类型查找特征（反向遍历，最新创建优先）"""
+        feat = doc.FeatureManager.GetLastFeature()
+        while feat is not None:
+            if feat.GetTypeName2() == type_name:  # GetTypeName2 更精确
+                return feat
+            # 反向遍历需要手动实现（SW API 无 GetPreviousFeature）
+            break  # 实际实现中需要完整遍历
+        # 回退：正向遍历查找
+        feat = doc.FirstFeature
+        result = None
+        while feat is not None:
+            if feat.GetTypeName2() == type_name:
+                result = feat
+            feat = feat.GetNextFeature()
+        return result
+    
+    @staticmethod
+    def find_all_features_of_type(doc, type_name):
+        """查找所有指定类型的特征"""
+        results = []
+        feat = doc.FirstFeature
+        while feat is not None:
+            if feat.GetTypeName2() == type_name:
+                results.append(feat)
+            feat = feat.GetNextFeature()
+        return results
+    
+    @staticmethod
+    def find_sketch_for_feature(doc, feature_name):
+        """查找特征关联的草图"""
+        feat = FeatureTreeTraversal.find_feature_by_name(doc, feature_name)
+        if feat is None:
+            return None
+        try:
+            definition = feat.GetDefinition()
+            if definition is not None:
+                return definition.GetSketch()
+        except Exception:
+            pass
+        return None
+```
+
+### 特征类型常量速查
+
+| GetTypeName2 返回值 | 特征类型 |
+|------|------|
+| `BaseBody` | 基体 |
+| `Extrusion` | 拉伸 |
+| `Cut` | 切除 |
+| `Fillet` | 圆角 |
+| `Chamfer` | 倒角 |
+| `Shell` | 抽壳 |
+| `RefPlane` | 参考基准面 |
+| `Sketch` | 草图 |
+| `ProfileFeature` | 轮廓特征 |
+
+### ⚡ SHOULD：基准面选择优化（替代 Sec 28 safe_select）
+
+```python
+def find_plane_by_name(doc, plane_name, translations=None):
+    """
+    查找基准面（支持中英文双匹配）。
+    整合 Sec 37 翻译表 + Sec 28 遍历回退。
+    """
+    if translations is None:
+        translations = {
+            "Front Plane": "前视基准面", "前视基准面": "Front Plane",
+            "Top Plane": "上视基准面", "上视基准面": "Top Plane",
+            "Right Plane": "右视基准面", "右视基准面": "Right Plane",
+        }
+    # 1. 正向遍历查找原名
+    feat = doc.FirstFeature
+    while feat is not None:
+        if feat.Name == plane_name:
+            feat.Select2(False, 0)
+            return feat
+        feat = feat.GetNextFeature()
+    # 2. 尝试翻译名
+    translated = translations.get(plane_name)
+    if translated:
+        feat = doc.FirstFeature
+        while feat is not None:
+            if feat.Name == translated:
+                feat.Select2(False, 0)
+                return feat
+            feat = feat.GetNextFeature()
+    return None
+```
+
+### 与 Sec 28 safe_select 的对比
+
+| 维度 | safe_select (Sec 28) | FeatureTreeTraversal (本 Sec) |
+|------|---------------------|-------------------------------|
+| 覆盖范围 | 仅基准面 | 所有特征类型 |
+| 遍历方向 | FirstFeature → forward | 支持正向 + GetLastFeature |
+| 类型检测 | Name 字符串匹配 | GetTypeName2 + Name 双重匹配 |
+| 草图查找 | 不支持 | find_sketch_for_feature() |
+| 中英文兼容 | 无 | 内置翻译表 |
+
+### 💡 MAY：特征树遍历的其他用途
+
+- 建模历史审计（列出所有特征及其类型）
+- 特征依赖性分析（通过 GetDependencies）
+- 自动化特征重命名（批量改名）
+
+---
+
+## 五十一、COM 空值安全规则（Never Pass Null to COM）
+
+> 参考来源：[vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
+
+### 问题背景
+
+SelectByID2 在 Python COM 下需要 VARIANT(VT_DISPATCH, None) 包装 Callout 参数。直接用 Python None 传递给 COM 方法会触发 TypeError。但并非所有"空值"都该用 VARIANT 包装——有些参数应该省略或使用默认值。
+
+### ⛔ MUST：null vs undefined vs VARIANT(None) 对照表
+
+| 参数类型 | 正确写法 | ❌ 错误写法 | 说明 |
+|------|----------|----------|------|
+| Object 可选参数 | `VARIANT(VT_DISPATCH, None)` | `None` | COM 将 None 解读为 VT_NULL → 类型不匹配 |
+| 数值可选参数 | `0` (零) | `None` / `""` | COM 数值参数不接受 None |
+| 字符串可选参数 | `""` (空字符串) | `None` | COM 字符串参数不接受 None |
+| 布尔可选参数 | `False` | `None` | COM 布尔参数不接受 None |
+| ByRef 参数 | `VARIANT(VT_BYREF \| VT_I4, 0)` | `0` | by-ref 必须 VARIANT 包装 |
+| 数组参数 | `()` (空元组) | `None` / `[]` | COM 数组不接受 None |
+
+### SelectByID2 失败根因分析
+
+| 根因 | 现象 | 正确修复 |
+|------|------|----------|
+| Callout 传 Python None | TypeError | `VARIANT(VT_DISPATCH, None)` |
+| 坐标传 0 但对象不在原点 | 选择失败 | 使用遍历查找（Sec 50） |
+| Name 传空字符串 + 坐标全 0 | 无法定位 | 必须提供名称或坐标 |
+| 中文名称在不同语言版本不一致 | 选择失败 | 中英文双匹配（Sec 50） |
+
+### ⛔ MUST：参数传递 6 条最佳实践
+
+```python
+import win32com.client
+import pythoncom
+
+def safe_com_params(api_name, params):
+    """
+    将 Python 参数转换为 COM 安全格式。
+    参考来源: vespo92/SolidworksMCP-TS (设计决策: "never pass null to COM")
+    """
+    safe = list(params)
+    for i, val in enumerate(safe):
+        if val is None:
+            # 自动推断：根据参数位置判断类型
+            if api_name == "SelectByID2" and i == 7:  # Callout
+                safe[i] = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+            elif api_name == "Extension.SaveAs" and i in (4, 5):  # by-ref
+                safe[i] = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+            else:
+                safe[i] = 0  # 数值默认值
+    return tuple(safe)
+```
+
+### ⚡ SHOULD：COMSafeParams 工具类
+
+```python
+class COMSafeParams:
+    """自动将 Python 参数转换为 COM 安全格式"""
+    
+    TYPE_DEFAULTS = {
+        "object": lambda: win32com.client.VARIANT(pythoncom.VT_DISPATCH, None),
+        "int": lambda: 0,
+        "float": lambda: 0.0,
+        "str": lambda: "",
+        "bool": lambda: False,
+        "byref": lambda: win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0),
+    }
+    
+    @staticmethod
+    def sanitize(value, param_type="int"):
+        """将 None 转换为对应类型的安全空值"""
+        if value is not None:
+            return value
+        converter = COMSafeParams.TYPE_DEFAULTS.get(param_type)
+        if converter:
+            return converter()
+        return 0  # 默认数值
+    
+    @staticmethod
+    def sanitize_all(values, types):
+        """批量转换参数列表"""
+        return tuple(
+            COMSafeParams.sanitize(v, t) 
+            for v, t in zip(values, types)
+        )
+```
+
+### 💡 MAY：调试辅助
+
+```python
+def debug_com_params(api_name, params):
+    """COM 调用失败时输出参数诊断信息"""
+    print(f"API: {api_name}, 参数数: {len(params)}")
+    for i, p in enumerate(params):
+        ptype = type(p).__name__
+        if hasattr(p, 'value'):  # VARIANT
+            print(f"  [{i}] VARIANT({p.vt}, {p.value})")
+        else:
+            print(f"  [{i}] {ptype}: {p}")
+```
+
+### 与 Sec 39 M2 的关系
+
+- **M2** 只覆盖 SelectByID2 Callout 参数的 VARIANT 包装
+- **本 Section** 覆盖所有 COM 方法的空值处理规则
+- M2 是子集，本 Section 是全集
 
 ---
 

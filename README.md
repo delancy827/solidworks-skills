@@ -490,6 +490,23 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v5.1.0 — MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎 (2026-06-03)
+
+**核心突破：从 3 个 MIT 开源项目学习，补齐 COM/VBA 智能路由、熔断器、VBA 宏引擎三大基础设施**
+
+#### 📚 学习来源
+- [andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (22 stars) — COM 路由 + 熔断器
+- [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (163 stars) — 特征遍历 + 空值安全
+- [eyfel/mcp-server-solidworks](https://github.com/eyfel/mcp-server-solidworks) — 架构参考
+
+#### ⚡ 新增 6 个 Section
+- **Sec 46**：COM/VBA 智能路由（参数复杂度自动降级）— 参考 andrewbartels1 + vespo92
+- **Sec 47**：熔断器模式（COM 健康状态三态管理）— 参考 andrewbartels1
+- **Sec 48**：VBA 宏自动生成与执行 — 参考 andrewbartels1 + vespo92
+- **Sec 49**：pywin32 适配器增强（连接管理与安全包装器）— 参考 andrewbartels1
+- **Sec 50**：特征树遍历替代 SelectByID2 — 参考 vespo92
+- **Sec 51**：COM 空值安全规则（Never Pass Null）— 参考 vespo92
+
 ### v5.0.0 — 对比 wzyn20051216 仓库学习 + 6大新 Section (2026-06-03)
 
 **核心突破：从社区开源仓库学习，补齐文件导出、装配体运动、自审查、性能优化、外观材质**

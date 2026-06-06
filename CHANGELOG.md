@@ -1,5 +1,47 @@
 # Changelog
 
+## 2026-06-03（MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎）
+
+### solidworks-automation v5.0.0 → v5.1.0
+
+#### 📚 学习来源（3个 MIT 开源项目）
+- [andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT, 22 stars) — COM/VBA 智能路由、熔断器、VBA 宏执行器、pywin32 适配器
+- [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT, 163 stars) — 特征树遍历、COM 空值安全规则、VBA 宏生成器
+- [eyfel/mcp-server-solidworks](https://github.com/eyfel/mcp-server-solidworks) (MIT) — 架构参考（Python + C# 混合）
+
+#### Section 46：COM/VBA 智能路由（参数复杂度自动降级）
+- 来源：andrewbartels1 (complexity_analyzer.py + intelligent_router.py)
+- 按参数数量自动判断走 COM 直连（≤12）还是 VBA 宏降级（>12）
+- 复杂度评分公式 + 历史路由学习机制
+- 三级降级链：COM直连 → VBA宏 → 加法建模
+
+#### Section 47：熔断器模式（COM 健康状态三态管理）
+- 来源：andrewbartels1 (circuit_breaker.py)
+- Closed→Open→Half-Open 三态转换 + 失败计数阈值检测
+- 程序化实现铁律 3 的异常熔断行为规范
+
+#### Section 48：VBA 宏自动生成与执行
+- 来源：andrewbartels1 (vba_macro_executor.py) + vespo92 (macro-generator.ts)
+- VBA 代码生成模板 + .swp 文件保存规范 + 执行历史记录
+- FeatureCut4 VBA 等效代码示例
+
+#### Section 49：pywin32 适配器增强
+- 来源：andrewbartels1 (pywin32_adapter.py)
+- SWPyWin32Adapter 统一适配器类 + 自动重连（指数退避）+ COM 安全包装器
+- 整合 Sec 30/35 分散的连接逻辑
+
+#### Section 50：特征树遍历替代 SelectByID2
+- 来源：vespo92 (feature-complexity-analyzer.ts)
+- FeatureTreeTraversal 框架 + 草图查找算法
+- 与 Sec 28 safe_select 对比：覆盖范围从基准面扩展到全部特征类型
+
+#### Section 51：COM 空值安全规则（Never Pass Null to COM）
+- 来源：vespo92 (SolidworksMCP-TS 设计决策)
+- null vs undefined vs VARIANT(None) 完整对照表
+- 6 条参数传递最佳实践规则
+
+---
+
 ## 2026-06-03（全网经验吸纳：wzyn20051216 仓库对比学习 + 6大新 Section）
 
 ### solidworks-automation v4.9.0 → v5.0.0
