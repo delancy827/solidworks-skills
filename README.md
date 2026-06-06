@@ -490,7 +490,23 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v4.9.0 — 规则分级系统 + SolidPractices 最佳实践整合 + 全网经验吸纳 (2026-06-03)
+### v5.0.0 — 对比 wzyn20051216 仓库学习 + 6大新 Section (2026-06-03)
+
+**核心突破：从社区开源仓库学习，补齐文件导出、装配体运动、自审查、性能优化、外观材质**
+
+#### 📚 对比学习来源
+- 来源仓库：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (283 stars, MIT License)
+- 所有引用内容已标注来源，给予社区尊重
+
+#### ⚡ 新增 6 个 Section
+- **Sec 40**：COM 属性/方法兼容探测（`get_com_member` 模式）— 参考 wzyn20051216
+- **Sec 41**：文件导出规范（STEP/STL/IGES/PDF/DXF）— 参考 wzyn20051216
+- **Sec 42**：装配体运动配合（Gear/Hinge/Concentric Mate）— 参考 wzyn20051216
+- **Sec 43**：结果自审查系统（6项必做+6项目视）— 参考 wzyn20051216
+- **Sec 44**：大型装配体性能优化（图形刷新开关）— 参考 wzyn20051216
+- **Sec 45**：外观与材质设置 + API 查证增强 — 参考 wzyn20051216
+
+### v4.9.0 — 规则分级系统 + SolidPractices 最佳实践整合 (2026-06-03)
 
 **核心突破：AI 执行优先级终于有明确判断依据，不再靠猜**
 
@@ -504,13 +520,6 @@ git push origin feature/amazing-feature
 - 来源：CADSharp LLC / Dassault Systèmes 36页官方指南
 - 6条 ⛔MUST / 6条 ⚡SHOULD / 3条 💡MAY 完整标签化
 - 现有规则（Section 16/29）全部重新分级标注
-
-#### Sections 44-48：全网实战经验吸纳
-- **Sec 44**：COM 健康检查与超时保护（CSDN @2402_87963769）
-- **Sec 45**：装配体自动化规范（抖音 @Hvemiiiiiours / B站 @奇葩人参果）
-- **Sec 46**：工程图自动出图规范（网易 @Solidkits）
-- **Sec 47**：跨版本性能差异 + 失败统计（知乎 + 技术邻）
-- **Sec 48**：AI+SolidWorks 能力边界（全网共识总结）
 
 ---
 
