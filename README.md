@@ -109,7 +109,7 @@ SolidWorks 是全球最流行的 3D CAD 软件之一，但它的 API 非常复�
 ```
 solidworks-skills/
 ├── solidworks-automation/     # 自动化建模技能
-│  ├── SKILL.md          # 技能主文档（11KB，超详细）
+│  ├── SKILL.md          # 技能主文档（~103KB, 3100+行, 41个Section）
 │  │  ├── SW 2024 API 完全指南
 │  │  ├── Python COM 实战踩坑记录
 │  │  ├── 参数化建模工作流
@@ -117,17 +117,22 @@ solidworks-skills/
 │  │  └── 代码示例（4 个完整脚本）
 │  └── examples/         # 可运行示例代码
 │    ├── 01_basic_part.py     # 基础零件建模
-│    ├── parametric_design.py  # 参数化设计
-│    ├── batch_export.py     # 批量导出
-│    └── advanced_features.py  # 高级特征建模
+│    ├── 02_assembly.py       # 装配体建模
+│    ├── 03_drawing.py        # 工程图生成
+│    └── 04_simulation.py     # Simulation 分析
 │
 ├── sw-designer/          # 设计指导技能
-│  └── SKILL.md         # 设计指南（22KB，超详细）
+│  └── SKILL.md         # 设计指南（~14KB, 12章完整设计流程）
 │    ├── IMA 知识库集成（55 篇教程）
 │    ├── 参数化设计原则
 │    ├── 性能优化技巧
 │    ├── 设计规范检查清单
-│    └── 10 章完整设计流程
+│    └── 12 章完整设计流程
+│
+├── solidworks-mcp/       # MCP Server 安全操控 SolidWorks
+│  ├── server.py          # MCP 服务入口
+│  ├── tools/             # MCP 工具集（连接/建模/截图/验证）
+│  └── core/              # 核心模块（反幻觉/熔断器/W-A-R验证）
 │
 └── README.md           # 本文件
 ```
@@ -154,8 +159,11 @@ doc.FeatureManager.FeatureExtrusion2(
 )
 
 # ❌ 错误：SelectByID2 必须用 VARIANT 包装
-# doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, Nothing, 0) # 会报错！
-# ✅ 正确写法见 SKILL.md 第 127-156 行
+# doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, None, 0) # 会报错！
+# ✅ 正确写法：
+import win32com.client, pythoncom
+variant_none = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, variant_none, 0)
 ```
 
 **实战踩坑记录（这些都是花了一整天调试才发现的）：**
@@ -216,11 +224,13 @@ Package real-world debugging experience into **AI Agent Skills**, letting AI tru
 ```
 solidworks-skills/
 ├── solidworks-automation/     # Automation skill
-│  ├── SKILL.md          # Main doc (11KB, super detailed)
-│  └── examples/         # Runnable examples
+│  ├── SKILL.md          # Main doc (~103KB, 3100+ lines, 41 sections)
+│  └── examples/         # Runnable examples (01-04)
 │
 ├── sw-designer/          # Design guidance skill
-│  └── SKILL.md         # Design guide (22KB, super detailed)
+│  └── SKILL.md         # Design guide (~14KB, 12 chapters)
+│
+├── solidworks-mcp/       # MCP Server for SolidWorks
 │
 └── README.md           # This file
 ```
@@ -305,12 +315,18 @@ git submodule update --init --recursive
 import win32com.client
 import pythoncom
 
-sw = win32com.client.Dispatch("SldWorks.Application")
+# 铁律1: GetActiveObject优先 + Dispatch回退
+try:
+    sw = win32com.client.GetActiveObject("SldWorks.Application")
+except Exception:
+    sw = win32com.client.Dispatch("SldWorks.Application")
 sw.Visible = True
-doc = sw.NewDocument("C:\\ProgramData\\SolidWorks\\SOLIDWORKS 2024\\templates\\gb_part.prtdot", 0, 0, 0)
+sw.UserControl = True
+doc = sw.NewDocument(r"C:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\gb_part.prtdot", 0, 0, 0)
 
-# 选择前视基准面
-boolstatus = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+# 选择前视基准面（铁律2: VARIANT正确包装）
+variant_none = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+boolstatus = doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, variant_none, 0)
 
 # 创建草图并拉伸
 # ... (完整代码见 examples/01_basic_part.py)
@@ -489,6 +505,26 @@ git push origin feature/amazing-feature
 ## 更新日志 | Changelog
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
+
+### v5.1.1 — 示例代码合规修正 + Section 重编号 + 文档同步 (2026-06-03)
+
+**核心修复：示例代码全部遵守三大铁律，Section 编号连续，README 与实际同步**
+
+#### ✅ 示例代码合规
+- 01-04 全部修正：`Dispatch` → `GetActiveObject` + fallback、`SelectByID2` VARIANT 包装、`FeatureExtrusion2/3` 完整 23 参数、`try...finally` + W-A-R 断言
+
+#### ✅ Section 重编号
+- 修复 十七→二十八 的编号跳跃（十八~二十七共10个缺失编号）
+- 总 Section 数从 51 调整为 41（连续编号），所有交叉引用同步更新
+
+#### ✅ sw-designer v2.2.0 → v2.2.1
+- 修复内部代码示例：`SelectByID2` VARIANT 包装 + `FeatureExtrusion2` 23 参数签名
+
+#### ✅ README 全面更新
+- 修正 SKILL.md 大小描述、示例文件列表、sw-designer 章节数
+- 新增 solidworks-mcp/ 模块说明，代码示例改用正确 VARIANT 写法
+
+---
 
 ### v5.1.0 — MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎 (2026-06-03)
 

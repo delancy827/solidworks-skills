@@ -2,7 +2,7 @@
 name: sw-designer
 description: SW设计狮——结合IMA知识库"SW设计狮"(10篇)和"SW教程合集"(45个教程)双知识库的SolidWorks专业设计指导skill。专注参数化设计、自动化建模、批量零件设计、性能优化、设计规范与最佳实践。
 category: engineering-cad
-version: 2.2.0
+version: 2.2.1
 author: Delancy
 ---
 
@@ -98,18 +98,43 @@ author: Delancy
 - 参数驱动生成：根据输入参数自动建模
 
 ```python
-# 宏录制 → API转换示例
+# 宏录制 → API转换示例（遵守三大铁律）
 import win32com.client
-sw = win32com.client.Dispatch("SldWorks.Application")
+import pythoncom
+
+# 铁律1: GetActiveObject优先 + Dispatch回退
+sw = None
+try:
+    sw = win32com.client.GetActiveObject("SldWorks.Application")
+except Exception:
+    sw = win32com.client.Dispatch("SldWorks.Application")
 sw.Visible = True
+sw.UserControl = True  # 防止Python结束后SW被GC回收
+
 sw.NewPart()
 model = sw.ActiveDoc
-model.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, None, 0)
+
+# 铁律2: SelectByID2 第8参数必须用VARIANT包装
+variant_none = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+model.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, variant_none, 0)
 model.SketchManager.InsertSketch(True)
 model.SketchManager.CreateCircle(0, 0, 0, 0.025, 0, 0)
 model.SketchManager.InsertSketch(True)
-model.FeatureManager.FeatureExtrusion3(True, False, False, 0, 0, 0.05, 0.05,
-    False, False, False, False, 0, 0, False, False, False, False)
+
+# FeatureExtrusion2/3 完整23参数签名 (SW 2024)
+model.FeatureManager.FeatureExtrusion2(
+    True, False, False,       # Sd, Flip, Dir
+    0, 0,                     # T1, T2 (0=Blind)
+    0.05, 0.0,                # D1, D2 (米)
+    False, False,             # Dchk1, Dchk2
+    False, False,             # Ddir1, Ddir2
+    0.0, 0.0,                 # Dang1, Dang2
+    False, False,             # Ofr, Ofc
+    False, False,             # Tf1, Tf2
+    False,                    # Merge
+    False, False,             # UseFeatScope, UseAutoSelect
+    0.0, False, False         # StartOffset, IsAuto, FlipStart
+)
 ```
 
 ### 2.4 自动化进阶技巧

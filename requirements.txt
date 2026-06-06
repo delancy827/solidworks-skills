@@ -1,5 +1,7 @@
 # SolidWorks Skills - Python Dependencies
 # Install: pip install -r requirements.txt
 
-# Python COM bindings for SolidWorks API (v311 recommended, v306 has known issues with >12 param APIs)
-pywin32>=306
+# Python COM bindings for SolidWorks API
+# v311 recommended (v306 has known issues with >12 param APIs like FeatureExtrusion2)
+# pythoncom is included in pywin32 package
+pywin32>=311

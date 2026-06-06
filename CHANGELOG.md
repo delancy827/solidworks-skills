@@ -1,5 +1,44 @@
 # Changelog
 
+## 2026-06-03（示例代码合规修正 + Section 重编号 + 文档同步）
+
+### solidworks-automation v5.1.0 → v5.1.1
+
+#### 示例代码合规修正（P0）
+- `01_basic_part.py` ~ `04_simulation.py` 全部重写：
+  - `Dispatch` → `GetActiveObject` + Dispatch fallback 链路（铁律1.1）
+  - `SelectByID2` 第8参数 `None` → `VARIANT(VT_DISPATCH, None)`（铁律2）
+  - `FeatureExtrusion3` 从 16 参数补齐完整 23 参数（Sec 29 M5）
+  - 添加 `try...finally` + `CoInitialize/CoUninitialize`（铁律1.3）
+  - 添加 `UserControl = True`（Sec 29 M4）
+  - 添加 W-A-R 验证断言（铁律2）
+
+#### Section 编号修正（P1）
+- 修复 十七→二十八 的编号跳跃（十八~二十七共10个缺失编号）
+- 二十八~五十一 重编号为 十八~四十一（连续编号）
+- 全文 17 处 `Sec XX` / `Section XX` 交叉引用同步更新
+- 总 Section 数从 51 调整为 41
+
+### sw-designer v2.2.0 → v2.2.1
+
+- 修复第103行连接方式：`Dispatch` → `GetActiveObject` + fallback
+- 修复第107行 `SelectByID2`：`None` → `VARIANT(VT_DISPATCH, None)`
+- 修复第111行 `FeatureExtrusion3`：17参数 → 完整23参数 `FeatureExtrusion2` 签名
+
+### README.md 全面更新
+- 修正 SKILL.md 大小描述（11KB → ~103KB, 3100+行, 41个Section）
+- 修正示例文件列表（不存在的文件 → 实际的 01-04 文件）
+- 修正 sw-designer 章节数（10章 → 12章）
+- 新增 solidworks-mcp/ 模块结构说明
+- 代码示例改用 VARIANT 正确写法 + GetActiveObject 连接方式
+
+### 其他修正
+- `requirements.txt`：`pywin32>=306` → `pywin32>=311`（v306有>12参数API问题）
+- `CONTRIBUTING.md`：补充 FeatureExtrusion3 签名、VARIANT 规范、铁律链接
+- `skills/DEPRECATED.md`：新增废弃说明，引导用户使用主版本
+
+---
+
 ## 2026-06-03（MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎）
 
 ### solidworks-automation v5.0.0 → v5.1.0

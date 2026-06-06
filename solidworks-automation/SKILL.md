@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 5.1.0
+version: 5.1.1
 author: Delancy
 ---
 
@@ -1301,7 +1301,7 @@ def list_features(sw_model):
 
 ---
 
-## 二十八、SWValidator 验证框架（跨机测试验证）
+## 十八、SWValidator 验证框架（跨机测试验证）
 
 ### 问题背景
 API 返回值（`S_OK`、`None`、特征对象）不能证明操作真正成功。吕亚峰（2026-06-02 跨机测试）验证了必须多层验证。
@@ -1386,7 +1386,7 @@ def safe_select(doc, plane_name):
 
 ---
 
-## 二十九、国内网络环境 + pywin32 版本陷阱
+## 十九、国内网络环境 + pywin32 版本陷阱
 
 ### raw.githubusercontent.com 被墙问题（吕亚峰测试发现）
 
@@ -1444,7 +1444,7 @@ except:
 
 ---
 
-## 三十、连接回退完整链路（生产可用）
+## 二十、连接回退完整链路（生产可用）
 
 ```python
 def connect_sw():
@@ -1488,7 +1488,7 @@ def connect_sw():
 
 ---
 
-## 三十一、完整验证工作流（推荐的自动化脚本结构）
+## 二十一、完整验证工作流（推荐的自动化脚本结构）
 
 ```python
 import win32com.client
@@ -1562,7 +1562,7 @@ if __name__ == "__main__":
 
 ---
 
-## 三十二、凳子建模架构模式（吕亚峰跨机验证 2026-06-02）
+## 二十二、凳子建模架构模式（吕亚峰跨机验证 2026-06-02）
 
 ### 问题背景
 叉形接头是单件拉伸特征，而**凳子**是**多体装配建模**——座面 + 4条腿，需要多次选基准面、多次拉伸、坐标计算。吕亚峰实测验证了这个模式。
@@ -1622,7 +1622,7 @@ self.拉伸(leg_length, flip=True, name=f"腿{i+1}")
 
 ---
 
-## 三十三、P1-P10 问题审计框架（系统代码审查法）
+## 二十三、P1-P10 问题审计框架（系统代码审查法）
 
 吕亚峰在 `凳子_建模分析报告.md` 中提出了**10大问题审计框架**，适用于任何 SW 自动化脚本的 code review。
 
@@ -1647,7 +1647,7 @@ self.拉伸(leg_length, flip=True, name=f"腿{i+1}")
 
 ---
 
-## 三十四、CoInitialize + EditRebuild3 验证链
+## 二十四、CoInitialize + EditRebuild3 验证链
 
 ### CoInitialize 必须显式调用
 
@@ -1692,7 +1692,7 @@ self.保存(path)
 
 ---
 
-## 三十五、版本化 ProgID 连接策略
+## 二十五、版本化 ProgID 连接策略
 
 `凳子_自动建模_优化版.py` 第80行使用了**版本化 ProgID**：
 
@@ -1731,7 +1731,7 @@ def 连接(self):
 
 ---
 
-## 三十六、动态模板检测（多路径遍历）
+## 二十六、动态模板检测（多路径遍历）
 
 硬编码 `C:\ProgramData\...\gb_part.prtdot` 在其他机器上会失败。正确做法：
 
@@ -1753,7 +1753,7 @@ def _检测模板路径(self):
 
 ---
 
-## 三十七、基准面名称自动翻译（中英文切换）
+## 二十七、基准面名称自动翻译（中英文切换）
 
 ```python
 def _翻译基准面(self, name):
@@ -1784,7 +1784,7 @@ def 选择基准面(self, plane_name):
 
 ---
 
-## 三十八、完整生产级脚本模板（吕亚峰验证版）
+## 二十八、完整生产级脚本模板（吕亚峰验证版）
 
 ```python
 """
@@ -1807,10 +1807,10 @@ class 生产级建模器:
         self.template = self._检测模板路径()
 
     def _检测模板路径(self):
-        # ... 见 Sec 36 ...
+        # ... 见 Sec 26 ...
 
     def 连接(self):
-        # ... 见 Sec 35 ...
+        # ... 见 Sec 25 ...
 
     def 新建零件(self):
         self.doc = self.sw.NewDocument(self.template, 0, 0, 0)
@@ -1818,7 +1818,7 @@ class 生产级建模器:
         assert self.doc is not None
 
     def 选择基准面(self, name):
-        # ... 见 Sec 37 ...
+        # ... 见 Sec 27 ...
 
     def 拉伸(self, depth_m, flip=False, is_cut=False):
         before = self.doc.GetFeatureCount
@@ -1858,7 +1858,7 @@ if __name__ == "__main__":
 
 ---
 
-## 三十九、SolidPractices 官方最佳实践（2026-06-03 学习整合）
+## 二十九、SolidPractices 官方最佳实践（2026-06-03 学习整合）
 
 ### 来源
 
@@ -1937,7 +1937,7 @@ class 建模器:
 
 ---
 
-## 四十、COM 属性/方法兼容探测（get_com_member 模式）
+## 三十、COM 属性/方法兼容探测（get_com_member 模式）
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -1979,14 +1979,14 @@ type_name = get_com_member(feat, "GetTypeName2")    # 方法，自动调用
 
 ### 与现有铁律的关系
 
-本函数补充了铁律3（反幻觉）和 Section 39 M1（属性vs方法区分）的实战工具：
+本函数补充了铁律3（反幻觉）和 Section 29 M1（属性vs方法区分）的实战工具：
 - 不再需要手动维护属性/方法对照表
 - 任何不确定的 COM 成员都可以安全读取
 - 错误码 `-2147352573` = "Member not found"，是 pywin32 属性伪可调用时的典型错误
 
 ---
 
-## 四十一、文件导出规范（STEP/STL/IGES/PDF/DXF）
+## 三十一、文件导出规范（STEP/STL/IGES/PDF/DXF）
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -2073,7 +2073,7 @@ def batch_convert(sw, input_dir, output_dir, input_ext=".sldprt", output_ext=".s
 
 ---
 
-## 四十二、装配体运动配合（Gear/Hinge/Concentric Mate）
+## 三十二、装配体运动配合（Gear/Hinge/Concentric Mate）
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -2181,7 +2181,7 @@ count = interference.GetInterferenceCount()
 
 ---
 
-## 四十三、结果自审查系统
+## 三十三、结果自审查系统
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -2236,7 +2236,7 @@ print(f"特征树: {len(feature_summary)} 个特征")
 
 ---
 
-## 四十四、大型装配体性能优化
+## 三十四、大型装配体性能优化
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -2286,7 +2286,7 @@ sw.UserControl = True
 
 ---
 
-## 四十五、外观与材质设置 + API 查证增强
+## 三十五、外观与材质设置 + API 查证增强
 
 > 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
 
@@ -2350,7 +2350,7 @@ doc.MaterialPropertyValues = red_material
 
 ---
 
-## 四十六、COM/VBA 智能路由（参数复杂度自动降级）
+## 三十六、COM/VBA 智能路由（参数复杂度自动降级）
 
 > 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
 
@@ -2466,7 +2466,7 @@ API调用请求
 
 ---
 
-## 四十七、熔断器模式（COM 健康状态三态管理）
+## 三十七、熔断器模式（COM 健康状态三态管理）
 
 > 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
 
@@ -2603,13 +2603,13 @@ def check_restart_needed(breaker):
 
 ---
 
-## 四十八、VBA 宏自动生成与执行
+## 三十八、VBA 宏自动生成与执行
 
 > 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) + [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
 
 ### 问题背景
 
-Section 46 智能路由判定走 VBA 通道后，需要自动生成 VBA 代码。Python COM 无法直接调用 FeatureCut4，但 VBA 宏内可以正常调用。SW 2024 中 RunMacro(.swb) 返回 False → 需要正确的文件路径和执行方式。
+Section 36 智能路由判定走 VBA 通道后，需要自动生成 VBA 代码。Python COM 无法直接调用 FeatureCut4，但 VBA 宏内可以正常调用。SW 2024 中 RunMacro(.swb) 返回 False → 需要正确的文件路径和执行方式。
 
 ### ⛔ MUST：.swp 文件保存规范
 
@@ -2741,10 +2741,10 @@ def get_macro_success_rate(executor, api_name=None):
     return rate
 ```
 
-### 与 Sec 46 智能路由的协作
+### 与 Sec 36 智能路由的协作
 
 ```
-Sec 46 判定走 VBA
+Sec 36 判定走 VBA
 │
 ├─ 调用 VBAMacroGenerator 生成代码
 ├─ 调用 VBAMacroExecutor 保存并执行
@@ -2754,13 +2754,13 @@ Sec 46 判定走 VBA
 
 ---
 
-## 四十九、pywin32 适配器增强（连接管理与安全包装器）
+## 三十九、pywin32 适配器增强（连接管理与安全包装器）
 
 > 参考来源：[andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT License)
 
 ### 问题背景
 
-Sec 30 提供了连接回退链路，Sec 35 提供了版本化 ProgID，但缺少：自动重连机制、COM 安全包装器、类型库信息缓存。长时间运行的脚本中，COM 连接可能因 SW 崩溃/超时断开。
+Sec 20 提供了连接回退链路，Sec 25 提供了版本化 ProgID，但缺少：自动重连机制、COM 安全包装器、类型库信息缓存。长时间运行的脚本中，COM 连接可能因 SW 崩溃/超时断开。
 
 ### ⛔ MUST：SWPyWin32Adapter 统一适配器类
 
@@ -2783,7 +2783,7 @@ class SWPyWin32Adapter:
         self._type_cache = {}  # API 签名缓存
     
     def connect(self):
-        """连接 SolidWorks（整合 Sec 30 回退链 + Sec 35 ProgID 策略）"""
+        """连接 SolidWorks（整合 Sec 20 回退链 + Sec 25 ProgID 策略）"""
         # 第一优先：GetActiveObject
         try:
             self.sw = win32com.client.GetActiveObject("SldWorks.Application")
@@ -2866,7 +2866,7 @@ def cache_type_info(sw_adapter):
         pass  # 某些环境不支持
 ```
 
-### 与 Sec 47 熔断器的集成点
+### 与 Sec 37 熔断器的集成点
 
 - `safe_call()` 内部检查熔断器状态
 - 熔断器 Open 时 `safe_call()` 拒绝执行
@@ -2874,13 +2874,13 @@ def cache_type_info(sw_adapter):
 
 ---
 
-## 五十、特征树遍历替代 SelectByID2（可靠性优先选择策略）
+## 四十、特征树遍历替代 SelectByID2（可靠性优先选择策略）
 
 > 参考来源：[vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
 
 ### 问题背景
 
-SelectByID2 存在多个已知问题：VARIANT 包装（Sec 39 M2）、中文名称不一致（Sec 37）、浮点误差。Sec 28 的 safe_select 提供了遍历回退，但只覆盖基准面。本 Section 提供系统化的特征树遍历框架。
+SelectByID2 存在多个已知问题：VARIANT 包装（Sec 29 M2）、中文名称不一致（Sec 27）、浮点误差。Sec 18 的 safe_select 提供了遍历回退，但只覆盖基准面。本 Section 提供系统化的特征树遍历框架。
 
 ### ⛔ MUST：FeatureTreeTraversal 框架
 
@@ -2960,13 +2960,13 @@ class FeatureTreeTraversal:
 | `Sketch` | 草图 |
 | `ProfileFeature` | 轮廓特征 |
 
-### ⚡ SHOULD：基准面选择优化（替代 Sec 28 safe_select）
+### ⚡ SHOULD：基准面选择优化（替代 Sec 18 safe_select）
 
 ```python
 def find_plane_by_name(doc, plane_name, translations=None):
     """
     查找基准面（支持中英文双匹配）。
-    整合 Sec 37 翻译表 + Sec 28 遍历回退。
+    整合 Sec 27 翻译表 + Sec 18 遍历回退。
     """
     if translations is None:
         translations = {
@@ -2993,9 +2993,9 @@ def find_plane_by_name(doc, plane_name, translations=None):
     return None
 ```
 
-### 与 Sec 28 safe_select 的对比
+### 与 Sec 18 safe_select 的对比
 
-| 维度 | safe_select (Sec 28) | FeatureTreeTraversal (本 Sec) |
+| 维度 | safe_select (Sec 18) | FeatureTreeTraversal (本 Sec) |
 |------|---------------------|-------------------------------|
 | 覆盖范围 | 仅基准面 | 所有特征类型 |
 | 遍历方向 | FirstFeature → forward | 支持正向 + GetLastFeature |
@@ -3011,7 +3011,7 @@ def find_plane_by_name(doc, plane_name, translations=None):
 
 ---
 
-## 五十一、COM 空值安全规则（Never Pass Null to COM）
+## 四十一、COM 空值安全规则（Never Pass Null to COM）
 
 > 参考来源：[vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT License)
 
@@ -3035,9 +3035,9 @@ SelectByID2 在 Python COM 下需要 VARIANT(VT_DISPATCH, None) 包装 Callout �
 | 根因 | 现象 | 正确修复 |
 |------|------|----------|
 | Callout 传 Python None | TypeError | `VARIANT(VT_DISPATCH, None)` |
-| 坐标传 0 但对象不在原点 | 选择失败 | 使用遍历查找（Sec 50） |
+| 坐标传 0 但对象不在原点 | 选择失败 | 使用遍历查找（Sec 40） |
 | Name 传空字符串 + 坐标全 0 | 无法定位 | 必须提供名称或坐标 |
-| 中文名称在不同语言版本不一致 | 选择失败 | 中英文双匹配（Sec 50） |
+| 中文名称在不同语言版本不一致 | 选择失败 | 中英文双匹配（Sec 40） |
 
 ### ⛔ MUST：参数传递 6 条最佳实践
 
@@ -3111,7 +3111,7 @@ def debug_com_params(api_name, params):
             print(f"  [{i}] {ptype}: {p}")
 ```
 
-### 与 Sec 39 M2 的关系
+### 与 Sec 29 M2 的关系
 
 - **M2** 只覆盖 SelectByID2 Callout 参数的 VARIANT 包装
 - **本 Section** 覆盖所有 COM 方法的空值处理规则
