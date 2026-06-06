@@ -1,6 +1,42 @@
 # Changelog
 
-## 2026-06-03（规则分级系统 + SolidPractices 最佳实践整合 + 全网实战经验吸纳）
+## 2026-06-03（全网经验吸纳：wzyn20051216 仓库对比学习 + 6大新 Section）
+
+### solidworks-automation v4.9.0 → v5.0.0
+
+#### 📚 对比学习来源
+- 来源仓库：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (283 stars, MIT License)
+- 对比结论：我们在深度踩坑记录、规则分级系统上领先；对方在文件导出、装配体运动配合、自审查、外观材质、性能优化上领先
+
+#### Section 40：COM 属性/方法兼容探测（get_com_member 模式）
+- 参考来源: wzyn20051216 (sw_connect.py)
+- `get_com_member(obj, attr_name, *args)` — 统一处理 pywin32 属性/方法歧义
+- 替代手动维护"属性列表 vs 方法列表"的脆弱方式
+
+#### Section 41：文件导出规范（STEP/STL/IGES/PDF/DXF）
+- 参考来源: wzyn20051216 (references/export.md)
+- 8种导出格式 + SaveAs VARIANT 包装 + 批量转换模板
+
+#### Section 42：装配体运动配合（Gear/Hinge/Concentric Mate）
+- 参考来源: wzyn20051216 (references/assembly.md)
+- AddMate5 完整 15 参数 + 运动型装配 10 步工作流
+- 配合类型枚举表（11种）+ 圆柱面识别 + 干涉检测
+
+#### Section 43：结果自审查系统
+- 参考来源: wzyn20051216 (references/review.md)
+- 必做检查清单（6项）+ 目视自查清单（6项）
+
+#### Section 44：大型装配体性能优化
+- 参考来源: wzyn20051216 (references/troubleshooting.md)
+- EnableFeatureTree / EnableGraphicsUpdate 开关 + 分批策略
+
+#### Section 45：外观与材质设置 + API 查证增强
+- 参考来源: wzyn20051216 (references/appearance.md + api-lookup.md)
+- MaterialPropertyValues 数组 + 预设颜色表 + API 查证记录模板
+
+---
+
+## 2026-06-03（规则分级系统 + SolidPractices 最佳实践整合）
 
 ### solidworks-automation v4.8.0 → v4.9.0
 

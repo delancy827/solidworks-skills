@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 4.9.0
+version: 5.0.0
 author: Delancy
 ---
 
@@ -1934,6 +1934,419 @@ class 建模器:
    ├─ 是 → 根据上下文判断是否执行
    └─ 否 → 自行判断，但必须 W-A-R 验证
 ```
+
+---
+
+## 四十、COM 属性/方法兼容探测（get_com_member 模式）
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### 问题背景
+
+pywin32 中同一个 COM 成员在不同环境下可能表现为属性也可能表现为方法，`callable(member)` 不能作为唯一判断。手动维护"属性列表 vs 方法列表"脆弱且不可扩展。
+
+### ⛔ MUST：get_com_member 统一探测函数
+
+```python
+def get_com_member(obj, attr_name, *args):
+    """
+    兼容 pywin32 中"同一成员既可能是属性也可能是方法"的情况。
+    优先尝试调用，失败后回退为属性读取。
+    参考来源: wzyn20051216/solidworks-automation-skill (sw_connect.py)
+    """
+    member = getattr(obj, attr_name)
+    if args:
+        return member(*args)
+    try:
+        return member()
+    except Exception as exc:
+        message = str(exc)
+        if "-2147352573" in message or "找不到成员" in message or "Member not found" in message:
+            return member
+        raise
+```
+
+### 使用示例
+
+```python
+# 不再需要记住哪些是属性哪些是方法
+title = get_com_member(doc, "GetTitle")         # 属性，自动回退
+feat = get_com_member(doc, "FirstFeature")       # 属性，自动回退
+count = get_com_member(doc, "GetFeatureCount")   # 属性，自动回退
+next_feat = get_com_member(feat, "GetNextFeature")  # 方法，自动调用
+type_name = get_com_member(feat, "GetTypeName2")    # 方法，自动调用
+```
+
+### 与现有铁律的关系
+
+本函数补充了铁律3（反幻觉）和 Section 39 M1（属性vs方法区分）的实战工具：
+- 不再需要手动维护属性/方法对照表
+- 任何不确定的 COM 成员都可以安全读取
+- 错误码 `-2147352573` = "Member not found"，是 pywin32 属性伪可调用时的典型错误
+
+---
+
+## 四十一、文件导出规范（STEP/STL/IGES/PDF/DXF）
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### 支持的导出格式
+
+| 格式 | 扩展名 | 需要 ExportData | 说明 |
+|------|--------|:---:|------|
+| STEP | .step .stp | 否 | 通用 3D 交换格式 |
+| IGES | .igs .iges | 否 | 传统交换格式 |
+| STL | .stl | 否 | 3D 打印/网格 |
+| Parasolid | .x_t .x_b | 否 | 高精度内核格式 |
+| PDF | .pdf | 是 | 工程图导出 |
+| DXF/DWG | .dxf .dwg | 否 | 2D 图纸/展开图 |
+| 3D PDF | .pdf | 是 | 3D 嵌入式 PDF |
+| eDrawings | .eprt .easm .edrw | 否 | 轻量查看格式 |
+
+### ⛔ MUST：Extension.SaveAs 的 VARIANT 包装
+
+```python
+import win32com.client
+import pythoncom
+
+errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+callout = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+
+success = doc.Extension.SaveAs(
+    output_path,     # 输出路径
+    0,               # 版本 (0=当前版本)
+    1,               # 选项 (1=SaveAs)
+    callout,         # Callout
+    errors,          # 错误码 (by-ref)
+    warnings         # 警告码 (by-ref)
+)
+
+if success:
+    print(f"✓ 导出成功: {output_path}")
+else:
+    print(f"✗ 导出失败: 错误码={errors.value}, 警告码={warnings.value}")
+```
+
+### SaveAs 错误码/警告码速查
+
+| 值 | 错误名 | 说明 |
+|:---:|--------|------|
+| 0 | swGenericSaveError | 通用错误 |
+| 1 | swReadOnlySaveError | 只读文件 |
+| 5 | swFileSaveFormatNotAvailable | 格式不可用 |
+| 6 | swFileSaveAsDoNotOverwrite | 不覆盖现有文件 |
+| 9 | swFileSaveAsInvalidFileExtension | 无效扩展名 |
+
+### STL 导出质量设置
+
+```python
+# 设置 STL 输出质量为 Fine
+doc.SetUserPreferenceIntegerValue(78, 0)  # 0=Fine, 1=Coarse
+# 设置自定义偏差和角度容差
+doc.SetUserPreferenceDoubleValue(0x00000F, 0.005)   # 偏差(米)
+doc.SetUserPreferenceDoubleValue(0x000010, 0.174)    # 角度容差(弧度≈10°)
+```
+
+### 批量转换模板
+
+```python
+import os
+
+def batch_convert(sw, input_dir, output_dir, input_ext=".sldprt", output_ext=".step"):
+    """批量转换目录下的所有文件"""
+    os.makedirs(output_dir, exist_ok=True)
+    errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+    warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+
+    for filename in os.listdir(input_dir):
+        if filename.lower().endswith(input_ext):
+            input_path = os.path.join(input_dir, filename)
+            base = os.path.splitext(filename)[0]
+            output_path = os.path.join(output_dir, base + output_ext)
+            model = sw.OpenDoc6(input_path, 1, 1, "", errors, warnings)
+            if model:
+                model.Extension.SaveAs(output_path, 0, 1, None, errors, warnings)
+                sw.CloseDoc(get_com_member(model, "GetTitle"))
+                print(f"✓ 已转换: {filename} -> {base + output_ext}")
+```
+
+---
+
+## 四十二、装配体运动配合（Gear/Hinge/Concentric Mate）
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### AddMate5 完整 15 参数签名
+
+```python
+errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+mate = asm.FeatureManager.AddMate5(
+    mate_type,              # 1: swMateType_e 枚举
+    align,                  # 2: swMateAlign_e (0=Aligned)
+    flip,                   # 3: bool
+    distance,               # 4: float (米)
+    distance_upper,         # 5: 距离上限
+    distance_lower,         # 6: 距离下限
+    gear_num,               # 7: Gear Mate 分子
+    gear_den,               # 8: Gear Mate 分母
+    angle,                  # 9: float (弧度)
+    angle_upper,            # 10: 角度上限
+    angle_lower,            # 11: 角度下限
+    for_positioning_only,   # 12: bool
+    lock_rotation,          # 13: 同心配合是否锁旋转
+    width_mate_option,      # 14: Width Mate 选项
+    errors                  # 15: by-ref 错误码
+)
+```
+
+### 配合类型枚举
+
+| 值 | 名称 | 说明 |
+|:---:|------|------|
+| 0 | swMateCOINCIDENT | 重合 |
+| 1 | swMateCONCENTRIC | 同心 |
+| 2 | swMatePERPENDICULAR | 垂直 |
+| 3 | swMatePARALLEL | 平行 |
+| 4 | swMateTANGENT | 相切 |
+| 5 | swMateDISTANCE | 距离 |
+| 6 | swMateANGLE | 角度 |
+| 10 | swMateGEAR | 齿轮 |
+| 11 | swMateWIDTH | 宽度 |
+| 16 | swMateLOCK | 锁定 |
+| 22 | swMateHINGE | 铰链 |
+
+### 组件压缩状态枚举
+
+| 值 | 名称 | 说明 |
+|:---:|------|------|
+| 0 | Suppressed | 压缩 |
+| 1 | Lightweight | 轻化（GetModelDoc2 返回 None！） |
+| 2 | FullyResolved | 完全解析（推荐） |
+| 3 | Resolved | 解析 |
+
+### ⛔ MUST：运动型装配工作流
+
+1. 先保存所有零件，关闭不再编辑的文档
+2. 新建装配体，添加组件
+3. **对所有需读取特征/面的组件先解析**：`SetSuppression2(2)` → FullyResolved
+4. 用 `GetCorresponding()` 将零件内部对象映射到装配体上下文
+5. 固定件用三基准面重合 Mate 锁死
+6. **旋转件不要用三基准面完全锁死**，用同心 Mate + `lock_rotation=False`
+7. 齿轮联动用 Gear Mate，按齿数传入比例
+8. 创建后遍历 MateGroup 子特征确认真实 Mate 写入
+9. 脚本生成的动画 ≠ 可在 SolidWorks 中拖动
+10. 用 sw_review 导出多视角预览图验证
+
+### 圆柱面识别（轴/孔定位）
+
+```python
+def find_largest_cylinder_face(component, min_radius=0.004, max_radius=0.008):
+    """通过圆柱面识别轴/孔，用于 Mate 选择"""
+    part = component.GetModelDoc2()
+    if part is None:
+        return None  # 轻化/压缩组件无法读取
+    bodies = part.GetBodies2(0, False)
+    best_face, best_r = None, 0
+    for body in (bodies or []):
+        for face in body.GetFaces():
+            surface = face.GetSurface()
+            if surface.IsCylinder:
+                params = surface.CylinderParams
+                radius = params[6]  # 单位：米
+                if min_radius <= radius <= max_radius and radius > best_r:
+                    best_face, best_r = face, radius
+    return best_face
+```
+
+### GetCorresponding 使用规范
+
+```python
+# 正确：从零件模型中查找特征，再通过组件映射到装配体上下文
+part_model = component.GetModelDoc2()
+feature = part_model.FeatureByName("Front Plane")
+asm_feature = component.GetCorresponding(feature)
+asm_feature.Select2(False, 0)
+```
+
+### 干涉检测
+
+```python
+interference = asm.InterferenceDetection
+interference.TreatSubAssembliesAsComponents = False
+interference.TreatCoincidenceAsInterference = False
+interference.Done()
+count = interference.GetInterferenceCount()
+```
+
+---
+
+## 四十三、结果自审查系统
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### ⛔ MUST：必做检查清单（6项）
+
+每次生成、修改或导出 CAD 后，至少检查：
+
+1. COM 调用返回值不是 None，关键特征对象创建成功
+2. SaveAs / 导出返回成功
+3. 输出文件真实存在且大小合理（>0 bytes）
+4. 模型已重建：`doc.ForceRebuild3(False)`
+5. 模型已缩放到适合窗口：`doc.ViewZoomtofit2()`
+6. 至少导出一张等轴测 BMP，复杂模型导出前视、俯视、右视
+
+### 结构化自审查流程
+
+```python
+# 1. 强制重建
+doc.ForceRebuild3(False)
+doc.ViewZoomtofit2()
+
+# 2. 检查输出文件
+import os
+for path in expected_outputs:
+    assert os.path.exists(path), f"文件不存在: {path}"
+    assert os.path.getsize(path) > 0, f"文件为空: {path}"
+
+# 3. 读取特征树摘要
+feat = doc.FirstFeature  # 属性
+feature_summary = []
+while feat:
+    feature_summary.append(f"{get_com_member(feat, 'Name')} ({get_com_member(feat, 'GetTypeName2')})")
+    feat = feat.GetNextFeature()  # 方法
+print(f"特征树: {len(feature_summary)} 个特征")
+```
+
+### 目视自查清单（6项）
+
+- 主体是否出现在画面中，是否为空白或只剩草图
+- 关键部件是否齐全（孔、轴、外壳、支架等）
+- 比例是否明显错误（毫米误当米导致模型巨大）
+- 方向是否正确（如轮子在侧面而非车顶）
+- 部件是否明显重叠、悬空、穿模或缺少约束
+- 文件名、输出目录、导出格式是否符合用户要求
+
+### 发现问题时
+
+1. **不要只报告"文件已保存"**
+2. 先定位是草图、选择、拉伸方向、单位、基准面还是导出失败
+3. 修改脚本后重新生成并再次导出预览图
+4. 最终回复中说明已检查项和仍有限制的地方
+
+---
+
+## 四十四、大型装配体性能优化
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### ⚡ SHOULD：图形刷新开关
+
+```python
+# 批量操作前：禁用图形刷新
+doc.FeatureManager.EnableFeatureTree = False
+doc.ActiveView.EnableGraphicsUpdate = False
+
+# ... 执行批量操作 ...
+
+# 操作后：恢复并刷新
+doc.FeatureManager.EnableFeatureTree = True
+doc.ActiveView.EnableGraphicsUpdate = True
+doc.GraphicsRedraw2()
+```
+
+### 分批策略（超过 20 个零件）
+
+1. 分批生成零件，每批 10-20 个，保存后 CloseDoc
+2. 所有零件生成完毕后，统一打开装配体
+3. 添加组件前确认所有路径存在，失败组件记录清单
+4. 自动化脚本中关闭不必要的图形刷新
+
+### COM 变慢时的处理
+
+```python
+# 1. 保存关键输出
+# 2. 清理会话
+sw.CloseAllDocuments(False)
+# 3. 分批重新打开必要零件
+# 4. 仍不稳定时，提示用户重启 SLDWORKS.exe
+# 5. 脚本内记录失败组件和失败 API，不要只打印"完成"
+```
+
+### 批量操作模式
+
+```python
+# 批量操作前禁用 UserControl（注意：仅限批量操作，单个零件不要这样做）
+sw.UserControl = False
+# ... 批量操作 ...
+# 手动重建
+doc.EditRebuild3()
+sw.UserControl = True
+```
+
+---
+
+## 四十五、外观与材质设置 + API 查证增强
+
+> 参考来源：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (MIT License)
+
+### MaterialPropertyValues 数组格式
+
+SolidWorks 使用 9 元素数组定义材质外观：
+
+```python
+# [R, G, B, Ambient, Diffuse, Specular, Shininess, Transparency, Emission]
+# 值范围: 0.0 ~ 1.0
+red_material = [
+    0.8, 0.1, 0.1,    # RGB (红色)
+    0.2,                # Ambient (环境光)
+    0.6,                # Diffuse (漫反射)
+    0.3,                # Specular (镜面反射)
+    0.5,                # Shininess (光泽度)
+    0.0,                # Transparency (透明度, 0=不透明)
+    0.0                 # Emission (发光)
+]
+
+# 设置文档级外观
+doc.MaterialPropertyValues = red_material
+```
+
+### 预设颜色速查
+
+| 名称 | RGB | 用途 |
+|------|-----|------|
+| iron_red | (0.8, 0.1, 0.1) | 深红装甲 |
+| armor_gold | (0.8, 0.7, 0.2) | 金色装甲 |
+| dark_gunmetal | (0.2, 0.2, 0.25) | 深色金属/关节 |
+| silver | (0.75, 0.75, 0.75) | 银色金属 |
+| black | (0.05, 0.05, 0.05) | 黑色 |
+| white | (0.95, 0.95, 0.95) | 白色 |
+
+### 稳定性建议
+
+- 单零件多特征上色可能受 SW 版本、显示状态、特征合并影响
+- 对颜色要求高的模型，优先拆成多个零件，对每个零件用文档级外观
+- 生成后必须导出预览图检查颜色和层次是否可见
+
+### API 查证工作流增强
+
+遇到 scripts 中尚未封装的 SolidWorks API 时：
+
+1. **优先资料源顺序**：官方 API Help → 本地 SDK → 本仓库已有封装 → 新写最小验证脚本
+2. **查证记录模板**：
+   ```
+   API: FeatureExtrusion3
+   资料源: help.solidworks.com
+   版本: SW 2024
+   签名: 21 参数
+   关键参数: Merge=参数16
+   枚举: swEndCondBlind=0
+   返回值: Feature 对象或 None
+   失败症状: 轮廓不闭合时返回 None
+   验证脚本: test_extrude.py
+   是否沉淀: 是 → scripts/sw_part.py
+   ```
+3. **沉淀规则**：同一 API 第二次用到就封装进工具函数；出现兼容问题、错误码、中文版名称差异时补充到文档
 
 ---
 
