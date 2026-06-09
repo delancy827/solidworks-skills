@@ -13,6 +13,11 @@ python src/clevis-joint/vertical_clevis_support.py
 That launcher compiles and runs the C# strong-typed modeler
 `src/clevis-joint/VerticalClevisSupport.cs`.
 
+Generated files are written under
+`C:/Users/<user>/Desktop/vertical_clevis_support_output/`, with verification
+views in the `views/` subfolder. Do not scatter generated CAD files directly on
+the desktop root.
+
 The side-view slot must be real geometry from the start:
 
 - Build the round base.

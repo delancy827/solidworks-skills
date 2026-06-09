@@ -9,7 +9,7 @@ solid web instead of the side-view 25 mm through slot.
 Default behavior is intentionally conservative:
 - reuse/start at most one SolidWorks instance through the C# program;
 - refuse to run when many SolidWorks documents are already open;
-- save C:/Users/<user>/Desktop/vertical_clevis_support.SLDPRT;
+- save under C:/Users/<user>/Desktop/vertical_clevis_support_output/;
 - close the generated document after saving;
 - do not capture screenshots unless --capture is passed.
 """

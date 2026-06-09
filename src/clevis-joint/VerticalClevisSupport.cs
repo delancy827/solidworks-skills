@@ -24,7 +24,7 @@ class VerticalClevisSupport
     static ModelDoc2 swDoc;
     static PartDoc partDoc;
     static string createdDocTitle;
-    static string desktop;
+    static string outputDir;
     static string outputPath;
     static bool keepOpen;
     static bool captureViews;
@@ -41,8 +41,11 @@ class VerticalClevisSupport
     static int Main(string[] args)
     {
         ParseArgs(args);
-        desktop = System.Environment.GetFolderPath(System.Environment.SpecialFolder.DesktopDirectory);
-        outputPath = Path.Combine(desktop, "vertical_clevis_support.SLDPRT");
+        outputDir = Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.DesktopDirectory),
+            "vertical_clevis_support_output");
+        Directory.CreateDirectory(outputDir);
+        outputPath = Path.Combine(outputDir, "vertical_clevis_support.SLDPRT");
 
         try
         {
@@ -314,7 +317,7 @@ class VerticalClevisSupport
 
     static void CaptureViews()
     {
-        string dir = Path.Combine(desktop, "vertical_clevis_support_views");
+        string dir = Path.Combine(outputDir, "views");
         Directory.CreateDirectory(dir);
         CaptureView("*Front", 1, Path.Combine(dir, "front.jpg"));
         CaptureView("*Right", 4, Path.Combine(dir, "right.jpg"));
