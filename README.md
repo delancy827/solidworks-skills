@@ -315,6 +315,13 @@ git submodule update --init --recursive
 python src/clevis-joint/vertical_clevis_support.py
 ```
 
+Note: this launcher compiles and runs `VerticalClevisSupport.cs`. The vertical
+clevis support must be modeled from the three-view relationship: a full-depth
+bridge below the slot, then two separate ears above it. The 25 mm middle slot
+and the phi18 pin hole are formed by the boss profiles themselves; do not rely
+on a later Python `FeatureCut4` cleanup, because that path can silently leave a
+single solid upright.
+
 这个脚本对应的是**圆盘底座 + 下部实体桥 + 上部竖直双耳 + 中间贯通镂空槽**，不要误用 `clevis_fork_*.py` 系列的水平叉头脚本。主形体采用加法建模；如果 Python COM 下 `FeatureCut4` 失败，会自动添加孔位标记并在日志中声明，需要切换到 C#/VBA 切除通道或手工贯穿切除。
 
 ---
