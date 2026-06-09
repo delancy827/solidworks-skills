@@ -57,9 +57,9 @@ class VerticalClevisSupport
             BuildForkEarsWithThroughHoles();
 
             VerifyBodies(1, "finished part");
-            AssertVolume();
             SavePart(outputPath);
             if (captureViews) CaptureViews();
+            AssertVolume();
 
             Log("DONE part=" + outputPath);
             return 0;
@@ -183,23 +183,17 @@ class VerticalClevisSupport
 
     static void BuildSlotBottomBridge()
     {
-        Log("[2] full-depth bridge below slot bottom");
+        Log("[2] full-width/full-depth bridge below slot bottom");
         double x = UprightWidth / 2.0;
         double y0 = BaseHeight;
         double y1 = BaseHeight + SlotBottomAboveBase;
-        double halfDepth = EarPackDepth / 2.0;
 
         SelectStandardPlane(StandardPlane.Front);
         swDoc.SketchManager.InsertSketch(true);
         swDoc.SketchManager.CreateCornerRectangle(-x, y0, 0, x, y1, 0);
         swDoc.SketchManager.InsertSketch(true);
-        ExtrudeBoss(halfDepth, true, false, "bridge +depth", (int)swStartConditions_e.swStartSketchPlane, 0, false);
+        ExtrudeBossMidPlane(EarPackDepth, true, "slot-bottom bridge");
 
-        SelectStandardPlane(StandardPlane.Front);
-        swDoc.SketchManager.InsertSketch(true);
-        swDoc.SketchManager.CreateCornerRectangle(-x, y0, 0, x, y1, 0);
-        swDoc.SketchManager.InsertSketch(true);
-        ExtrudeBoss(halfDepth, true, true, "bridge -depth", (int)swStartConditions_e.swStartSketchPlane, 0, false);
         VerifyBodies(1, "bridge");
     }
 
@@ -207,18 +201,34 @@ class VerticalClevisSupport
     {
         Log("[3] two separated fork ears; central slot=25, each ear=17.5");
         double slotHalf = SlotWidth / 2.0;
+        double earCenterOffset = slotHalf + EarThickness / 2.0;
 
-        SelectStandardPlane(StandardPlane.Front);
-        DrawEarProfileWithHole();
-        ExtrudeBoss(EarThickness, true, true, "rear ear with through hole",
-            (int)swStartConditions_e.swStartOffset, slotHalf, true);
-
-        SelectStandardPlane(StandardPlane.Front);
-        DrawEarProfileWithHole();
-        ExtrudeBoss(EarThickness, true, false, "front ear with through hole",
-            (int)swStartConditions_e.swStartOffset, slotHalf, false);
+        BuildEarOnMidPlane(-earCenterOffset, "rear ear");
+        BuildEarOnMidPlane(earCenterOffset, "front ear");
 
         VerifyBodies(1, "fork ears");
+    }
+
+    static void BuildEarOnMidPlane(double offset, string label)
+    {
+        Feature plane = CreateFrontOffsetPlane(offset, label + " center plane");
+        swDoc.ClearSelection2(true);
+        if (!plane.Select2(false, 0)) Fail("cannot select " + label + " plane");
+        DrawEarProfileWithHole();
+        ExtrudeBossMidPlane(EarThickness, true, label + " with through hole");
+    }
+
+    static Feature CreateFrontOffsetPlane(double offset, string label)
+    {
+        SelectStandardPlane(StandardPlane.Front);
+        int before = swDoc.GetFeatureCount();
+        Feature plane = (Feature)swDoc.FeatureManager.InsertRefPlane(
+            (int)swRefPlaneReferenceConstraints_e.swRefPlaneReferenceConstraint_Distance,
+            offset, 0, 0, 0, 0);
+        swDoc.ForceRebuild3(false);
+        if (plane == null || swDoc.GetFeatureCount() <= before) Fail("offset plane failed: " + label);
+        plane.Name = label;
+        return plane;
     }
 
     static void DrawEarProfileWithHole()
@@ -263,24 +273,71 @@ class VerticalClevisSupport
         Log("OK " + label + " " + before + "->" + after);
     }
 
+    static void ExtrudeBossMidPlane(double depth, bool merge, string label)
+    {
+        int before = swDoc.GetFeatureCount();
+        Feature feat = swDoc.FeatureManager.FeatureExtrusion2(
+            true, false, false,
+            (int)swEndConditions_e.swEndCondMidPlane,
+            (int)swEndConditions_e.swEndCondBlind,
+            depth, 0.0,
+            false, false,
+            false, false,
+            0.0, 0.0,
+            false, false,
+            false, false,
+            merge,
+            true, true,
+            (int)swStartConditions_e.swStartSketchPlane,
+            0,
+            false);
+
+        swDoc.ForceRebuild3(false);
+        int after = swDoc.GetFeatureCount();
+        if (feat == null && after <= before) Fail(label + " returned null and no feature was added");
+        if (after <= before) Fail(label + " feature count did not increase " + before + "->" + after);
+        Log("OK " + label + " " + before + "->" + after);
+    }
+
     static void VerifyBodies(int expected, string label)
     {
         object[] bodies = (object[])partDoc.GetBodies2((int)swBodyType_e.swSolidBody, false);
         int count = bodies == null ? 0 : bodies.Length;
         if (count != expected) Fail(label + " body count " + count + " expected " + expected);
         Log("OK " + label + " body count=" + count);
+        if (count == 1) LogBodyBox(bodies[0], label);
+        LogVolume(label);
+    }
+
+    static void LogBodyBox(object bodyObject, string label)
+    {
+        try
+        {
+            Body2 body = (Body2)bodyObject;
+            object boxObject = body.GetBodyBox();
+            double[] box = (double[])boxObject;
+            if (box == null || box.Length < 6) return;
+            Log(String.Format(
+                "{0} bbox x=[{1:F4},{2:F4}] y=[{3:F4},{4:F4}] z=[{5:F4},{6:F4}]",
+                label,
+                box[0], box[3],
+                box[1], box[4],
+                box[2], box[5]));
+        }
+        catch
+        {
+        }
     }
 
     static void AssertVolume()
     {
         double baseVolume = Math.PI * Math.Pow(BaseDia / 2.0, 2) * BaseHeight;
         double bridgeVolume = UprightWidth * EarPackDepth * SlotBottomAboveBase;
-        double bridgeBaseOverlap = UprightWidth * SlotBottomAboveBase * BaseHeight;
         double earOuterArea = UprightWidth * (HoleCenterY - BaseHeight - SlotBottomAboveBase)
             + 0.5 * Math.PI * Math.Pow(UprightRadius, 2);
         double holeArea = Math.PI * Math.Pow(HoleDia / 2.0, 2);
         double earsVolume = 2.0 * EarThickness * (earOuterArea - holeArea);
-        double expected = baseVolume + bridgeVolume + earsVolume - bridgeBaseOverlap;
+        double expected = baseVolume + bridgeVolume + earsVolume;
 
         MassProperty mp = (MassProperty)swDoc.Extension.CreateMassProperty();
         double actual = mp.Volume;
@@ -290,6 +347,18 @@ class VerticalClevisSupport
         if (relErr > 0.008)
         {
             Fail("volume assertion failed; the middle slot or pin holes are probably not modeled correctly");
+        }
+    }
+
+    static void LogVolume(string label)
+    {
+        try
+        {
+            MassProperty mp = (MassProperty)swDoc.Extension.CreateMassProperty();
+            Log(String.Format("{0} volume={1:F9}", label, mp.Volume));
+        }
+        catch
+        {
         }
     }
 
@@ -336,12 +405,21 @@ class VerticalClevisSupport
     static void SelectStandardPlane(StandardPlane plane)
     {
         swDoc.ClearSelection2(true);
-        string englishName = plane == StandardPlane.Front ? "Front Plane"
-            : plane == StandardPlane.Top ? "Top Plane"
-            : "Right Plane";
+        string[] names = plane == StandardPlane.Front
+            ? new[] { "Front Plane", "前视基准面" }
+            : plane == StandardPlane.Top
+                ? new[] { "Top Plane", "上视基准面" }
+                : new[] { "Right Plane", "右视基准面" };
 
-        bool ok = swDoc.Extension.SelectByID2(englishName, "PLANE", 0, 0, 0, false, 0, null, 0);
-        if (ok) return;
+        foreach (string name in names)
+        {
+            bool ok = swDoc.Extension.SelectByID2(name, "PLANE", 0, 0, 0, false, 0, null, 0);
+            if (ok)
+            {
+                Log("selected " + plane + " plane by name: " + name);
+                return;
+            }
+        }
 
         Feature feat = (Feature)swDoc.FirstFeature();
         int index = 0;
@@ -354,7 +432,11 @@ class VerticalClevisSupport
                 if (index == (int)plane)
                 {
                     swDoc.ClearSelection2(true);
-                    if (feat.Select2(false, 0)) return;
+                    if (feat.Select2(false, 0))
+                    {
+                        Log("selected " + plane + " plane by fallback index " + index + ": " + feat.Name);
+                        return;
+                    }
                 }
                 index++;
             }
