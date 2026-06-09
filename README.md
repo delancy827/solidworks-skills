@@ -305,6 +305,20 @@ git submodule update --init --recursive
 
 ## 使用示例 | Usage Examples
 
+### 示例 0：按三视图建竖直叉耳支座
+
+**用户说：**
+> "按这张图画一个圆底座双耳支座：底座 Φ150×30，耳高 120，孔 Φ18，耳包深 60，中槽 25，槽底距底座上表面 20"
+
+**AI 执行：**
+```bash
+python src/clevis-joint/vertical_clevis_support.py
+```
+
+这个脚本对应的是**圆盘底座 + 下部实体桥 + 上部竖直双耳 + 中间贯通镂空槽**，不要误用 `clevis_fork_*.py` 系列的水平叉头脚本。主形体采用加法建模；如果 Python COM 下 `FeatureCut4` 失败，会自动添加孔位标记并在日志中声明，需要切换到 C#/VBA 切除通道或手工贯穿切除。
+
+---
+
 ### 示例 1：自动化建模（简单零件）
 
 **用户说：** 

@@ -205,6 +205,16 @@ doc.SketchManager.AddRelation(...)  # 忘了是 AddConstraint 还是 AddRelation
 - 圆角用 FeatureFillet3
 - 孔位用 FeatureExtrusion2 做标记(1mm凸台)，手动切除
 
+### 形态识别：水平叉头 vs 竖直叉耳支座
+遇到三视图零件图时，先判断主形态，不能只看到"叉耳/clevis"就套用水平叉头模板。
+
+| 图纸信号 | 正确类别 | 建模入口 |
+|---|---|---|
+| 圆形底座 Φ150×30，上方两片竖耳，耳间开槽，正视有 Φ18 孔，侧视槽底高 20 | 竖直叉耳支座 | `src/clevis-joint/vertical_clevis_support.py` |
+| 水平扁柄 + 端部叉口，整体沿 X 方向伸展 | 水平叉形接头 | `src/clevis-joint/clevis_fork_*.py` 或 `Clevis_Joint.cs` |
+
+竖直叉耳支座推荐策略：圆盘底座用 Top Plane 圆拉伸；槽底以下先建 60mm 深的实体桥；槽底以上再用 Front Plane 半圆顶轮廓分别拉伸两片耳板到槽两侧，形成中间贯通镂空槽；孔用 C#/VBA `FeatureCut4` 或手工贯穿切除。Python COM 直连切除失败时，只允许创建清晰孔位标记并报告失败，严禁宣称已完成通孔。
+
 ### 模板路径
 ```python
 TEMPLATE = r'C:\ProgramData\SolidWorks\SOLIDWORKS 2024\templates\gb_part.prtdot'
