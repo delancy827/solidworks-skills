@@ -8,9 +8,10 @@ using SolidWorks.Interop.swconst;
 
 class CourseProjectAssembly
 {
-    static readonly string WorkDir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压作业";
+    // TODO: Update WorkDir to your working directory before running.
+    static readonly string WorkDir = @"C:\temp\sw_course";
     static readonly string ShotDir = Path.Combine(WorkDir, "建模过程截图");
-    static readonly string Part1Source = @"C:\Users\22374\Desktop\vertical_clevis_support_output\vertical_clevis_support.SLDPRT";
+    static readonly string Part1Source = @"C:\temp\sw_course\vertical_clevis_support.SLDPRT";
     static readonly string Part1Path = Path.Combine(WorkDir, "零件1.SLDPRT");
     static readonly string Part2Path = Path.Combine(WorkDir, "零件2.SLDPRT");
     static readonly string Part3Path = Path.Combine(WorkDir, "零件3.SLDPRT");
