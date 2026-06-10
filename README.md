@@ -122,7 +122,7 @@ solidworks-skills/
 │    └── 04_simulation.py     # Simulation 分析
 │
 ├── sw-designer/          # 设计指导技能
-│  └── SKILL.md         # 设计指南（~14KB, 12章完整设计流程）
+│  └── SKILL.md         # 设计指南（~28KB, 17章完整设计流程）
 │    ├── IMA 知识库集成（55 篇教程）
 │    ├── 参数化设计原则
 │    ├── 性能优化技巧
@@ -228,7 +228,7 @@ solidworks-skills/
 │  └── examples/         # Runnable examples (01-04)
 │
 ├── sw-designer/          # Design guidance skill
-│  └── SKILL.md         # Design guide (~14KB, 12 chapters)
+│  └── SKILL.md         # Design guide (~28KB, 17 chapters)
 │
 ├── solidworks-mcp/       # MCP Server for SolidWorks
 │
@@ -505,6 +505,28 @@ git push origin feature/amazing-feature
 ## 更新日志 | Changelog
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
+
+### v5.1.2 — 隐私清理 + Codex 装配经验同步 + sw-designer v2.6.0 (2026-06-10)
+
+**核心更新：隐私安全加固 + Codex++ 装配调试经验整合 + 设计技能大幅扩展**
+
+#### 🔒 隐私清理
+- 删除 `.codebuddy/`、`.workbuddy/` 目录（含个人路径、学号、工作日志等敏感信息）
+- 替换源码中硬编码路径为通用占位符（`C:\temp\sw_course`），保留代码可运行性
+- `solidworks-automation/SKILL.md` 中 `E:/sw2024/SOLIDWORKS` 替换为通用路径
+
+#### 🆕 新增 Codex 装配调试经验（6 条核心法则）
+- `docs/solidworks-assembly-debugging-lessons.md` — 装配调试 6 条核心经验 + Robust Transform 模式
+- `docs/github-push-handoff.md` — GitHub 推送交接笔记
+- `src/clevis-joint/CourseProjectAssembly.cs` — 圆底双耳支座 + 双叉连杆 + 双销轴装配体完整脚本
+- `src/clevis-joint/CourseProjectStepReplay.cs` — 分步重播截图工具
+- `src/clevis-joint/InspectCylinders.cs` — 圆柱面检测与干涉检查工具
+- `src/clevis-joint/make_course_doc.py` — 课程文档自动生成（截图→Word）
+
+#### 📈 sw-designer v2.2.1 → v2.6.0
+- 新增第13~17章：斜面建草图禁止规则、参数化封装架构、正交几何设计铁律、双重嵌套纠错环等
+
+---
 
 ### v5.1.1 — 示例代码合规修正 + Section 重编号 + 文档同步 (2026-06-03)
 
