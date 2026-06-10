@@ -8,7 +8,8 @@ using SolidWorks.Interop.swconst;
 
 class CourseProjectStepReplay
 {
-    static readonly string WorkDir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压作业";
+    // TODO: Update WorkDir to your working directory before running.
+    static readonly string WorkDir = @"C:\temp\sw_course";
     static readonly string ShotDir = Path.Combine(WorkDir, "建模过程截图");
     static SldWorks swApp;
     static ModelDoc2 doc;
