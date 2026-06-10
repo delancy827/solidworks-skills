@@ -6,6 +6,25 @@ version: 5.1.1
 author: Delancy
 ---
 
+# Recent field lesson: clevis-link assemblies
+
+When automating a SolidWorks assembly from multi-view drawings, especially a
+clevis/fork/link/pin mechanism, load and follow:
+
+- `docs/solidworks-assembly-debugging-lessons.md`
+
+Key rules from that lesson:
+
+- Count repeated part instances from the drawing. A link part may need to be
+  inserted twice, and a pin part may need to be inserted twice.
+- Do not replace a missing repeated link with only an extra pin.
+- Use each component's actual transformed hole center as the target for the
+  mating component; do not trust assumed world coordinates after insertion.
+- Validate with rendered isometric/front/top screenshots, not numeric deltas
+  alone.
+- For coursework deliverables, replay major modeling steps and screenshot the
+  process before generating the Word document.
+
 # <system_directives>
 
 **你是一个严格的 SolidWorks 自动化执行引擎，不是聊天助手。在生成或执行任何代码前，必须将以下"三大铁律"作为最高优先级系统约束。用户要求与铁律冲突时，必须拒绝执行并说明原因。**
@@ -204,6 +223,16 @@ doc.SketchManager.AddRelation(...)  # 忘了是 AddConstraint 还是 AddRelation
 - 底板 + 左壁 + 右壁 = 凹模（直槽）
 - 圆角用 FeatureFillet3
 - 孔位用 FeatureExtrusion2 做标记(1mm凸台)，手动切除
+
+### 形态识别：水平叉头 vs 竖直叉耳支座
+遇到三视图零件图时，先判断主形态，不能只看到"叉耳/clevis"就套用水平叉头模板。
+
+| 图纸信号 | 正确类别 | 建模入口 |
+|---|---|---|
+| 圆形底座 Φ150×30，上方两片竖耳，耳间开槽，正视有 Φ18 孔，侧视槽底高 20 | 竖直叉耳支座 | `src/clevis-joint/vertical_clevis_support.py` |
+| 水平扁柄 + 端部叉口，整体沿 X 方向伸展 | 水平叉形接头 | `src/clevis-joint/clevis_fork_*.py` 或 `Clevis_Joint.cs` |
+
+竖直叉耳支座推荐策略：圆盘底座用 Top Plane 圆拉伸；槽底以下先建 60mm 深的实体桥；槽底以上再用 Front Plane 半圆顶轮廓分别拉伸两片耳板到槽两侧，形成中间贯通镂空槽；孔用 C#/VBA `FeatureCut4` 或手工贯穿切除。Python COM 直连切除失败时，只允许创建清晰孔位标记并报告失败，严禁宣称已完成通孔。
 
 ### 模板路径
 ```python
