@@ -16,7 +16,6 @@ class VerticalClevisSupport
     const double SlotBottomAboveBase = 0.020;
     const double HoleDia = 0.018;
 
-    static readonly double EarThickness = (EarPackDepth - SlotWidth) / 2.0;
     static readonly double UprightRadius = UprightWidth / 2.0;
     static readonly double HoleCenterY = BaseHeight + UprightHeightAboveBase - UprightRadius;
 
@@ -53,10 +52,11 @@ class VerticalClevisSupport
             NewPart();
 
             BuildBase();
-            BuildSlotBottomBridge();
-            BuildForkEarsWithThroughHoles();
+            BuildFullUprightWithThroughHole();
+            CutMiddleSlot();
 
             VerifyBodies(1, "finished part");
+            PrepareFinalDisplay();
             SavePart(outputPath);
             if (captureViews) CaptureViews();
             AssertVolume();
@@ -181,60 +181,34 @@ class VerticalClevisSupport
         VerifyBodies(1, "base");
     }
 
-    static void BuildSlotBottomBridge()
+    static void BuildFullUprightWithThroughHole()
     {
-        Log("[2] full-width/full-depth bridge below slot bottom");
+        Log("[2] full upright blank with phi18 through hole");
+        SelectStandardPlane(StandardPlane.Front);
+        DrawEarProfileWithHole();
+        ExtrudeBossMidPlane(EarPackDepth, true, "full upright with through hole");
+        VerifyBodies(1, "upright blank");
+    }
+
+    static void CutMiddleSlot()
+    {
+        Log("[3] cut middle slot: centered +/-12.5, bottom=20 above base");
         double x = UprightWidth / 2.0;
-        double y0 = BaseHeight;
-        double y1 = BaseHeight + SlotBottomAboveBase;
+        double y0 = BaseHeight + SlotBottomAboveBase;
+        double y1 = BaseHeight + UprightHeightAboveBase;
 
         SelectStandardPlane(StandardPlane.Front);
         swDoc.SketchManager.InsertSketch(true);
         swDoc.SketchManager.CreateCornerRectangle(-x, y0, 0, x, y1, 0);
         swDoc.SketchManager.InsertSketch(true);
-        ExtrudeBossMidPlane(EarPackDepth, true, "slot-bottom bridge");
-
-        VerifyBodies(1, "bridge");
-    }
-
-    static void BuildForkEarsWithThroughHoles()
-    {
-        Log("[3] two separated fork ears; central slot=25, each ear=17.5");
-        double slotHalf = SlotWidth / 2.0;
-        double earCenterOffset = slotHalf + EarThickness / 2.0;
-
-        BuildEarOnMidPlane(-earCenterOffset, "rear ear");
-        BuildEarOnMidPlane(earCenterOffset, "front ear");
-
-        VerifyBodies(1, "fork ears");
-    }
-
-    static void BuildEarOnMidPlane(double offset, string label)
-    {
-        Feature plane = CreateFrontOffsetPlane(offset, label + " center plane");
-        swDoc.ClearSelection2(true);
-        if (!plane.Select2(false, 0)) Fail("cannot select " + label + " plane");
-        DrawEarProfileWithHole();
-        ExtrudeBossMidPlane(EarThickness, true, label + " with through hole");
-    }
-
-    static Feature CreateFrontOffsetPlane(double offset, string label)
-    {
-        SelectStandardPlane(StandardPlane.Front);
-        int before = swDoc.GetFeatureCount();
-        Feature plane = (Feature)swDoc.FeatureManager.InsertRefPlane(
-            (int)swRefPlaneReferenceConstraints_e.swRefPlaneReferenceConstraint_Distance,
-            offset, 0, 0, 0, 0);
-        swDoc.ForceRebuild3(false);
-        if (plane == null || swDoc.GetFeatureCount() <= before) Fail("offset plane failed: " + label);
-        plane.Name = label;
-        return plane;
+        CutMidPlane(SlotWidth, "middle 25mm slot");
+        VerifyBodies(1, "middle slot");
     }
 
     static void DrawEarProfileWithHole()
     {
         double x = UprightWidth / 2.0;
-        double y0 = BaseHeight + SlotBottomAboveBase;
+        double y0 = BaseHeight;
         double yc = HoleCenterY;
         double yt = BaseHeight + UprightHeightAboveBase;
 
@@ -299,6 +273,34 @@ class VerticalClevisSupport
         Log("OK " + label + " " + before + "->" + after);
     }
 
+    static void CutMidPlane(double depth, string label)
+    {
+        int before = swDoc.GetFeatureCount();
+        Feature feat = swDoc.FeatureManager.FeatureCut4(
+            false, false, false,
+            (int)swEndConditions_e.swEndCondMidPlane,
+            (int)swEndConditions_e.swEndCondBlind,
+            depth, 0.0,
+            false, false,
+            false, false,
+            0.0, 0.0,
+            false, false,
+            false, false,
+            false,
+            false, false,
+            false, false,
+            false,
+            (int)swStartConditions_e.swStartSketchPlane,
+            0.0,
+            false, false);
+
+        swDoc.ForceRebuild3(false);
+        int after = swDoc.GetFeatureCount();
+        if (feat == null && after <= before) Fail(label + " returned null and no feature was added");
+        if (after <= before) Fail(label + " feature count did not increase " + before + "->" + after);
+        Log("OK " + label + " " + before + "->" + after);
+    }
+
     static void VerifyBodies(int expected, string label)
     {
         object[] bodies = (object[])partDoc.GetBodies2((int)swBodyType_e.swSolidBody, false);
@@ -332,12 +334,14 @@ class VerticalClevisSupport
     static void AssertVolume()
     {
         double baseVolume = Math.PI * Math.Pow(BaseDia / 2.0, 2) * BaseHeight;
-        double bridgeVolume = UprightWidth * EarPackDepth * SlotBottomAboveBase;
-        double earOuterArea = UprightWidth * (HoleCenterY - BaseHeight - SlotBottomAboveBase)
+        double fullUprightOuterArea = UprightWidth * (HoleCenterY - BaseHeight)
+            + 0.5 * Math.PI * Math.Pow(UprightRadius, 2);
+        double slottedOuterArea = UprightWidth * (HoleCenterY - BaseHeight - SlotBottomAboveBase)
             + 0.5 * Math.PI * Math.Pow(UprightRadius, 2);
         double holeArea = Math.PI * Math.Pow(HoleDia / 2.0, 2);
-        double earsVolume = 2.0 * EarThickness * (earOuterArea - holeArea);
-        double expected = baseVolume + bridgeVolume + earsVolume;
+        double uprightVolume = EarPackDepth * (fullUprightOuterArea - holeArea);
+        double slotVolume = SlotWidth * (slottedOuterArea - holeArea);
+        double expected = baseVolume + uprightVolume - slotVolume;
 
         MassProperty mp = (MassProperty)swDoc.Extension.CreateMassProperty();
         double actual = mp.Volume;
@@ -388,9 +392,44 @@ class VerticalClevisSupport
     {
         string dir = Path.Combine(outputDir, "views");
         Directory.CreateDirectory(dir);
+        PrepareFinalDisplay();
         CaptureView("*Front", 1, Path.Combine(dir, "front.jpg"));
         CaptureView("*Right", 4, Path.Combine(dir, "right.jpg"));
         CaptureView("*Isometric", 7, Path.Combine(dir, "iso.jpg"));
+    }
+
+    static void PrepareFinalDisplay()
+    {
+        try { swDoc.ClearSelection2(true); } catch { }
+        HideReferencePlanes();
+        try { swDoc.ForceRebuild3(false); } catch { }
+        try { swDoc.GraphicsRedraw2(); } catch { }
+    }
+
+    static void HideReferencePlanes()
+    {
+        Feature feat = null;
+        try { feat = (Feature)swDoc.FirstFeature(); } catch { }
+        while (feat != null)
+        {
+            try
+            {
+                if (feat.GetTypeName2() == "RefPlane")
+                {
+                    swDoc.ClearSelection2(true);
+                    if (feat.Select2(false, 0))
+                    {
+                        swDoc.BlankRefGeom();
+                    }
+                }
+            }
+            catch
+            {
+            }
+            try { feat = (Feature)feat.GetNextFeature(); }
+            catch { feat = null; }
+        }
+        try { swDoc.ClearSelection2(true); } catch { }
     }
 
     static void CaptureView(string name, int id, string path)

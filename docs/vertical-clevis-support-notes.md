@@ -18,17 +18,22 @@ Generated files are written under
 views in the `views/` subfolder. Do not scatter generated CAD files directly on
 the desktop root.
 
-The side-view slot must be real geometry from the start:
+The side-view slot must be real geometry and centered on the middle plane:
 
 - Build the round base.
-- Build the lower bridge full depth up to the slot-bottom height.
-- Build two separated upper ears with a 25 mm empty gap between them.
-- Include the `Phi18` pin hole inside the ear boss profiles.
-- Assert final volume so a missing slot or missing hole fails the build.
+- Build one full-depth upright boss with the `Phi18` through hole.
+- Cut the middle slot from the front-plane sketch using C# `FeatureCut4`
+  mid-plane depth `25 mm`, so the side view is split `12.5 mm` on each side of
+  the center plane.
+- Keep the slot bottom `20 mm` above the base top; material below that remains
+  as the bridge between the two ears.
+- Assert final volume so a missing slot, too-narrow slot, or missing hole fails
+  the build.
 
-Do not build this part as one solid upright and then rely on a later Python COM
-`FeatureCut4` cleanup. That path can silently leave a single solid plate, which
-breaks the three-view relationship.
+Do not build this part by separately adding two offset ear bosses. That path is
+sensitive to offset-plane and flip-direction interpretation and can leave the
+side-view slot too narrow or the root geometry stepped. Use the C# strong-typed
+cut path in `VerticalClevisSupport.cs`.
 
 The builder refuses to run when many SolidWorks documents are already open
 unless explicitly forced, and closes its generated document after saving unless

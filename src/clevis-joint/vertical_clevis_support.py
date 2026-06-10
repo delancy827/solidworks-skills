@@ -2,9 +2,9 @@
 Safe launcher for the vertical clevis support example.
 
 The actual model is built by VerticalClevisSupport.cs because this part needs
-reliable start-offset extrusion and volume checks.  The Python COM path is not
-used for the geometry: earlier direct-COM attempts could silently create one
-solid web instead of the side-view 25 mm through slot.
+reliable C# FeatureCut4 slot cutting and volume checks.  The Python COM path is
+not used for the geometry: earlier direct-COM attempts could silently create one
+solid web or an incorrectly narrow side-view slot.
 
 Default behavior is intentionally conservative:
 - reuse/start at most one SolidWorks instance through the C# program;
