@@ -2,7 +2,7 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 5.1.1
+version: 5.1.2
 author: Delancy
 ---
 
