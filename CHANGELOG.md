@@ -33,6 +33,17 @@
 
 ---
 
+### 源码隐私清理（硬编码路径 -> 占位符）
+- `src/clevis-joint/CourseProjectAssembly.cs`
+  - `C:/Users/22374/Desktop/...` -> `C:/temp/sw_course`
+  - 新增 `// TODO: Update WorkDir` 注释
+- `src/clevis-joint/CourseProjectStepReplay.cs`
+  - 同上路径替换
+- `solidworks-automation/SKILL.md`
+  - `E:/sw2024/SOLIDWORKS` -> `C:/SOLIDWORKS`（通用路径）
+- 策略：保留代码可运行性，仅替换个人路径为通用占位符，不影响 skill 性能
+
+
 ## 2026-06-03（示例代码合规修正 + Section 重编号 + 文档同步）
 
 ### solidworks-automation v5.1.0 → v5.1.1
