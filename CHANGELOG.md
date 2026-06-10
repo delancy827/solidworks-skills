@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-06-10（隐私清理 + Codex 经验同步 + sw-designer 更新）
+
+### 隐私清理（P0）
+- **删除 .codebuddy/ 目录**：包含 WorkBuddy 内部插件配置（settings.local.json），暴露内部目录结构
+- **删除 .workbuddy/ 目录**：包含 4 个 memory 日志文件 + 4 个 skill 副本
+  - .workbuddy/memory/2026-05-30.md — 含个人工作日志
+  - .workbuddy/memory/2026-05-31.md — 含个人工作日志
+  - .workbuddy/memory/2026-06-01.md — 含硬编码路径 C:/Users/22374/Desktop/...、学号、SW 安装路径等敏感信息
+  - .workbuddy/memory/MEMORY.md — 含 E:/sw2024/SOLIDWORKS 路径、个人项目经验
+  - .workbuddy/skills/* — skill 副本与仓库主目录重复，属冗余文件
+- **根因**：.gitignore 已包含 .workbuddy/ 和 .codebuddy/，但这些文件是在添加 .gitignore 之前提交的
+- **建议**：后续避免将运行时生成的本地工作区文件提交到公开仓库
+
+### solidworks-automation SKILL.md 更新（v5.1.1 → v5.1.2）
+- 新增 assembly debugging 实战章节（来源：Codex++ 成功跑通的经验）
+- 新增装配体 AddComponent5 / Transform2 精确定位方法论
+- 新增重复零件检测与实例化规则（同一零件在装配图中出现多次时的处理）
+- 新增截图验证闭环（isometric / top / front 多视图对比）
+
+### 新增 Codex 经验文档与源码
+- docs/solidworks-assembly-debugging-lessons.md — 装配调试 6 条核心经验 + 验证清单 + Robust Transform 模式
+- docs/github-push-handoff.md — GitHub 推送交接笔记
+- src/clevis-joint/CourseProjectAssembly.cs — 圆底双耳支座 + 双叉连杆 + 双销轴装配体完整脚本
+- src/clevis-joint/CourseProjectStepReplay.cs — 分步重播截图工具（用于课程过程文档）
+- src/clevis-joint/InspectCylinders.cs — 圆柱面检测与干涉检查工具
+- src/clevis-joint/make_course_doc.py — 课程文档自动生成（截图→Word）
+
+### sw-designer SKILL.md 更新（v2.2.1 → v2.6.0）
+- 本地 v2.6.0 已推送到 GitHub
+- 新增第13~17章：斜面建草图禁止规则、参数化封装架构、正交几何设计铁律、双重嵌套纠错环等
+
+---
+
 ## 2026-06-03（示例代码合规修正 + Section 重编号 + 文档同步）
 
 ### solidworks-automation v5.1.0 → v5.1.1
