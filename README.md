@@ -515,6 +515,7 @@ git push origin feature/amazing-feature
 - **Complex drawing intake rule**：复杂图纸先建尺寸账本，禁止把"仅标记"说成"已切除"
 
 #### 🌐 经验章节回并（Sec 42-46）
+- **经验来源**：社区公开实践 — CSDN @2402_87963769、抖音 @Hvemiiiiiours、B站 @奇葩人参果、网易 @Solidkits、知乎/技术邻 等
 - **Sec 42**：COM 健康检查+超时保护
 - **Sec 43**：装配体自动化规范（四阶段 + 配合黄金顺序）
 - **Sec 44**：工程图自动出图规范（四大模块 + 企业四大经验）
@@ -523,6 +524,7 @@ git push origin feature/amazing-feature
 
 #### 📚 基底已含 v5.1.2 重构（41 章）
 - 跨机测试验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
+- **经验来源**：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)、andrewbartels1/eyfel 等社区开源项目
 
 ### v5.1.2 — 隐私清理 + Codex 装配经验同步 + sw-designer v2.6.0 (2026-06-10)
 
@@ -569,6 +571,8 @@ git push origin feature/amazing-feature
 
 **核心突破：补齐 COM/VBA 智能路由、熔断器、VBA 宏引擎三大基础设施**
 
+- **经验来源**：社区 MIT 开源项目 — andrewbartels1/SolidworksMCP-python、vespo92/SolidworksMCP-TS、eyfel/mcp-server-solidworks
+
 #### ⚡ 新增 6 个 Section
 - **Sec 46**：COM/VBA 智能路由（参数复杂度自动降级）
 - **Sec 47**：熔断器模式（COM 健康状态三态管理）
@@ -580,6 +584,8 @@ git push origin feature/amazing-feature
 ### v5.0.0 — 文件导出/装配运动/自审查/性能优化能力补齐 (2026-06-03)
 
 **核心突破：补齐文件导出、装配体运动、自审查、性能优化、外观材质**
+
+- **经验来源**：社区开源仓库 wzyn20051216/solidworks-automation-skill（MIT，283 stars）
 
 #### ⚡ 新增 6 个 Section
 - **Sec 40**：COM 属性/方法兼容探测（`get_com_member` 模式）

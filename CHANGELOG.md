@@ -12,6 +12,7 @@
 - Sec 1-17：SW 全模块教程（草图/特征/装配/工程图/曲面/钣金/焊件/模具/Simulation/Flow/批量/API参考/排错/规范/工作流）
 - Sec 18-28：SWValidator 验证框架、跨机测试验证全套（凳子建模/P1-P10/CoInitialize/版本化ProgID/动态模板/基准面翻译）
 - Sec 29-41：SolidPractices 官方最佳实践、get_com_member 兼容探测、装配体运动配合(Gear/Hinge)、结果自审查、大型装配体性能、外观材质、COM/VBA智能路由降级、熔断器三态管理、VBA宏生成执行、pywin32适配器增强、特征树遍历替代SelectByID2、COM空值安全规则
+- **经验来源**：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)、andrewbartels1/eyfel 等社区开源项目
 
 #### 2. 回并 v4.9.0 经验章节（Sec 42-46）
 - **Sec 42**：COM 健康检查与超时保护（子进程+超时、脏会话隔离、中文路径隔离）
@@ -19,6 +20,7 @@
 - **Sec 44**：工程图自动出图规范（四大模块、出图代码、企业四大经验）
 - **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考
 - **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）
+- **经验来源**：社区公开实践 — CSDN @2402_87963769、抖音 @Hvemiiiiiours、B站 @奇葩人参果、网易 @Solidkits、知乎/技术邻 等
 
 ---
 
@@ -127,6 +129,7 @@
 #### Section 51：COM 空值安全规则（Never Pass Null to COM）
 - null vs undefined vs VARIANT(None) 完整对照表
 - 6 条参数传递最佳实践规则
+- **经验来源**：社区 MIT 开源项目 — andrewbartels1/SolidworksMCP-python、vespo92/SolidworksMCP-TS、eyfel/mcp-server-solidworks
 
 ---
 
@@ -153,6 +156,7 @@
 
 #### Section 45：外观与材质设置 + API 查证增强
 - MaterialPropertyValues 数组 + 预设颜色表 + API 查证记录模板
+- **经验来源**：社区开源仓库 wzyn20051216/solidworks-automation-skill（MIT，283 stars）
 
 ---
 
@@ -170,6 +174,7 @@
 - **6条 ⛔ MUST**：属性vs方法区分、VARIANT包装、单位转换(m)、UserControl=True、CoInitialize()、FeatureCut不可用
 - **6条 ⚡ SHOULD**：特征命名、常量集中化、关注点分离、CloseDoc、先简后繁、重建验证
 - **3条 💡 MAY**：VBA宏注入、多版本ProgID回退、CDN镜像
+- **经验来源**：CADSharp LLC / Dassault Systèmes 官方 API 文档与最佳实践
 
 #### 🔧 现有规则标签化
 - Section 16（设计规范）：16.1模板规范→⛔MUST、16.2命名→⚡SHOULD、16.3最佳实践→⚡/💡分级
@@ -186,6 +191,7 @@
 - **Sec 46**：工程图自动出图规范（四大模块、出图代码、企业四大经验）
 - **Sec 47**：跨版本性能差异 + 失败统计
 - **Sec 48**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）
+- **经验来源**：社区公开实践 — CSDN、抖音、B站、网易、知乎、技术邻 等多平台实战经验汇总
 
 ---
 
