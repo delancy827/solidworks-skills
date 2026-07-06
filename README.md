@@ -608,6 +608,7 @@ git push origin feature/amazing-feature
 #### 📚 Section 39：SolidPractices 官方最佳实践整合
 - 6条 ⛔MUST / 6条 ⚡SHOULD / 3条 💡MAY 完整标签化
 - 现有规则（Section 16/29）全部重新分级标注
+- **经验来源**：CADSharp LLC / Dassault Systèmes 官方 API 文档与最佳实践
 
 ---
 
