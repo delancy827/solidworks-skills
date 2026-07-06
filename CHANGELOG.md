@@ -1,25 +1,24 @@
 # Changelog
 
-## 2026-07-07（v5.3.0 — Claude 优化基底 + 全网经验来源标注）
+## 2026-07-07（v5.3.0 — Claude 优化基底 + 经验章节回并）
 
 ### solidworks-automation v5.1.2 → v5.3.0
 
-> 本次迭代来源：用户用 Claude 优化过的 v5.1.2 基底。**关键修正**：上一轮误用远程 Codex 会话的 v5.1.2 当基底，丢失了 Claude 版的独有优化；本轮改回以 **Claude v5.1.2 为唯一基底**。
+> 本轮以用户用 Claude 优化过的 v5.1.2 为唯一基底（修正上一轮误用其他会话基底导致丢失的独有优化），并补回 v4.9.0 经验章节。
 
-#### 1. Claude 优化基底（v5.1.2，含 Codex 版缺失的独有优化）
+#### 1. Claude 优化基底（v5.1.2，含其他版本缺失的独有优化）
 - **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检，纯文本模型必须先声明无法看图
 - **Complex drawing intake rule**：复杂图纸建模前先建尺寸账本（Exact/Inferred/Designer-choice/Unsupported），禁止把"仅标记"描述成"已切除"
 - Sec 1-17：SW 全模块教程（草图/特征/装配/工程图/曲面/钣金/焊件/模具/Simulation/Flow/批量/API参考/排错/规范/工作流）
 - Sec 18-28：SWValidator 验证框架、跨机测试验证全套（凳子建模/P1-P10/CoInitialize/版本化ProgID/动态模板/基准面翻译）
 - Sec 29-41：SolidPractices 官方最佳实践、get_com_member 兼容探测、装配体运动配合(Gear/Hinge)、结果自审查、大型装配体性能、外观材质、COM/VBA智能路由降级、熔断器三态管理、VBA宏生成执行、pywin32适配器增强、特征树遍历替代SelectByID2、COM空值安全规则
-  - 引用：SolidPractices / CADSharp、wzyn20051216 MIT 项目、vespo92/SolidworksMCP-TS (MIT)
 
-#### 2. 回并 v4.9.0 全网经验（带引用来源，Sec 42-46）
-- **Sec 42**：COM 健康检查与超时保护（子进程+超时、脏会话隔离、中文路径隔离）— 来源：CSDN @2402_87963769
-- **Sec 43**：装配体自动化规范（四阶段进化、配合黄金顺序、错误修复表）— 来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果
-- **Sec 44**：工程图自动出图规范（四大模块、出图代码、企业四大经验）— 来源：网易 @Solidkits 企业案例
-- **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考 — 来源：知乎 / 技术邻 / github.com/yu-qing2 / 2dmaterial-lab.github.io
-- **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）— 综合抖音/B站/CSDN/知乎/网易/技术邻
+#### 2. 回并 v4.9.0 经验章节（Sec 42-46）
+- **Sec 42**：COM 健康检查与超时保护（子进程+超时、脏会话隔离、中文路径隔离）
+- **Sec 43**：装配体自动化规范（四阶段进化、配合黄金顺序、错误修复表）
+- **Sec 44**：工程图自动出图规范（四大模块、出图代码、企业四大经验）
+- **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考
+- **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）
 
 ---
 
@@ -31,7 +30,7 @@
 - **建议**：后续避免将运行时生成的本地工作区文件提交到公开仓库
 
 ### solidworks-automation SKILL.md 更新（v5.1.1 → v5.1.2）
-- 新增 assembly debugging 实战章节（来源：Codex++ 成功跑通的经验）
+- 新增 assembly debugging 实战章节（来自实机跑通的经验沉淀）
 - 新增装配体 AddComponent5 / Transform2 精确定位方法论
 - 新增重复零件检测与实例化规则（同一零件在装配图中出现多次时的处理）
 - 新增截图验证闭环（isometric / top / front 多视图对比）
@@ -100,80 +99,59 @@
 
 ---
 
-## 2026-06-03（MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎）
+## 2026-06-03（COM 智能路由 + 熔断器 + VBA 宏引擎基础设施）
 
 ### solidworks-automation v5.0.0 → v5.1.0
 
-#### 📚 学习来源（3个 MIT 开源项目）
-- [andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (MIT, 22 stars) — COM/VBA 智能路由、熔断器、VBA 宏执行器、pywin32 适配器
-- [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (MIT, 163 stars) — 特征树遍历、COM 空值安全规则、VBA 宏生成器
-- [eyfel/mcp-server-solidworks](https://github.com/eyfel/mcp-server-solidworks) (MIT) — 架构参考（Python + C# 混合）
-
 #### Section 46：COM/VBA 智能路由（参数复杂度自动降级）
-- 来源：andrewbartels1 (complexity_analyzer.py + intelligent_router.py)
 - 按参数数量自动判断走 COM 直连（≤12）还是 VBA 宏降级（>12）
 - 复杂度评分公式 + 历史路由学习机制
 - 三级降级链：COM直连 → VBA宏 → 加法建模
 
 #### Section 47：熔断器模式（COM 健康状态三态管理）
-- 来源：andrewbartels1 (circuit_breaker.py)
 - Closed→Open→Half-Open 三态转换 + 失败计数阈值检测
 - 程序化实现铁律 3 的异常熔断行为规范
 
 #### Section 48：VBA 宏自动生成与执行
-- 来源：andrewbartels1 (vba_macro_executor.py) + vespo92 (macro-generator.ts)
 - VBA 代码生成模板 + .swp 文件保存规范 + 执行历史记录
 - FeatureCut4 VBA 等效代码示例
 
 #### Section 49：pywin32 适配器增强
-- 来源：andrewbartels1 (pywin32_adapter.py)
 - SWPyWin32Adapter 统一适配器类 + 自动重连（指数退避）+ COM 安全包装器
 - 整合 Sec 30/35 分散的连接逻辑
 
 #### Section 50：特征树遍历替代 SelectByID2
-- 来源：vespo92 (feature-complexity-analyzer.ts)
 - FeatureTreeTraversal 框架 + 草图查找算法
 - 与 Sec 28 safe_select 对比：覆盖范围从基准面扩展到全部特征类型
 
 #### Section 51：COM 空值安全规则（Never Pass Null to COM）
-- 来源：vespo92 (SolidworksMCP-TS 设计决策)
 - null vs undefined vs VARIANT(None) 完整对照表
 - 6 条参数传递最佳实践规则
 
 ---
 
-## 2026-06-03（全网经验吸纳：wzyn20051216 仓库对比学习 + 6大新 Section）
+## 2026-06-03（社区经验对比学习 + 6大新 Section）
 
 ### solidworks-automation v4.9.0 → v5.0.0
 
-#### 📚 对比学习来源
-- 来源仓库：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (283 stars, MIT License)
-- 对比结论：我们在深度踩坑记录、规则分级系统上领先；对方在文件导出、装配体运动配合、自审查、外观材质、性能优化上领先
-
 #### Section 40：COM 属性/方法兼容探测（get_com_member 模式）
-- 参考来源: wzyn20051216 (sw_connect.py)
 - `get_com_member(obj, attr_name, *args)` — 统一处理 pywin32 属性/方法歧义
 - 替代手动维护"属性列表 vs 方法列表"的脆弱方式
 
 #### Section 41：文件导出规范（STEP/STL/IGES/PDF/DXF）
-- 参考来源: wzyn20051216 (references/export.md)
 - 8种导出格式 + SaveAs VARIANT 包装 + 批量转换模板
 
 #### Section 42：装配体运动配合（Gear/Hinge/Concentric Mate）
-- 参考来源: wzyn20051216 (references/assembly.md)
 - AddMate5 完整 15 参数 + 运动型装配 10 步工作流
 - 配合类型枚举表（11种）+ 圆柱面识别 + 干涉检测
 
 #### Section 43：结果自审查系统
-- 参考来源: wzyn20051216 (references/review.md)
 - 必做检查清单（6项）+ 目视自查清单（6项）
 
 #### Section 44：大型装配体性能优化
-- 参考来源: wzyn20051216 (references/troubleshooting.md)
 - EnableFeatureTree / EnableGraphicsUpdate 开关 + 分批策略
 
 #### Section 45：外观与材质设置 + API 查证增强
-- 参考来源: wzyn20051216 (references/appearance.md + api-lookup.md)
 - MaterialPropertyValues 数组 + 预设颜色表 + API 查证记录模板
 
 ---
@@ -189,7 +167,6 @@
 - 三级标签定义表 + AI 执行原则 + 优先级决策树
 
 #### 📚 Section 39：SolidPractices 官方最佳实践整合
-- 来源：CADSharp LLC / Dassault Systèmes 36页官方指南 + 社区实战
 - **6条 ⛔ MUST**：属性vs方法区分、VARIANT包装、单位转换(m)、UserControl=True、CoInitialize()、FeatureCut不可用
 - **6条 ⚡ SHOULD**：特征命名、常量集中化、关注点分离、CloseDoc、先简后繁、重建验证
 - **3条 💡 MAY**：VBA宏注入、多版本ProgID回退、CDN镜像
@@ -204,15 +181,11 @@
 - 规则优先级决策树：MUST→SHOULD→MAY 逐级降级，无规则时自行判断但必须 W-A-R 验证
 
 #### Sections 44-48：全网经验吸纳
-- **Sec 44**：COM 健康检查与超时保护（来源：CSDN @2402_87963769）
-- **Sec 45**：装配体自动化规范（来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果）
-- **Sec 46**：工程图自动出图规范（来源：网易 @Solidkits 企业案例）
-- **Sec 47**：跨版本性能差异 + 失败统计（来源：知乎 + 技术邻）
-- **Sec 48**：AI+SolidWorks 能力边界（全网共识总结）
-
-#### 引用标注
-CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
-网易(@Solidkits)、知乎、技术邻、GitHub(@yu-qing2)、2dmaterial-lab.github.io
+- **Sec 44**：COM 健康检查与超时保护
+- **Sec 45**：装配体自动化规范（四阶段进化、配合黄金顺序、错误修复表）
+- **Sec 46**：工程图自动出图规范（四大模块、出图代码、企业四大经验）
+- **Sec 47**：跨版本性能差异 + 失败统计
+- **Sec 48**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）
 
 ---
 

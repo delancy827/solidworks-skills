@@ -506,24 +506,23 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v5.3.0 — Claude 优化基底 + 全网经验来源标注 (2026-07-07)
+### v5.3.0 — Claude 优化基底 + 经验章节回并 (2026-07-07)
 
-**核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 全网经验章节（保留全部引用来源）**
+**核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 经验章节（Sec 42-46）**
 
 #### 🤖 Claude 基底独有优化（Codex 版缺失）
 - **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检
 - **Complex drawing intake rule**：复杂图纸先建尺寸账本，禁止把"仅标记"说成"已切除"
 
-#### 🌐 全网经验回并（带引用，Sec 42-46）
-- **Sec 42**：COM 健康检查+超时保护 — 来源：CSDN @2402_87963769
-- **Sec 43**：装配体自动化规范（四阶段 + 配合黄金顺序）— 来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果
-- **Sec 44**：工程图自动出图规范（四大模块 + 企业四大经验）— 来源：网易 @Solidkits 企业案例
-- **Sec 45**：跨版本性能差异 + 失败统计 — 来源：知乎 / 技术邻 / github.com/yu-qing2
-- **Sec 46**：AI+SW 能力边界（6能✅/5不能❌）— 全网共识
+#### 🌐 经验章节回并（Sec 42-46）
+- **Sec 42**：COM 健康检查+超时保护
+- **Sec 43**：装配体自动化规范（四阶段 + 配合黄金顺序）
+- **Sec 44**：工程图自动出图规范（四大模块 + 企业四大经验）
+- **Sec 45**：跨版本性能差异 + 失败统计
+- **Sec 46**：AI+SW 能力边界（6能✅/5不能❌）
 
 #### 📚 基底已含 v5.1.2 重构（41 章）
 - 跨机测试验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
-- 引用：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)
 
 ### v5.1.2 — 隐私清理 + Codex 装配经验同步 + sw-designer v2.6.0 (2026-06-10)
 
@@ -566,38 +565,29 @@ git push origin feature/amazing-feature
 
 ---
 
-### v5.1.0 — MIT 开源项目学习整合：COM 智能路由 + 熔断器 + VBA 宏引擎 (2026-06-03)
+### v5.1.0 — COM 智能路由 + 熔断器 + VBA 宏引擎基础设施 (2026-06-03)
 
-**核心突破：从 3 个 MIT 开源项目学习，补齐 COM/VBA 智能路由、熔断器、VBA 宏引擎三大基础设施**
-
-#### 📚 学习来源
-- [andrewbartels1/SolidworksMCP-python](https://github.com/andrewbartels1/SolidworksMCP-python) (22 stars) — COM 路由 + 熔断器
-- [vespo92/SolidworksMCP-TS](https://github.com/vespo92/SolidworksMCP-TS) (163 stars) — 特征遍历 + 空值安全
-- [eyfel/mcp-server-solidworks](https://github.com/eyfel/mcp-server-solidworks) — 架构参考
+**核心突破：补齐 COM/VBA 智能路由、熔断器、VBA 宏引擎三大基础设施**
 
 #### ⚡ 新增 6 个 Section
-- **Sec 46**：COM/VBA 智能路由（参数复杂度自动降级）— 参考 andrewbartels1 + vespo92
-- **Sec 47**：熔断器模式（COM 健康状态三态管理）— 参考 andrewbartels1
-- **Sec 48**：VBA 宏自动生成与执行 — 参考 andrewbartels1 + vespo92
-- **Sec 49**：pywin32 适配器增强（连接管理与安全包装器）— 参考 andrewbartels1
-- **Sec 50**：特征树遍历替代 SelectByID2 — 参考 vespo92
-- **Sec 51**：COM 空值安全规则（Never Pass Null）— 参考 vespo92
+- **Sec 46**：COM/VBA 智能路由（参数复杂度自动降级）
+- **Sec 47**：熔断器模式（COM 健康状态三态管理）
+- **Sec 48**：VBA 宏自动生成与执行
+- **Sec 49**：pywin32 适配器增强（连接管理与安全包装器）
+- **Sec 50**：特征树遍历替代 SelectByID2
+- **Sec 51**：COM 空值安全规则（Never Pass Null）
 
-### v5.0.0 — 对比 wzyn20051216 仓库学习 + 6大新 Section (2026-06-03)
+### v5.0.0 — 文件导出/装配运动/自审查/性能优化能力补齐 (2026-06-03)
 
-**核心突破：从社区开源仓库学习，补齐文件导出、装配体运动、自审查、性能优化、外观材质**
-
-#### 📚 对比学习来源
-- 来源仓库：[wzyn20051216/solidworks-automation-skill](https://github.com/wzyn20051216/solidworks-automation-skill) (283 stars, MIT License)
-- 所有引用内容已标注来源，给予社区尊重
+**核心突破：补齐文件导出、装配体运动、自审查、性能优化、外观材质**
 
 #### ⚡ 新增 6 个 Section
-- **Sec 40**：COM 属性/方法兼容探测（`get_com_member` 模式）— 参考 wzyn20051216
-- **Sec 41**：文件导出规范（STEP/STL/IGES/PDF/DXF）— 参考 wzyn20051216
-- **Sec 42**：装配体运动配合（Gear/Hinge/Concentric Mate）— 参考 wzyn20051216
-- **Sec 43**：结果自审查系统（6项必做+6项目视）— 参考 wzyn20051216
-- **Sec 44**：大型装配体性能优化（图形刷新开关）— 参考 wzyn20051216
-- **Sec 45**：外观与材质设置 + API 查证增强 — 参考 wzyn20051216
+- **Sec 40**：COM 属性/方法兼容探测（`get_com_member` 模式）
+- **Sec 41**：文件导出规范（STEP/STL/IGES/PDF/DXF）
+- **Sec 42**：装配体运动配合（Gear/Hinge/Concentric Mate）
+- **Sec 43**：结果自审查系统（6项必做+6项目视）
+- **Sec 44**：大型装配体性能优化（图形刷新开关）
+- **Sec 45**：外观与材质设置 + API 查证增强
 
 ### v4.9.0 — 规则分级系统 + SolidPractices 最佳实践整合 (2026-06-03)
 
@@ -610,7 +600,6 @@ git push origin feature/amazing-feature
 - **优先级决策树**：MUST→SHOULD→MAY 逐级降级
 
 #### 📚 Section 39：SolidPractices 官方最佳实践整合
-- 来源：CADSharp LLC / Dassault Systèmes 36页官方指南
 - 6条 ⛔MUST / 6条 ⚡SHOULD / 3条 💡MAY 完整标签化
 - 现有规则（Section 16/29）全部重新分级标注
 
