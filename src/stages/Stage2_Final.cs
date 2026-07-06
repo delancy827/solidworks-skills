@@ -8,7 +8,7 @@ class Program
 {
     static void Main()
     {
-        string logPath = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\swkuskills\stage2_final.log";
+        string logPath = @"C:\Users\<user>\Desktop\湛江北海\学习课程\sw\swkuskills\stage2_final.log";
         StreamWriter log = new StreamWriter(logPath, false, System.Text.Encoding.UTF8);
         log.AutoFlush = true;
         Console.SetOut(log);

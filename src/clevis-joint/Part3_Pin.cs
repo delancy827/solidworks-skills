@@ -11,7 +11,7 @@ class Program
     static SldWorks swApp;
     static ModelDoc2 swDoc;
     static PartDoc partDoc;
-    static string outDir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压作业";
+    static string outDir = @"C:\Users\<user>\Desktop\湛江北海\学习课程\sw\冲压作业";
 
     static void Main()
     {

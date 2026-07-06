@@ -16,7 +16,7 @@ class Step4_Done
     static void Main()
     {
         Console.WriteLine("=== Step4: Die + Punch (2 parts) ===\n");
-        string targetDir = @"D:\冲压课设1\181班27号";
+        string targetDir = @"D:\冲压课设";
         Directory.CreateDirectory(targetDir);
 
         SldWorks sw = (SldWorks)Activator.CreateInstance(
@@ -53,7 +53,7 @@ class Step4_Done
         Console.WriteLine("  FC=" + doc.GetFeatureCount());
 
         // Save die
-        string diePath = targetDir + @"\凹模_27号.SLDPRT";
+        string diePath = targetDir + @"\凹模_示例编号.SLDPRT";
         if (File.Exists(diePath)) File.Delete(diePath);
         doc.SaveAs3(diePath, 1, 2);
         if (!File.Exists(diePath) || new FileInfo(diePath).Length == 0)
@@ -96,7 +96,7 @@ class Step4_Done
         Console.WriteLine("  FC=" + doc.GetFeatureCount());
 
         // Save punch
-        string punchPath = targetDir + @"\凸模_27号_U形槽.SLDPRT";
+        string punchPath = targetDir + @"\凸模_示例编号_U形槽.SLDPRT";
         if (File.Exists(punchPath)) File.Delete(punchPath);
         doc.SaveAs3(punchPath, 1, 2);
         if (!File.Exists(punchPath) || new FileInfo(punchPath).Length == 0)

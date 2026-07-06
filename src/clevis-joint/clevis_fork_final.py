@@ -133,7 +133,7 @@ def main():
         sw.extrude(25)
 
         # 保存
-        save_path = r"C:\Users\22374\Desktop\clevis_fork_base.SLDPRT"
+        save_path = r"C:\Users\<user>\Desktop\clevis_fork_base.SLDPRT"
         sw.save(save_path)
 
         print("\n" + "=" * 70)

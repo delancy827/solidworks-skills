@@ -1,7 +1,7 @@
 # SolidWorks 二次开发核心突破与避坑铁律 v4.3.0
 
 > 沉淀日期：2026-06-01
-> 来源：Clevis_Joint 正交几何重构 + 双机跨机验证（本机 E:盘 SW2024 + 舍友 C:盘 SW2024 32.5.0）
+> 来源：Clevis_Joint 正交几何重构 + 双机跨机验证（本机 [SW安装路径] SW2024 + 跨机测试机 C:盘 SW2024 32.5.0）
 > 原则：每条规则背后都有至少一次实机失败的血泪教训——任何人不得以"试试看"为由绕过。
 
 ---
@@ -308,7 +308,7 @@ C#源码 → csc.exe编译 → 失败则捕获stderr → AI重写 → 重编译�
 |------|-----|
 | 编译器 | `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe` |
 | C# 版本 | C# 5（无 `$` 插值，用 `string.Format`） |
-| Interop DLL | `E:\sw2024\SOLIDWORKS\api\redist\*.dll` |
+| Interop DLL | `[SW安装路径]\SOLIDWORKS\api\redist\*.dll` |
 | 编译命令 | `csc.exe /r:"sldworks.dll" /r:"swconst.dll" /out:xxx.exe xxx.cs` |
 
 ---

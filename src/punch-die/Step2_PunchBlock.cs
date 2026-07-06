@@ -103,9 +103,9 @@ namespace StampingDie
             Console.WriteLine(string.Format("  ✓ 凸模拉伸成功: {0} ({1}->{2})", feat.Name, before, after));
 
             // ===== 保存 =====
-            string saveDir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压课设1\SW_CSharp\Model";
+            string saveDir = @"C:\Users\<user>\Desktop\湛江北海\学习课程\sw\冲压课设1\SW_CSharp\Model";
             System.IO.Directory.CreateDirectory(saveDir);
-            string savePath = saveDir + @"\凸模_27号.SLDPRT";
+            string savePath = saveDir + @"\凸模_示例编号.SLDPRT";
             int saveResult = swDoc.SaveAs3(savePath, 1, 2);
             if (saveResult != 1)
             {

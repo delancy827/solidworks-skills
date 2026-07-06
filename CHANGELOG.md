@@ -1,10 +1,10 @@
 # Changelog
 
-## 2026-07-07（v5.3.0 — Claude 优化基底 + 去标识化 + 全网经验来源标注）
+## 2026-07-07（v5.3.0 — Claude 优化基底 + 全网经验来源标注）
 
 ### solidworks-automation v5.1.2 → v5.3.0
 
-> 本次迭代来源：`sw-skill-for-claude.zip`（用户用 Claude 优化过的 v5.1.2 基底）。**关键修正**：上一轮误用远程 Codex 会话的 v5.1.2 当基底，丢失了 Claude 版的独有优化；本轮改回以 **Claude v5.1.2 为唯一基底**，并做去标识化处理。
+> 本次迭代来源：用户用 Claude 优化过的 v5.1.2 基底。**关键修正**：上一轮误用远程 Codex 会话的 v5.1.2 当基底，丢失了 Claude 版的独有优化；本轮改回以 **Claude v5.1.2 为唯一基底**。
 
 #### 1. Claude 优化基底（v5.1.2，含 Codex 版缺失的独有优化）
 - **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检，纯文本模型必须先声明无法看图
@@ -21,26 +21,13 @@
 - **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考 — 来源：知乎 / 技术邻 / github.com/yu-qing2 / 2dmaterial-lab.github.io
 - **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）— 综合抖音/B站/CSDN/知乎/网易/技术邻
 
-#### 3. 去标识化（隐私合规，P0）
-- **移除真实姓名**：全仓库 11 处舍友真实姓名 → 统一改为"跨机测试验证"
-- 外部来源保留原始出处标注（CSDN/抖音/B站/网易/知乎/技术邻/SolidPractices/MIT 项目），均为公开平台或开源仓库，不涉及个人隐私
-
-#### 4. 隐私合规
-- 全程 0 处硬编码个人路径（[SW安装路径]、[用户主目录] 等），沿用占位符规范
-
 ---
 
 ## 2026-06-10（隐私清理 + Codex 经验同步 + sw-designer 更新）
 
-### 隐私清理（P0）
-- **删除 .codebuddy/ 目录**：包含 WorkBuddy 内部插件配置（settings.local.json），暴露内部目录结构
-- **删除 .workbuddy/ 目录**：包含 4 个 memory 日志文件 + 4 个 skill 副本
-  - .workbuddy/memory/2026-05-30.md — 含个人工作日志
-  - .workbuddy/memory/2026-05-31.md — 含个人工作日志
-  - .workbuddy/memory/2026-06-01.md — 含硬编码路径 [用户主目录]/Desktop/...、学号、SW 安装路径等敏感信息
-  - .workbuddy/memory/MEMORY.md — 含 [SW安装路径]/SOLIDWORKS 路径、个人项目经验
-  - .workbuddy/skills/* — skill 副本与仓库主目录重复，属冗余文件
-- **根因**：.gitignore 已包含 .workbuddy/ 和 .codebuddy/，但这些文件是在添加 .gitignore 之前提交的
+### 仓库目录清理
+- **删除 `.codebuddy/` 与 `.workbuddy/` 目录**：含内部配置与本地工作区文件，已通过 .gitignore 排除，不再提交到公开仓库
+- **根因**：.gitignore 已包含这两个目录，但相关文件是在添加 .gitignore 之前提交的
 - **建议**：后续避免将运行时生成的本地工作区文件提交到公开仓库
 
 ### solidworks-automation SKILL.md 更新（v5.1.1 → v5.1.2）
@@ -238,7 +225,7 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 补充课设实战参数化脚本模板（Section 42）
 
 ### 新增文件
-- 📐 **Step2_PunchBlock_27.cs** — 凸模实心块完整脚本
+- 📐 **Step2_PunchBlock.cs** — 凸模实心块完整脚本
 - 🔬 **Probe_AllFeatureCut_Investigation.cs** — FeatureCut全系API反射探测
 
 ---
@@ -277,10 +264,10 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - ❌ **VBA 宏注入**：RunMacro 无法执行 .swb 文件
 - ❌ **Python win32com FeatureCut4**：同样返回 None
 - **结论**：SW 2024 Standalone COM 模式下，切除/布尔运算类 API 被系统级禁用，必须从几何构造层面绕过
-#### Section 42：课设实战脚本 — 凸模U形槽（学号27号）
-- 📐 **PunchUShape_27_SingleProfile.cs** — 完整生产级脚本，含参数表、三级验证、保存双路径
+#### Section 42：课设实战脚本 — 凸模U形槽（示例编号）
+- 📐 **PunchUShape_SingleProfile.cs** — 完整生产级脚本，含参数表、三级验证、保存双路径
 - 📐 **参数化驱动**：A1=42, gap=2.1, slotTopW=37.8, slotBotW=38.236, slotDepth=25, punchW=62, punchH=27, punchL=80
-- 📐 **文件输出**：C:/temp/ + D:/冲压课设1/181班27号/ 双路径保存
+- 📐 **文件输出**：C:/temp/ + D:/冲压课设/ 双路径保存
 
 ---
 
@@ -357,13 +344,13 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 
 ### solidworks-automation v4.2.0 → v4.4.0
 
-#### 第一轮跨机验证反馈（舍友电脑SW2024中文版）
+#### 第一轮跨机验证反馈（跨机测试机SW2024中文版）
 - 🚨 **CreateLine 闭合铁律**：浮点坐标→微米级端点间隙→轮廓不闭合，全部坐标取整到整数mm
 - 🚨 **SaveAs中文路径**：SaveAs3中文路径返回0静默失败，降级SaveAs
 - 📐 **图纸分析五步法**：基准面→尺寸链→交叉验算→坐标表→代码
 - 📦 **Python VARIANT包装参考**：D2必须非零
 
-#### 第二轮跨机验证反馈（舍友SW 32.5.0 + pywin32 306）
+#### 第二轮跨机验证反馈（跨机测试机SW 32.5.0 + pywin32 306）
 - 🚨 **FeatureExtrusion2 版本依赖警告**：pywin32 306下23参数调用失败，修正API表为"⚠️版本依赖"
 - 🚨 **C#沙箱隔离发现**：WorkBuddy环境下C# exe无法Marshal.GetActiveObject(SW)
 - ⭐ **Python→VBA混合架构**：绕过Python COM限制和C#沙箱隔离的关键路线

@@ -8,7 +8,7 @@ class InspectCylinders
 {
     static void Main()
     {
-        string dir = @"C:\Users\22374\Desktop\湛江北海\学习课程\sw\冲压作业";
+        string dir = @"C:\Users\<user>\Desktop\湛江北海\学习课程\sw\冲压作业";
         SldWorks sw;
         try { sw = (SldWorks)Marshal.GetActiveObject("SldWorks.Application"); }
         catch

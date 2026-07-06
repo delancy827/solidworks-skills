@@ -506,9 +506,9 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v5.3.0 — Claude 优化基底 + 去标识化 + 全网经验来源标注 (2026-07-07)
+### v5.3.0 — Claude 优化基底 + 全网经验来源标注 (2026-07-07)
 
-**核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 全网经验章节（保留全部引用来源），并对真实姓名做去标识化**
+**核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 全网经验章节（保留全部引用来源）**
 
 #### 🤖 Claude 基底独有优化（Codex 版缺失）
 - **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检
@@ -521,10 +521,6 @@ git push origin feature/amazing-feature
 - **Sec 45**：跨版本性能差异 + 失败统计 — 来源：知乎 / 技术邻 / github.com/yu-qing2
 - **Sec 46**：AI+SW 能力边界（6能✅/5不能❌）— 全网共识
 
-#### 🔒 去标识化（隐私 P0）
-- 全仓库 11 处真实姓名（舍友）→ 统一改为"跨机测试验证"
-- 外部来源（CSDN/抖音/B站/网易/知乎/技术邻/SolidPractices/MIT 项目）均为公开平台/开源仓库，保留原始出处，不涉及个人隐私
-
 #### 📚 基底已含 v5.1.2 重构（41 章）
 - 跨机测试验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
 - 引用：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)
@@ -533,10 +529,9 @@ git push origin feature/amazing-feature
 
 **核心更新：隐私安全加固 + Codex++ 装配调试经验整合 + 设计技能大幅扩展**
 
-#### 🔒 隐私清理
-- 删除 `.codebuddy/`、`.workbuddy/` 目录（含个人路径、学号、工作日志等敏感信息）
-- 替换源码中硬编码路径为通用占位符（`C:\temp\sw_course`），保留代码可运行性
-- `solidworks-automation/SKILL.md` 中 `[SW安装路径]` 替换为通用路径
+#### 隐私清理
+- 删除 `.codebuddy/`、`.workbuddy/` 目录（含内部配置与本地工作区文件，已排除推送）
+- 替换源码中硬编码路径为通用占位符，保留代码可运行性
 
 #### 🆕 新增 Codex 装配调试经验（6 条核心法则）
 - `docs/solidworks-assembly-debugging-lessons.md` — 装配调试 6 条核心经验 + Robust Transform 模式
@@ -634,8 +629,8 @@ git push origin feature/amazing-feature
 - **零切除API依赖**：完全绕过 FeatureCut1/2/3/4、InsertCombineFeature、Body2.Cut 的全部 COM 锁死
 - **一次 FeatureExtrusion2 成型**：外框+U形凹口的单闭合轮廓，7条线段直接拉伸成带89.5°斜壁实体
 - **89.5°三级验证链**：开放轮廓(0.5000°) → 闭合梯形(0.5000°) → 单轮廓凹口(面数=9) 全部通过
-- **课设交付**：`PunchUShape_27_SingleProfile.cs` — 学号27号完整生产级脚本
-- **凸模实心块**：`Step2_PunchBlock_27.cs` — Step2凸模基础件
+- **课设交付**：`PunchUShape_SingleProfile.cs` — 示例编号完整生产级脚本
+- **凸模实心块**：`Step2_PunchBlock.cs` — Step2凸模基础件
 - **API探测工具**：`Probe_AllFeatureCut_Investigation.cs` — FeatureCut全系反射参数探测
 
 ### v4.5.0 — Python COM 底层陷阱 + 类封装架构 (2026-06-02)

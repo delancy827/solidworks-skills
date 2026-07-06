@@ -2416,7 +2416,7 @@ except:
 ## 二十一、叉形接头工程实践终极沉淀（2026-06-01 实机验证）
 
 > 背景：在叉形接头（Clevis Joint）全自动建模攻坚中，经过反射探测+实机验证，
-> 发现E:\sw2024 Interop DLL与官方文档存在大量参数位置偏差。
+> 发现[SW安装路径] Interop DLL与官方文档存在大量参数位置偏差。
 > 以下所有结论均已经过 `GetBodies2` 实体计数硬验证，4/4步骤全部通关。
 
 ---
@@ -2488,7 +2488,7 @@ VerifyBodies(partDoc, expectedBodies, stepName);  // 实体计数正确 → 几�
 ### 21.2 Interop DLL 底层 API 避坑铁律 ⚠️
 
 > 以下所有参数位置均经过 `System.Reflection` 实机反射探测确认。
-> **切勿信官方文档** — E:\sw2024 Interop DLL 有大量参数重排。
+> **切勿信官方文档** — [SW安装路径] Interop DLL 有大量参数重排。
 
 #### 铁律1：FeatureExtrusion2 真实参数顺序（23参数）
 
@@ -2783,10 +2783,10 @@ class Program
 
 ---
 
-## 二十二、舍友电脑跨机验证反馈（第一轮）（2026-06-01）
+## 二十二、跨机验证反馈（第一轮）（2026-06-01）
 
-> 来源：舍友在独立PC（SW2024中文版）上运行本skill执行"底座支架"建模任务后的复盘报告。
-> 与本机（E:盘SW2024）形成跨机对照。
+> 来源：跨机测试机在独立PC（SW2024中文版）上运行本skill执行"底座支架"建模任务后的复盘报告。
+> 与本机（[SW安装路径]SW2024）形成跨机对照。
 
 ---
 
@@ -2829,7 +2829,7 @@ Python COM下FeatureExtrusion2需全部23参数用VARIANT()包裹，且D2必须�
 
 ### 22.6 跨机环境差异（第一轮）
 
-| 项目 | 本机（E:盘SW2024） | 舍友（C:盘SW2024） |
+| 项目 | 本机（[SW安装路径]SW2024） | 跨机测试机（C:盘SW2024） |
 |------|------|------|
 | 保存 | 英文路径 | 中文桌面（SaveAs3失败） |
 | 建模结果 | Clevis_Joint 4/4 | bracket外形对、孔手动 |
@@ -2838,7 +2838,7 @@ Python COM下FeatureExtrusion2需全部23参数用VARIANT()包裹，且D2必须�
 
 ## 二十三、跨机验证反馈（第二轮）—— Verify→Fix→Re-Verify 全流程（2026-06-01）
 
-> 来源：舍友在独立PC（SW 32.5.0中文版 + Python 3.13 + pywin32）上执行本skill的"验证→修复→再验证"闭环。
+> 来源：跨机测试机在独立PC（SW 32.5.0中文版 + Python 3.13 + pywin32）上执行本skill的"验证→修复→再验证"闭环。
 > 本轮发现了多个本机未暴露的环境差异和架构限制。
 
 ---
@@ -2847,18 +2847,18 @@ Python COM下FeatureExtrusion2需全部23参数用VARIANT()包裹，且D2必须�
 
 #### 问题发现
 
-在本机（SW 2024 + E:盘 + Python 3.14），FeatureExtrusion2 23参数调用**成功**。
+在本机（SW 2024 + [SW安装路径] + Python 3.14），FeatureExtrusion2 23参数调用**成功**。
 
-在舍友电脑（SW 2024 + C:盘 + Python 3.13 + pywin32最新版），**始终失败**：
+在跨机测试机（SW 2024 + C:盘 + Python 3.13 + pywin32最新版），**始终失败**：
 ```
 pywintypes.com_error: (-2147352562, '无效的参数数目。')
 ```
 
 #### 比对分析
 
-| 项目 | 本机 | 舍友 | 结论 |
+| 项目 | 本机 | 跨机测试机 | 结论 |
 |------|------|------|------|
-| SW版本 | 2024 (E:盘) | 2024 (C:盘) 32.5.0 | 相同主版本 |
+| SW版本 | 2024 ([SW安装路径]) | 2024 (C:盘) 32.5.0 | 相同主版本 |
 | Python | 3.14 | 3.13 | 差异 |
 | pywin32 | 305 | 306 (最新) | 差异 |
 | FeatureExtrusion2 | ✅ | ❌ | **版本依赖！** |
@@ -2891,7 +2891,7 @@ def try_feature_extrusion2(doc, params_23):
 
 #### 问题发现
 
-舍友电脑上：
+跨机测试机上：
 - C#代码可以编译（csc.exe正常）
 - 但运行时 `Marshal.GetActiveObject("SldWorks.Application")` → `MK_E_UNAVAILABLE (0x800401E3)`
 - `Activator.CreateInstance(Type.GetTypeFromProgID(...))` → `TYPE_E_ELEMENTNOTFOUND`
@@ -3103,7 +3103,7 @@ Step5: 差异分析 → 定位建模错误的根因
 > ⚠️ **截图方法选择警告**（跨机验证复盘）：
 > `PrintWindow` / `BitBlt` (GDI) **不可用于 SW 3D 视图**——SW 使用 OpenGL 硬件渲染，
 > GDI 捕获到的全是负值/黑色垃圾数据。**必须用 `doc.SaveAs("xxx.jpg")` 方式截图。**
-> 该结论在舍友 PC（SW2024 中文版）上实测验证：SaveAs JPG 各视图 MD5 均不同，截图有效。
+> 该结论在跨机测试机（SW2024 中文版）上实测验证：SaveAs JPG 各视图 MD5 均不同，截图有效。
 
 ```python
 # 视图配置映射（View ID 实测确认 SW2024：Front=1, Top=3, Right=5, Iso=7）
@@ -3217,7 +3217,7 @@ print(f"边界框: X={x_max-x_min:.2f}, Y={y_max-y_min:.2f}, Z={z_max-z_min:.2f}
 
 ### 23.7 环境差异汇总（两轮交叉对比）
 
-| 项目 | 本机（E:盘） | 舍友（C:盘） | 舍友第二轮 | 关键发现 |
+| 项目 | 本机（[SW安装路径]） | 跨机测试机（C:盘） | 跨机测试机第二轮 | 关键发现 |
 |------|:---:|:---:|:---:|------|
 | SW版本 | 2024 | 2024 | 2024 32.5.0 | 同主版 |
 | Python | 3.14 | 3.14 | **3.13** | 版本差→FeatureExtrusion2表现不同 |
@@ -3241,8 +3241,8 @@ print(f"边界框: X={x_max-x_min:.2f}, Y={y_max-y_min:.2f}, Z={z_max-z_min:.2f}
 
 
 
-> 来源：舍友在独立PC（SW2024中文版）上运行本skill执行"底座支架"建模任务后的复盘报告。
-> 与本机（E:盘SW2024）形成跨机对照，以下为差异发现和强化项。
+> 来源：跨机测试机在独立PC（SW2024中文版）上运行本skill执行"底座支架"建模任务后的复盘报告。
+> 与本机（[SW安装路径]SW2024）形成跨机对照，以下为差异发现和强化项。
 
 ---
 
@@ -3511,15 +3511,15 @@ swDoc.SketchManager.CreateLine(-ht, sh, 0, -hb, 0, 0);
 
 ### 22.6 跨机环境差异汇总
 
-| 项目 | 本机（E:盘SW2024） | 舍友电脑（SW2024中文版） | 差异 |
+| 项目 | 本机（[SW安装路径]SW2024） | 跨机测试机（SW2024中文版） | 差异 |
 |------|------|------|:---:|
-| SW安装路径 | E:\sw2024\ | C:\Program Files\ | 编译命令的/r路径不同 |
+| SW安装路径 | [SW安装路径]\ | C:\Program Files\ | 编译命令的/r路径不同 |
 | Interop DLL位置 | C:\SOLIDWORKS\api\redist\ | C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist\ | **需自适应** |
 | 保存路径 | 英文 | 中文桌面 | **SaveAs3不兼容中文** |
 | Python环境 | — | 3.14 + pywin32 | Python COM下FeatureCut全失败 |
 | 建模结果 | Clevis_Joint 4/4通过 | bracket外形正确、孔需手动 | C# vs Python差异大 |
 
-> **核心结论**：C#路径下（本机）和Python路径下（舍友电脑）的建模成功率差距显著。
+> **核心结论**：C#路径下（本机）和Python路径下（跨机测试机）的建模成功率差距显著。
 > 再次验证：**复杂特征（切除、孔、圆角）必须走C#架构**。
 
 ---
@@ -3703,7 +3703,7 @@ static void Fail(string msg) {
 
 ## 二十六、Python COM 底层陷阱（2026-06-02 第三轮跨机验证）
 
-> 来源：舍友运行 bracket_v3→v9 迭代链的完整复盘。
+> 来源：跨机测试机运行 bracket_v3→v9 迭代链的完整复盘。
 > 发现多个之前本机 C# 路径下从未暴露的 Python late-binding 特定问题。
 
 ### 26.1 SelectByID2 Callout 参数陷阱（P0 - 新发现）⚠️
@@ -3819,7 +3819,7 @@ def run_modeling():
 
 ## 二十七、Python 类封装架构模板（2026-06-02 新增）
 
-> 基于舍友 bracket_v10 的 `BracketBuilder` 类设计，提取为通用模板。
+> 基于跨机测试机 bracket_v10 的 `BracketBuilder` 类设计，提取为通用模板。
 
 ### 27.1 架构原则
 

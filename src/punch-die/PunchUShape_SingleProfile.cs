@@ -6,7 +6,7 @@ namespace StampingDie
 {
     /// <summary>
     /// Step3: 凸模U形槽自动化建模（单轮廓凹口法）
-    /// 学号27号 | 材控2320181班
+    /// 示例编号 | 材控示例班
     /// 核心技术：单轮廓带凹口草图 + FeatureExtrusion2 一次拉伸成型
     /// 完全绕过 FeatureCut/布尔减 的所有COM限制
     /// </summary>
@@ -17,10 +17,10 @@ namespace StampingDie
         {
             Console.WriteLine("========================================");
             Console.WriteLine("Step3: 凸模U形槽 - 单轮廓凹口法");
-            Console.WriteLine("学号27号 | 材控2320181班");
+            Console.WriteLine("示例编号 | 材控示例班");
             Console.WriteLine("========================================\n");
 
-            // ========== 课设参数（学号27号） ==========
+            // ========== 课设参数（示例编号） ==========
             double A1 = 42.0;           // 凹模槽宽 = 35 + 7
             double D = 57.0;            // 凹模外径 = 50 + 7
             double E = 13.0;            // 凹模相关尺寸 = 6 + 7
@@ -245,11 +245,11 @@ namespace StampingDie
             // 同时保存到课设目录（如存在）
             string classDir = System.IO.Path.Combine(
                 System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop),
-                "冲压课设", "181班27号");
+                "冲压课设", "示例班");
             if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(classDir)))
             {
                 System.IO.Directory.CreateDirectory(classDir);
-                string classPath = System.IO.Path.Combine(classDir, "凸模_27号_U形槽.SLDPRT");
+                string classPath = System.IO.Path.Combine(classDir, "凸模_示例编号_U形槽.SLDPRT");
                 Part.SaveAs3(classPath, 0, 0);
                 Console.WriteLine("[保存] 课设目录 -> " + classPath);
             }

@@ -22,7 +22,7 @@ class Step5_Final
         { ModelDoc2 t = (ModelDoc2)sw.ActiveDoc; if (t != null) sw.CloseDoc(t.GetTitle()); else break; }
 
         // 1. Open punch part (it must be open for drawing views)
-        string punchPath = @"D:\冲压课设1\181班27号\凸模_27号_U形槽.SLDPRT";
+        string punchPath = @"D:\冲压课设\凸模_示例编号_U形槽.SLDPRT";
         int errors = 0, warnings = 0;
         ModelDoc2 punchDoc = (ModelDoc2)sw.OpenDoc6(punchPath, 1, 1, "", errors, warnings);
         Console.WriteLine("[1] Punch loaded: " + punchDoc.GetTitle());
@@ -97,7 +97,7 @@ class Step5_Final
         doc.ViewZoomtofit2();
         Thread.Sleep(500);
 
-        string savePath = @"D:\冲压课设1\181班27号\工程图_27号.SLDDRW";
+        string savePath = @"D:\冲压课设\工程图_示例编号.SLDDRW";
         if (File.Exists(savePath)) File.Delete(savePath);
         doc.SaveAs3(savePath, 1, 2);
         if (!File.Exists(savePath) || new FileInfo(savePath).Length == 0)
@@ -112,7 +112,7 @@ class Step5_Final
         Thread.Sleep(300);
 
         // Open die
-        string diePath = @"D:\冲压课设1\181班27号\凹模_27号.SLDPRT";
+        string diePath = @"D:\冲压课设\凹模_示例编号.SLDPRT";
         ModelDoc2 dieDoc = (ModelDoc2)sw.OpenDoc6(diePath, 1, 1, "", errors, warnings);
         Console.WriteLine("  Die loaded: " + (dieDoc != null ? dieDoc.GetTitle() : "FAIL"));
 
@@ -130,7 +130,7 @@ class Step5_Final
         catch { }
 
         doc.EditRebuild3();
-        string saveDie = @"D:\冲压课设1\181班27号\工程图_凹模_27号.SLDDRW";
+        string saveDie = @"D:\冲压课设\工程图_凹模_示例编号.SLDDRW";
         if (File.Exists(saveDie)) File.Delete(saveDie);
         doc.SaveAs3(saveDie, 1, 2);
         if (!File.Exists(saveDie) || new FileInfo(saveDie).Length == 0)

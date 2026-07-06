@@ -1,7 +1,7 @@
 """
 修复2: 凹模添加 Φ13mm 孔 (IT14 公差 +0.18/0)
 ===============================================
-学号27号 | 材控2320181班
+示例编号 | 材控示例班
 
 在凹模上创建 Φ13mm 通孔:
   - 直径: 13mm (IT14: +0.18/0, 实际加工时取上限)
@@ -9,7 +9,7 @@
   - 方式: FeatureExtrusion2 Dir=True 完全贯穿
 
 使用: python fix_phi13_hole.py
-前提: SW 2024 已打开，凹模_27号.SLDPRT 在指定路径
+前提: SW 2024 已打开，凹模_示例编号.SLDPRT 在指定路径
 """
 import os
 import time
@@ -18,7 +18,7 @@ import pythoncom
 import win32com.client
 
 # ========== 配置参数 ==========
-DIE_FILE = r"D:\冲压课设1\181班27号\凹模_27号.SLDPRT"
+DIE_FILE = r"D:\冲压课设\凹模_示例编号.SLDPRT"
 
 # 凹模外形 (57×42×80mm: 宽×高×长)
 DIE_W = 57.0   # 宽度 mm
@@ -48,7 +48,7 @@ HOLE_SIDE_Y = DIE_H * 0.65   # 沿高度偏上 (27.3mm)
 
 print("=" * 50)
 print("修复2: 凹模 Φ13mm 通孔 (IT14)")
-print("学号27号")
+print("示例编号")
 print("=" * 50)
 print(f"  孔径: Φ{HOLE_DIA}mm (IT14: +0.18/0)")
 print(f"  凹模文件: {DIE_FILE}")

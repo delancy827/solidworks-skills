@@ -1,7 +1,7 @@
 """
 修复1: 凸模U形槽添加 R5.5mm 槽底圆角
 ========================================
-学号27号 | 材控2320181班
+示例编号 | 材控示例班
 
 方法: 重画带圆弧的9段草图（7直线+2圆弧），一次拉伸成型。
       完全绕过 FeatureFillet3 边选择的不稳定性。
@@ -20,7 +20,7 @@ import time
 import pythoncom
 import win32com.client
 
-# ========== 课设参数 (学号27号) ==========
+# ========== 课设参数 (示例编号) ==========
 A1   = 42.0       # 凹模槽宽 mm
 gap  = 2.1        # 单边间隙 mm (t+0.1)
 B    = 25.0       # U形高度/槽深 mm
@@ -72,7 +72,7 @@ x7, y7 = 0.0, punchH
 
 print("=" * 50)
 print("修复1: 凸模U形槽 R5.5 槽底圆角")
-print("学号27号 | 9段草图法 (7直线+2圆弧)")
+print("示例编号 | 9段草图法 (7直线+2圆弧)")
 print("=" * 50)
 print(f"  凸模外形: {punchW} x {punchH} x {punchL} mm")
 print(f"  槽顶宽: {slotTopW:.1f} mm, 槽底宽: {slotBotW:.3f} mm")
@@ -245,9 +245,9 @@ if body_count > 0:
 
 # ========== 保存 ==========
 print("\n[4/4] 保存...")
-save_dir = r"D:\冲压课设1\181班27号"
+save_dir = r"D:\冲压课设"
 os.makedirs(save_dir, exist_ok=True)
-save_path = os.path.join(save_dir, "凸模_27号_U形槽_R55.SLDPRT")
+save_path = os.path.join(save_dir, "凸模_示例编号_U形槽_R55.SLDPRT")
 
 result = doc.SaveAs3(save_path, 0, 0)
 if result != 1 and result != 0:

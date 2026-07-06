@@ -1,7 +1,7 @@
 """
 修复3: 创建装配体 (凹模 + 凸模, 单边间隙 2.1mm)
 ================================================
-学号27号 | 材控2320181班
+示例编号 | 材控示例班
 
 装配关系:
   凹模: 固定基座 (57×42×80mm)
@@ -27,10 +27,10 @@ import pythoncom
 import win32com.client
 
 # ========== 配置参数 ==========
-BASE_DIR = r"D:\冲压课设1\181班27号"
-DIE_FILE = os.path.join(BASE_DIR, "凹模_27号.SLDPRT")
-PUNCH_FILE = os.path.join(BASE_DIR, "凸模_27号_U形槽.SLDPRT")  # 或 _R55 版本
-ASM_FILE = os.path.join(BASE_DIR, "装配体_27号.SLDASM")
+BASE_DIR = r"D:\冲压课设"
+DIE_FILE = os.path.join(BASE_DIR, "凹模_示例编号.SLDPRT")
+PUNCH_FILE = os.path.join(BASE_DIR, "凸模_示例编号_U形槽.SLDPRT")  # 或 _R55 版本
+ASM_FILE = os.path.join(BASE_DIR, "装配体_示例编号.SLDASM")
 
 # 凹模参数
 DIE_W = 57.0   # 宽 mm
@@ -76,7 +76,7 @@ OFFSET_Z = 0.0
 
 print("=" * 50)
 print("修复3: 创建装配体")
-print("学号27号 | 凹模+凸模 | 间隙2.1mm")
+print("示例编号 | 凹模+凸模 | 间隙2.1mm")
 print("=" * 50)
 print(f"  凹模: {DIE_FILE}")
 print(f"  凸模: {PUNCH_FILE}")
