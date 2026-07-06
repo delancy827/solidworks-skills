@@ -2,9 +2,26 @@
 name: solidworks-automation
 description: SolidWorks自动化建模skill，内置完整的SW教程知识体系。支持通过Python/C#/VBA连接SolidWorks API进行自动化建模、装配、工程图生成、Simulation分析、Flow Simulation流体分析、钣金设计、焊件设计、模具设计、曲面造型、电气设计等。
 category: engineering-cad
-version: 5.2.0
+version: 5.3.0
 author: Delancy
 ---
+
+# Model capability preflight
+
+Before using this skill, identify the active AI model/runtime and state whether
+it can inspect images/PDF pages directly.
+
+- If the runtime is multimodal or has image/PDF rendering tools, inspect the
+  source drawing visually before extracting dimensions.
+- If the runtime is text-only, tell the user before modeling: "This model cannot
+  inspect drawings directly. Please add a multimodal/vision step before this
+  skill, or provide rendered views plus a dimension table." Do not infer unseen
+  geometry from filenames or captions.
+- If the runtime can run SolidWorks but cannot inspect screenshots, it may
+  execute scripts only after a vision-capable reviewer or the user validates the
+  drawing interpretation.
+- Record the preflight in the output: model/runtime, visual capability, drawing
+  source, and who/what performed visual verification.
 
 # Recent field lesson: clevis-link assemblies
 
@@ -12,6 +29,9 @@ When automating a SolidWorks assembly from multi-view drawings, especially a
 clevis/fork/link/pin mechanism, load and follow:
 
 - `docs/solidworks-assembly-debugging-lessons.md`
+
+If that file is not present in the installed skill package, do not block the
+task; follow the embedded rules below.
 
 Key rules from that lesson:
 
@@ -24,6 +44,28 @@ Key rules from that lesson:
   alone.
 - For coursework deliverables, replay major modeling steps and screenshot the
   process before generating the Word document.
+
+# Complex drawing intake rule
+
+Before automating a complex drawing from a PDF/image, build a small dimension
+ledger:
+
+- **Exact**: dimensions readable from the drawing and used directly.
+- **Inferred**: values derived from visible dimensions, symmetry, or centerlines.
+- **Designer choice**: missing values chosen conservatively; label them in output.
+- **Unsupported**: cuts, chamfers, slots, threads, or blends that were not executed
+  because the Python COM route is unreliable.
+
+Do not start modeling until the ledger identifies the base feature, secondary
+additive features, hole/cut strategy, and validation screenshots. If a feature
+is only marked, say "marker only"; never describe it as a completed cut.
+
+Final acceptance for complex drawings must include exported front, top, and
+isometric screenshots. Compare the screenshots against the source drawing's
+visible required features. If required features are missing (holes, slots,
+chamfers, radii, bosses, repeated parts), mark the result **FAIL** or
+**PARTIAL** and list the missing features; feature-count growth and SaveAs
+success alone are not validation.
 
 # <system_directives>
 
@@ -77,7 +119,7 @@ try:
 finally:
     # 每个中间临时文档必须 CloseDoc！
     if temp_doc:
-        sw.CloseDoc(temp_doc.GetTitle)
+        sw.CloseDoc(get_com_member(temp_doc, "GetTitle"))
 ```
 
 **违规后果**：多窗口泛滥、COM 引用泄漏、SW 进程残留 — 直接判定任务失败。
@@ -105,12 +147,11 @@ before_fingerprint = {
 # 执行修改
 dim.SetSystemValue3(target_m, 0, None)
 
-# 步骤1：强制重建
-rebuild_result = doc.EditRebuild3()
+# 步骤1：强制重建（pywin32 中可能表现为方法或属性，统一探测）
+rebuild_result = get_com_member(doc, "EditRebuild3")
 
-# 步骤2：检查重建错误码
-if rebuild_result != 0:  # 0 = swRebuildAll
-    raise SWAssertionError(f"重建失败！错误码: {rebuild_result}")
+# 步骤2：记录重建结果；不要依赖固定错误码语义，后续用几何断言验证
+print(f"重建结果: {rebuild_result}")
 
 # 步骤3：硬断言
 actual_value = dim.GetSystemValue3(0)
@@ -215,8 +256,8 @@ doc.SketchManager.AddRelation(...)  # 忘了是 AddConstraint 还是 AddRelation
 | `RunMacro2(.swb)` | 3 | ❌ 类型不匹配 | |
 | `InsertCombineFeature` | 3 | ❌ 类型不匹配 | |
 | `GetBodies2` | 1 | ❌ 参数不匹配 | |
-| `CloseDoc` | 1 | ✅ | title用`doc.GetTitle`(属性)不是`GetTitle()` |
-| `GetDocuments` | 0 | ✅ | 返回tuple, 属性不是方法 |
+| `CloseDoc` | 1 | ✅ | title用`get_com_member(doc, "GetTitle")`，避免 pywin32 属性/方法差异 |
+| `GetDocuments` | 0 | ✅ | 用`get_com_member(sw, "GetDocuments")`读取，避免属性/方法差异 |
 
 ### 应急方案：加法建模策略
 当 FeatureCut 不可用时，用 FeatureExtrusion2 加法构建零件：
@@ -325,8 +366,9 @@ SolidWorks是Dassault Systemes公司开发的基于Windows的三维CAD软件，�
 ```python
 import win32com.client
 
-sw_app = win32com.client.Dispatch("SldWorks.Application")
-sw_app.Visible = True
+# ✅ 正确：使用 connect_sw()（铁律1），参见 Sec 20/25/39
+# ❌ 禁止：win32com.client.Dispatch("SldWorks.Application")  ← 违反铁律1
+sw_app = connect_sw()
 sw_model = sw_app.ActiveDoc  # 或 sw_app.NewPart()
 
 # 选择基准面
@@ -791,8 +833,7 @@ sw_model.FeatureManager.InsertToolingSplit(True)
 ```python
 import win32com.client
 
-sw_app = win32com.client.Dispatch("SldWorks.Application")
-sw_app.Visible = True
+sw_app = connect_sw()
 
 # 步骤1：主体圆柱（φ65×45mm）
 sw_model.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, None, 0)
@@ -844,7 +885,7 @@ drawing = sw_app.NewDocument(r'...\gb_a3.drwdot', 0, 0, 0)
 drawing.Create3rdAngleViews2(part_path)
 sw_model.InsertSurfaceFinish(0, 0.0000032, 0, 0)   # Ra=3.2μm
 sw_model.InsertGtol2(0, 0, 0, 0)                   # 形位公差框格
-drawing.Extension.SaveAs('output.pdf', 0, 0, None, False, False, None, 0)
+safe_save_as(drawing, 'output.pdf')                # 参见 Sec 31: SaveAs VARIANT 包装
 ```
 
 ### 9.7 模具材料与热处理
@@ -1024,8 +1065,7 @@ import win32com.client
 
 def create_parametric_gear(module, teeth, width):
     """参数化创建齿轮"""
-    sw_app = win32com.client.Dispatch("SldWorks.Application")
-    sw_app.Visible = True
+    sw_app = connect_sw()  # ✅ 铁律1：GetActiveObject优先，参见 Sec 20/25/39
     sw_app.NewPart()
     sw_model = sw_app.ActiveDoc
     
@@ -1060,8 +1100,7 @@ import os
 
 def batch_convert_sldprt_to_step(input_dir, output_dir):
     """批量将.sldprt转换为.step"""
-    sw_app = win32com.client.Dispatch("SldWorks.Application")
-    sw_app.Visible = True
+    sw_app = connect_sw()  # ✅ 铁律1：GetActiveObject优先，参见 Sec 20/25/39
     
     for filename in os.listdir(input_dir):
         if filename.endswith(".sldprt"):
@@ -1072,17 +1111,16 @@ def batch_convert_sldprt_to_step(input_dir, output_dir):
             sw_model = sw_app.OpenDoc6(filepath, 1, 0, "", 0, 0)
             
             # 导出STEP
-            sw_model.Extension.SaveAs(outpath, 0, 0, None, False, False, None, 0)
+            safe_save_as(sw_model, outpath)  # 参见 Sec 31: SaveAs VARIANT 包装
             
             # 关闭文档
-            sw_app.CloseDoc(sw_model.GetTitle())
+            sw_app.CloseDoc(get_com_member(sw_model, "GetTitle"))
             
     print("批量转换完成！")
 
 def batch_print_drawings(drawing_dir):
     """批量打印工程图"""
-    sw_app = win32com.client.Dispatch("SldWorks.Application")
-    sw_app.Visible = True
+    sw_app = connect_sw()  # ✅ 铁律1：GetActiveObject优先，参见 Sec 20/25/39
     
     for filename in os.listdir(drawing_dir):
         if filename.endswith(".slddrw"):
@@ -1095,7 +1133,7 @@ def batch_print_drawings(drawing_dir):
             sw_model.PrintOut2(1, 1, 1, False, "", 0, 0)
             
             # 关闭文档
-            sw_app.CloseDoc(sw_model.GetTitle())
+            sw_app.CloseDoc(get_com_member(sw_model, "GetTitle"))
     
     print("批量打印完成！")
 ```
@@ -1153,10 +1191,10 @@ sw_model.Extension.SelectByID2(                      # 选择对象
 sw_model.ClearSelection2(True)
 
 # 获取信息
-sw_model.GetTitle()                                  # 文档标题
-sw_model.GetPathName()                               # 文件路径
-sw_model.GetType()                                   # 文档类型 (1=零件,2=装配体,3=工程图)
-sw_model.GetConfigurationNames()                     # 配置名称列表
+get_com_member(sw_model, "GetTitle")                 # 文档标题
+get_com_member(sw_model, "GetPathName")              # 文件路径
+get_com_member(sw_model, "GetType")                  # 文档类型 (1=零件,2=装配体,3=工程图)
+get_com_member(sw_model, "GetConfigurationNames")    # 配置名称列表
 ```
 
 ### 14.3 Python完整环境搭建
@@ -1175,8 +1213,7 @@ def full_example():
         pythoncom.CoInitialize()
         
         # 连接SolidWorks
-        sw_app = win32com.client.Dispatch("SldWorks.Application")
-        sw_app.Visible = True
+        sw_app = connect_sw()
         
         # 新建零件
         sw_app.NewPart()
@@ -1246,14 +1283,14 @@ path = winreg.QueryValueEx(key, "SolidWorks Shared Directory")[0]
 
 # 列出活动文档
 sw_app.Visible = True
-count = sw_app.GetDocumentCount()
+count = get_com_member(sw_app, "GetDocumentCount")
 for i in range(count):
-    doc = sw_app.GetDocuments().Item(i)
-    print(f"文档 {i}: {doc.GetTitle()} (类型: {doc.GetType()})")
+    doc = get_com_member(sw_app, "GetDocuments").Item(i)
+    print(f"文档 {i}: {get_com_member(doc, 'GetTitle')} (类型: {get_com_member(doc, 'GetType')})")
 
 # 列出特征树
 def list_features(sw_model):
-    feat = sw_model.FirstFeature()
+    feat = get_com_member(sw_model, "FirstFeature")
     while feat is not None:
         print(f"特征: {feat.Name} (类型: {feat.GetTypeName()})")
         feat = feat.GetNextFeature()
@@ -1333,7 +1370,7 @@ def list_features(sw_model):
 ## 十八、SWValidator 验证框架（跨机测试验证）
 
 ### 问题背景
-API 返回值（`S_OK`、`None`、特征对象）不能证明操作真正成功。吕亚峰（2026-06-02 跨机测试）验证了必须多层验证。
+API 返回值（`S_OK`、`None`、特征对象）不能证明操作真正成功。跨机测试验证（2026-06-02）验证了必须多层验证。
 
 ### 验证层级（L1-L4）
 
@@ -1348,7 +1385,7 @@ API 返回值（`S_OK`、`None`、特征对象）不能证明操作真正成功�
 
 ```python
 class SWValidator:
-    """SolidWorks API调用验证器（吕亚峰跨机测试验证版）"""
+    """SolidWorks API调用验证器（跨机测试验证版）"""
     
     @staticmethod
     def verify_connection(sw_app):
@@ -1366,7 +1403,7 @@ class SWValidator:
     @staticmethod
     def verify_feature_created(doc, before_count=None):
         """验证特征是否真正创建"""
-        after_count = doc.GetFeatureCount()
+        after_count = get_com_member(doc, "GetFeatureCount")
         if before_count is not None:
             if after_count <= before_count:
                 raise Exception(f"特征创建失败: {before_count} → {after_count}")
@@ -1404,7 +1441,7 @@ def safe_select(doc, plane_name):
     if ok:
         return True
     # 回退：遍历特征树
-    feat = doc.FirstFeature         # 属性，不用()
+    feat = get_com_member(doc, "FirstFeature")
     while feat is not None:
         if feat.Name == plane_name:
             feat.Select2(False, 0)
@@ -1417,7 +1454,7 @@ def safe_select(doc, plane_name):
 
 ## 十九、国内网络环境 + pywin32 版本陷阱
 
-### raw.githubusercontent.com 被墙问题（吕亚峰测试发现）
+### raw.githubusercontent.com 被墙问题（跨机测试发现）
 
 **现象**：GitHub API 可连，但 `raw.githubusercontent.com` 无法访问（国内 GFW 封锁）。
 
@@ -1457,7 +1494,7 @@ sw.UserControl = True   # ⛔ MUST: Python自动化必须True，防止SW被GC回
 
 ### GetVersion() 可用性更正
 
-Sec 26 之前记录 `GetVersion` 是属性。吕亚峰环境（pywin32 v311 + SW 2024）实测**可作为方法调用**：
+Sec 26 之前记录 `GetVersion` 是属性。跨机测试环境（pywin32 v311 + SW 2024）实测**可作为方法调用**：
 
 ```python
 # pywin32 v311 + SW 2024：✅ 可以调用
@@ -1479,7 +1516,7 @@ except:
 def connect_sw():
     """
     连接SolidWorks（完整回退链路）
-    吕亚峰跨机测试验证：GetActiveObject在某些环境失败→必须Dispatch回退
+    跨机测试验证：GetActiveObject在某些环境失败→必须Dispatch回退
     """
     sw = None
     
@@ -1550,7 +1587,7 @@ class ClevisAutomation:
         return True
     
     def extrude(self, depth_mm):
-        before = self.doc.GetFeatureCount()
+        before = get_com_member(self.doc, "GetFeatureCount")  # ✅ M1: 用 get_com_member 取数值，避免属性/方法歧义
         self.doc.SketchManager.InsertSketch(True)  # 关闭草图
         
         depth_m = depth_mm / 1000.0
@@ -1591,16 +1628,16 @@ if __name__ == "__main__":
 
 ---
 
-## 二十二、凳子建模架构模式（吕亚峰跨机验证 2026-06-02）
+## 二十二、凳子建模架构模式（跨机测试验证 2026-06-02）
 
 ### 问题背景
-叉形接头是单件拉伸特征，而**凳子**是**多体装配建模**——座面 + 4条腿，需要多次选基准面、多次拉伸、坐标计算。吕亚峰实测验证了这个模式。
+叉形接头是单件拉伸特征，而**凳子**是**多体装配建模**——座面 + 4条腿，需要多次选基准面、多次拉伸、坐标计算。跨机测试实测验证了这个模式。
 
 ### 凳子参数化架构
 
 ```python
 class 凳子建模器:
-    """凳子自动化建模器（吕亚峰验证版）"""
+    """凳子自动化建模器（跨机测试验证版）"""
 
     # 默认尺寸参数（单位：米）
     默认尺寸 = {
@@ -1653,7 +1690,7 @@ self.拉伸(leg_length, flip=True, name=f"腿{i+1}")
 
 ## 二十三、P1-P10 问题审计框架（系统代码审查法）
 
-吕亚峰在 `凳子_建模分析报告.md` 中提出了**10大问题审计框架**，适用于任何 SW 自动化脚本的 code review。
+跨机测试验证中在 `凳子_建模分析报告.md` 中提出了**10大问题审计框架**，适用于任何 SW 自动化脚本的 code review。
 
 ### 问题清单
 
@@ -1702,7 +1739,7 @@ if __name__ == "__main__":
 def 重建验证(self):
     """强制重建模型（L4.5验证层级）"""
     try:
-        self.doc.EditRebuild3()
+        get_com_member(self.doc, "EditRebuild3")
         print("  ✓ 重建完成")
         return True
     except Exception as e:
@@ -1813,12 +1850,12 @@ def 选择基准面(self, plane_name):
 
 ---
 
-## 二十八、完整生产级脚本模板（吕亚峰验证版）
+## 二十八、完整生产级脚本模板（跨机测试验证版）
 
 ```python
 """
 凳子自动化建模脚本 - 生产级模板
-吕亚峰 2026-06-02 跨机验证通过
+跨机测试验证 2026-06-02 通过
 """
 import win32com.client
 import pythoncom
@@ -1850,7 +1887,7 @@ class 生产级建模器:
         # ... 见 Sec 27 ...
 
     def 拉伸(self, depth_m, flip=False, is_cut=False):
-        before = self.doc.GetFeatureCount
+        before = get_com_member(self.doc, "GetFeatureCount")  # ✅ 取数值，M1: 用 get_com_member 避免属性/方法歧义
         feat = self.doc.FeatureManager.FeatureExtrusion2(
             False, flip, is_cut,
             0, 0, depth_m, 0,
@@ -1859,12 +1896,12 @@ class 生产级建模器:
             True, True, True,
             0, False, False
         )
-        after = self.doc.GetFeatureCount
+        after = get_com_member(self.doc, "GetFeatureCount")  # ✅ 取数值后再比较
         assert after > before, "拉伸失败"
         return feat
 
     def 保存(self, path):
-        self.doc.EditRebuild3()  # L4.5 验证
+        get_com_member(self.doc, "EditRebuild3")  # L4.5 验证
         result = self.doc.SaveAs3(path, 1, 2)
         if result != 1:
             self.doc.SaveAs(path)  # 降级
@@ -1899,12 +1936,14 @@ if __name__ == "__main__":
 
 | 编号 | 规则 | 说明 | 代码示例 |
 |------|------|------|----------|
-| M1 | **属性 vs 方法区分** | GetTitle/GetFeatureCount/FirstFeature/EditRebuild3 是属性不加括号；GetNextFeature() 是方法要加括号 | `doc.GetFeatureCount` ✅ / `doc.GetFeatureCount()` ❌ |
+| M1 | **属性 vs 方法兼容** | GetTitle/GetFeatureCount/FirstFeature/EditRebuild3 在不同 pywin32/SW 环境可能表现不同；统一用 Sec 31 `get_com_member()`，禁止硬编码“必须加/不加括号” | `get_com_member(doc, "GetFeatureCount")` ✅ |
 | M2 | **VARIANT 包装** | SelectByID2 第8参数必须 `VARIANT(VT_DISPATCH, None)`，不能用 Python None | `VARIANT(pythoncom.VT_DISPATCH, None)` |
 | M3 | **单位转换** | SolidWorks 内部统一使用米（SI），输入 mm 必须 `/1000.0` | `depth_m = 30 / 1000.0` |
-| M4 | **UserControl=True** | Python COM 环境必须设置，防止 SW 被 GC 回收 | `sw.UserControl = True` |
+| M4 | **UserControl=True** | Python COM 环境必须设置，防止 SW 被 GC 回收。⚠️ 例外：在明确的批量处理循环体内可临时设为 False（参见 Sec 34），但循环结束后必须立即恢复 True | `sw.UserControl = True` |
 | M5 | **CoInitialize()** | 必须显式调用，否则 Dispatch 可能返回无效指针 | `pythoncom.CoInitialize()` |
-| M6 | **FeatureCut 不可用** | Python COM 中 FeatureCut/2/3/4 全部返回 None，必须用加法建模策略 | 用 FeatureExtrusion2 + FeatureFillet3 |
+| M6 | **FeatureCut 不可用** | Python COM 中 FeatureCut/2/3/4 全部返回 None，默认用加法建模策略；如需真正执行切除，可通过 Sec 38 的 VBA 宏自动生成路由绕过此限制（VBA 中 FeatureCut4 可正常调用） | 加法建模优先；复杂切除 → Sec 38 VBA 路由 |
+
+旧章节中若仍出现 `SelectByID2(..., None, ...)`，只能当作历史语法示意；实际执行必须替换为 M2 的 `VARIANT(VT_DISPATCH, None)` 或使用 Sec 18/40 的遍历选择函数。
 
 ---
 
@@ -1999,11 +2038,11 @@ def get_com_member(obj, attr_name, *args):
 
 ```python
 # 不再需要记住哪些是属性哪些是方法
-title = get_com_member(doc, "GetTitle")         # 属性，自动回退
-feat = get_com_member(doc, "FirstFeature")       # 属性，自动回退
-count = get_com_member(doc, "GetFeatureCount")   # 属性，自动回退
-next_feat = get_com_member(feat, "GetNextFeature")  # 方法，自动调用
-type_name = get_com_member(feat, "GetTypeName2")    # 方法，自动调用
+title = get_com_member(doc, "GetTitle")
+feat = get_com_member(doc, "FirstFeature")
+count = get_com_member(doc, "GetFeatureCount")
+next_feat = get_com_member(feat, "GetNextFeature")
+type_name = get_com_member(feat, "GetTypeName2")
 ```
 
 ### 与现有铁律的关系
@@ -2042,19 +2081,21 @@ errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
 warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
 callout = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
 
-success = doc.Extension.SaveAs(
-    output_path,     # 输出路径
-    0,               # 版本 (0=当前版本)
-    1,               # 选项 (1=SaveAs)
-    callout,         # Callout
-    errors,          # 错误码 (by-ref)
-    warnings         # 警告码 (by-ref)
-)
-
-if success:
-    print(f"✓ 导出成功: {output_path}")
-else:
-    print(f"✗ 导出失败: 错误码={errors.value}, 警告码={warnings.value}")
+def safe_save_as(doc, output_path):
+    errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+    warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+    callout = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
+    success = doc.Extension.SaveAs(
+        output_path,     # 输出路径
+        0,               # 版本 (0=当前版本)
+        1,               # 选项 (1=SaveAs)
+        callout,         # Callout
+        errors,          # 错误码 (by-ref)
+        warnings         # 警告码 (by-ref)
+    )
+    if not success:
+        raise RuntimeError(f"导出失败: 错误码={errors.value}, 警告码={warnings.value}")
+    return True
 ```
 
 ### SaveAs 错误码/警告码速查
@@ -2085,17 +2126,18 @@ import os
 def batch_convert(sw, input_dir, output_dir, input_ext=".sldprt", output_ext=".step"):
     """批量转换目录下的所有文件"""
     os.makedirs(output_dir, exist_ok=True)
-    errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
-    warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
 
     for filename in os.listdir(input_dir):
         if filename.lower().endswith(input_ext):
+            errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+            warnings = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
+            callout = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
             input_path = os.path.join(input_dir, filename)
             base = os.path.splitext(filename)[0]
             output_path = os.path.join(output_dir, base + output_ext)
             model = sw.OpenDoc6(input_path, 1, 1, "", errors, warnings)
             if model:
-                model.Extension.SaveAs(output_path, 0, 1, None, errors, warnings)
+                model.Extension.SaveAs(output_path, 0, 1, callout, errors, warnings)
                 sw.CloseDoc(get_com_member(model, "GetTitle"))
                 print(f"✓ 已转换: {filename} -> {base + output_ext}")
 ```
@@ -2309,7 +2351,7 @@ sw.CloseAllDocuments(False)
 sw.UserControl = False
 # ... 批量操作 ...
 # 手动重建
-doc.EditRebuild3()
+get_com_member(doc, "EditRebuild3")
 sw.UserControl = True
 ```
 
@@ -3146,8 +3188,6 @@ def debug_com_params(api_name, params):
 - **本 Section** 覆盖所有 COM 方法的空值处理规则
 - M2 是子集，本 Section 是全集
 
----
-
 ## 四十二、COM 健康检查与超时保护（互联网实战经验）
 
 > **来源**：CSDN @2402_87963769《SolidWorks AI 自动画图系统从零复现》(2026-06-01)  
@@ -3359,6 +3399,13 @@ def 自动出图(doc, template_path, output_path):
 > **"AI 是机械设计助手，不是替代工程师。"**  
 > **"适合快速出初版、做概念验证、辅助写建模脚本。"**  
 > **"最终的关键判断——单位对不对、边界条件对不对——仍然靠工程师。"**
+
+---
+
+**注意**:
+1. SolidWorks版本不同可能导致API行为差异，建议使用2016+版本
+2. 所有单位默认为米制(SI)，SolidWorks内部使用米
+3. 批量操作前建议先在小范围测试
 
 ---
 

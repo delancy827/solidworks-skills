@@ -2047,8 +2047,8 @@ public Program() { Count = 0; }
 #### 实际编译命令（E: 盘 SW2024）
 ```bash
 C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe \
-  /reference:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.sldworks.dll" \
-  /reference:"E:/sw2024/SOLIDWORKS/api/redist/SolidWorks.Interop.swconst.dll" \
+  /reference:"C:/SOLIDWORKS/api/redist/SolidWorks.Interop.sldworks.dll" \
+  /reference:"C:/SOLIDWORKS/api/redist/SolidWorks.Interop.swconst.dll" \
   /out:Clevis_Joint.exe \
   Clevis_Joint.cs
 ```
@@ -2684,8 +2684,8 @@ swDoc.SketchManager.CreateCornerRectangle(0.015, -0.0125, 0, 0.090, -0.0375, 0);
 ```csharp
 // Clevis_Joint.cs — 叉形接头全自动建模（4/4步骤实体验证通过）
 // 编译: & 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe' \
-//        /r:'E:\sw2024\SOLIDWORKS\api\redist\SolidWorks.Interop.sldworks.dll' \
-//        /r:'E:\sw2024\SOLIDWORKS\api\redist\SolidWorks.Interop.swconst.dll' \
+//        /r:'C:\SOLIDWORKS\api\redist\SolidWorks.Interop.sldworks.dll' \
+//        /r:'C:\SOLIDWORKS\api\redist\SolidWorks.Interop.swconst.dll' \
 //        /out:Clevis_Joint.exe Clevis_Joint.cs
 
 using System;
@@ -3308,11 +3308,11 @@ Console.WriteLine(string.Format("草图线段数: {0}", segCount));
 
 ```csharp
 // ❌ 可能失败 — SaveAs3 + 中文路径
-string path = @"C:\Users\彭凯阳\Desktop\bracket.sldprt";
+string path = @"C:\Users\<user>\Desktop\bracket.sldprt";
 int result = swDoc.SaveAs3(path, 1, 2);  // result=0 → 静默失败
 
 // ✅ 方案1：用SaveAs（不带数字后缀）
-swDoc.SaveAs("C:/Users/彭凯阳/Desktop/bracket.sldprt");
+swDoc.SaveAs("C:/Users/<user>/Desktop/bracket.sldprt");
 Console.WriteLine("✓ 保存成功");
 
 // ✅ 方案2：全英文/数字路径
@@ -3514,7 +3514,7 @@ swDoc.SketchManager.CreateLine(-ht, sh, 0, -hb, 0, 0);
 | 项目 | 本机（E:盘SW2024） | 舍友电脑（SW2024中文版） | 差异 |
 |------|------|------|:---:|
 | SW安装路径 | E:\sw2024\ | C:\Program Files\ | 编译命令的/r路径不同 |
-| Interop DLL位置 | E:\sw2024\SOLIDWORKS\api\redist\ | C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist\ | **需自适应** |
+| Interop DLL位置 | C:\SOLIDWORKS\api\redist\ | C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist\ | **需自适应** |
 | 保存路径 | 英文 | 中文桌面 | **SaveAs3不兼容中文** |
 | Python环境 | — | 3.14 + pywin32 | Python COM下FeatureCut全失败 |
 | 建模结果 | Clevis_Joint 4/4通过 | bracket外形正确、孔需手动 | C# vs Python差异大 |

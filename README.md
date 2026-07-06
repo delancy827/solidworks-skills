@@ -506,9 +506,13 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
-### v5.2.0 — 上游系统化重构 + 全网经验来源标注回并 (2026-07-07)
+### v5.3.0 — Claude 优化基底 + 去标识化 + 全网经验来源标注 (2026-07-07)
 
-**核心：基于远程 v5.1.2 基底（含隐私清理）叠加 v4.9.0 全网经验章节（保留全部引用来源）**
+**核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 全网经验章节（保留全部引用来源），并对真实姓名做去标识化**
+
+#### 🤖 Claude 基底独有优化（Codex 版缺失）
+- **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检
+- **Complex drawing intake rule**：复杂图纸先建尺寸账本，禁止把"仅标记"说成"已切除"
 
 #### 🌐 全网经验回并（带引用，Sec 42-46）
 - **Sec 42**：COM 健康检查+超时保护 — 来源：CSDN @2402_87963769
@@ -517,13 +521,13 @@ git push origin feature/amazing-feature
 - **Sec 45**：跨版本性能差异 + 失败统计 — 来源：知乎 / 技术邻 / github.com/yu-qing2
 - **Sec 46**：AI+SW 能力边界（6能✅/5不能❌）— 全网共识
 
-#### 📚 基底已含 v5.1.2 重构（41 章）
-- 吕亚峰跨机验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
-- 引用：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)
+#### 🔒 去标识化（隐私 P0）
+- 全仓库 11 处真实姓名（舍友）→ 统一改为"跨机测试验证"
+- 外部来源（CSDN/抖音/B站/网易/知乎/技术邻/SolidPractices/MIT 项目）均为公开平台/开源仓库，保留原始出处，不涉及个人隐私
 
-#### ✅ 引用合规 + 隐私合规
-- 外部来源（吕亚峰、CSDN、抖音、B站、网易、知乎、技术邻、SolidPractices、MIT 项目）均保留原始出处
-- 全程未引入硬编码个人路径
+#### 📚 基底已含 v5.1.2 重构（41 章）
+- 跨机测试验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
+- 引用：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)
 
 ### v5.1.2 — 隐私清理 + Codex 装配经验同步 + sw-designer v2.6.0 (2026-06-10)
 
@@ -532,7 +536,7 @@ git push origin feature/amazing-feature
 #### 🔒 隐私清理
 - 删除 `.codebuddy/`、`.workbuddy/` 目录（含个人路径、学号、工作日志等敏感信息）
 - 替换源码中硬编码路径为通用占位符（`C:\temp\sw_course`），保留代码可运行性
-- `solidworks-automation/SKILL.md` 中 `E:/sw2024/SOLIDWORKS` 替换为通用路径
+- `solidworks-automation/SKILL.md` 中 `[SW安装路径]` 替换为通用路径
 
 #### 🆕 新增 Codex 装配调试经验（6 条核心法则）
 - `docs/solidworks-assembly-debugging-lessons.md` — 装配调试 6 条核心经验 + Robust Transform 模式

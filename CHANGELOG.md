@@ -1,29 +1,32 @@
 # Changelog
 
-## 2026-07-07（v5.2.0 — 上游系统化重构 + 全网经验来源标注回并）
+## 2026-07-07（v5.3.0 — Claude 优化基底 + 去标识化 + 全网经验来源标注）
 
-### solidworks-automation v5.1.2 → v5.2.0
+### solidworks-automation v5.1.2 → v5.3.0
 
-> 本次迭代来源：`sw-skill-upstream` 包（原 `sw-skill-for-claude.zip`，已去除 Claude 品牌，author 保持 Delancy）。基于远程 v5.1.2 基底（含隐私清理）叠加。
+> 本次迭代来源：`sw-skill-for-claude.zip`（用户用 Claude 优化过的 v5.1.2 基底）。**关键修正**：上一轮误用远程 Codex 会话的 v5.1.2 当基底，丢失了 Claude 版的独有优化；本轮改回以 **Claude v5.1.2 为唯一基底**，并做去标识化处理。
 
-#### 1. 基底已含上游 v5.1.2 系统化重构（共 41 章，详见 v5.1.2 条目）
+#### 1. Claude 优化基底（v5.1.2，含 Codex 版缺失的独有优化）
+- **Model capability preflight**：多模态/纯文本/仅能跑 SW 三种运行时能力自检，纯文本模型必须先声明无法看图
+- **Complex drawing intake rule**：复杂图纸建模前先建尺寸账本（Exact/Inferred/Designer-choice/Unsupported），禁止把"仅标记"描述成"已切除"
 - Sec 1-17：SW 全模块教程（草图/特征/装配/工程图/曲面/钣金/焊件/模具/Simulation/Flow/批量/API参考/排错/规范/工作流）
-- Sec 18-28：SWValidator 验证框架、吕亚峰跨机验证全套（凳子建模/P1-P10/CoInitialize/版本化ProgID/动态模板/基准面翻译）
+- Sec 18-28：SWValidator 验证框架、跨机测试验证全套（凳子建模/P1-P10/CoInitialize/版本化ProgID/动态模板/基准面翻译）
 - Sec 29-41：SolidPractices 官方最佳实践、get_com_member 兼容探测、装配体运动配合(Gear/Hinge)、结果自审查、大型装配体性能、外观材质、COM/VBA智能路由降级、熔断器三态管理、VBA宏生成执行、pywin32适配器增强、特征树遍历替代SelectByID2、COM空值安全规则
   - 引用：SolidPractices / CADSharp、wzyn20051216 MIT 项目、vespo92/SolidworksMCP-TS (MIT)
 
-#### 2. 回并 v4.9.0 全网经验（带引用来源，现 Sec 42-46）
+#### 2. 回并 v4.9.0 全网经验（带引用来源，Sec 42-46）
 - **Sec 42**：COM 健康检查与超时保护（子进程+超时、脏会话隔离、中文路径隔离）— 来源：CSDN @2402_87963769
 - **Sec 43**：装配体自动化规范（四阶段进化、配合黄金顺序、错误修复表）— 来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果
 - **Sec 44**：工程图自动出图规范（四大模块、出图代码、企业四大经验）— 来源：网易 @Solidkits 企业案例
 - **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考 — 来源：知乎 / 技术邻 / github.com/yu-qing2 / 2dmaterial-lab.github.io
 - **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）— 综合抖音/B站/CSDN/知乎/网易/技术邻
 
-#### 3. 所有外部来源均保留原始出处标注（符合引用要求）
-- 吕亚峰跨机测试、CSDN @2402_87963769、抖音 @Hvemiiiiiours、B站 @奇葩人参果、网易 @Solidkits、知乎、技术邻、SolidPractices/CADSharp、wzyn20051216、vespo92/SolidworksMCP-TS
+#### 3. 去标识化（隐私合规，P0）
+- **移除真实姓名**：全仓库 11 处"吕亚峰"（用户舍友真实姓名）→ 统一改为"跨机测试验证"
+- 外部来源保留原始出处标注（CSDN/抖音/B站/网易/知乎/技术邻/SolidPractices/MIT 项目），均为公开平台或开源仓库，不涉及个人隐私
 
 #### 4. 隐私合规
-- 全程未引入硬编码个人路径（E:/sw2024、C:/Users/22374 等），沿用远程 v5.1.2 的占位符规范
+- 全程 0 处硬编码个人路径（[SW安装路径]、[用户主目录] 等），沿用占位符规范
 
 ---
 
@@ -34,8 +37,8 @@
 - **删除 .workbuddy/ 目录**：包含 4 个 memory 日志文件 + 4 个 skill 副本
   - .workbuddy/memory/2026-05-30.md — 含个人工作日志
   - .workbuddy/memory/2026-05-31.md — 含个人工作日志
-  - .workbuddy/memory/2026-06-01.md — 含硬编码路径 C:/Users/22374/Desktop/...、学号、SW 安装路径等敏感信息
-  - .workbuddy/memory/MEMORY.md — 含 E:/sw2024/SOLIDWORKS 路径、个人项目经验
+  - .workbuddy/memory/2026-06-01.md — 含硬编码路径 [用户主目录]/Desktop/...、学号、SW 安装路径等敏感信息
+  - .workbuddy/memory/MEMORY.md — 含 [SW安装路径]/SOLIDWORKS 路径、个人项目经验
   - .workbuddy/skills/* — skill 副本与仓库主目录重复，属冗余文件
 - **根因**：.gitignore 已包含 .workbuddy/ 和 .codebuddy/，但这些文件是在添加 .gitignore 之前提交的
 - **建议**：后续避免将运行时生成的本地工作区文件提交到公开仓库
@@ -62,12 +65,12 @@
 
 ### 源码隐私清理（硬编码路径 -> 占位符）
 - `src/clevis-joint/CourseProjectAssembly.cs`
-  - `C:/Users/22374/Desktop/...` -> `C:/temp/sw_course`
+  - `[用户主目录]/Desktop/...` -> `C:/temp/sw_course`
   - 新增 `// TODO: Update WorkDir` 注释
 - `src/clevis-joint/CourseProjectStepReplay.cs`
   - 同上路径替换
 - `solidworks-automation/SKILL.md`
-  - `E:/sw2024/SOLIDWORKS` -> `C:/SOLIDWORKS`（通用路径）
+  - `[SW安装路径]/SOLIDWORKS` -> `C:/SOLIDWORKS`（通用路径）
 - 策略：保留代码可运行性，仅替换个人路径为通用占位符，不影响 skill 性能
 
 
@@ -311,7 +314,7 @@ CSDN(@2402_87963769)、抖音(@Hvemiiiiiours)、B站(@奇葩人参果)、
 - 🌐 **遍历特征树回退** — `FirstFeature` 属性 + `GetNextFeature()` 方法
 
 #### Section 38：完整生产级脚本模板
-- 🏭 **吕亚峰验证版** — `生产级建模器` 类模板
+- 🏭 **跨机测试验证版** — `生产级建模器` 类模板
 - 🏭 **`finally: pythoncom.CoUninitialize()`** — COM资源确保释放
 
 ### sw-designer v2.6.0 → v2.7.0

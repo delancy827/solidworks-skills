@@ -19,7 +19,7 @@ Recommended files to include:
 
 Do not push private/generated coursework artifacts:
 
-- files under `C:/Users/22374/Desktop/.../冲压作业/`,
+- files under `C:/Users/<user>/Desktop/.../冲压作业/`,
 - `.SLDPRT`, `.SLDASM`, `.SLDDRW`,
 - `.docx` coursework output,
 - generated screenshots,
