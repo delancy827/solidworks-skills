@@ -506,6 +506,25 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v5.2.0 — 上游系统化重构 + 全网经验来源标注回并 (2026-07-07)
+
+**核心：基于远程 v5.1.2 基底（含隐私清理）叠加 v4.9.0 全网经验章节（保留全部引用来源）**
+
+#### 🌐 全网经验回并（带引用，Sec 42-46）
+- **Sec 42**：COM 健康检查+超时保护 — 来源：CSDN @2402_87963769
+- **Sec 43**：装配体自动化规范（四阶段 + 配合黄金顺序）— 来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果
+- **Sec 44**：工程图自动出图规范（四大模块 + 企业四大经验）— 来源：网易 @Solidkits 企业案例
+- **Sec 45**：跨版本性能差异 + 失败统计 — 来源：知乎 / 技术邻 / github.com/yu-qing2
+- **Sec 46**：AI+SW 能力边界（6能✅/5不能❌）— 全网共识
+
+#### 📚 基底已含 v5.1.2 重构（41 章）
+- 吕亚峰跨机验证全套、SolidPractices 官方最佳实践、get_com_member 兼容探测、COM/VBA 智能路由降级、熔断器三态管理、VBA 宏生成、COM 空值安全规则
+- 引用：SolidPractices/CADSharp、wzyn20051216 (MIT)、vespo92/SolidworksMCP-TS (MIT)
+
+#### ✅ 引用合规 + 隐私合规
+- 外部来源（吕亚峰、CSDN、抖音、B站、网易、知乎、技术邻、SolidPractices、MIT 项目）均保留原始出处
+- 全程未引入硬编码个人路径
+
 ### v5.1.2 — 隐私清理 + Codex 装配经验同步 + sw-designer v2.6.0 (2026-06-10)
 
 **核心更新：隐私安全加固 + Codex++ 装配调试经验整合 + 设计技能大幅扩展**

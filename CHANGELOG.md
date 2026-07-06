@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-07-07（v5.2.0 — 上游系统化重构 + 全网经验来源标注回并）
+
+### solidworks-automation v5.1.2 → v5.2.0
+
+> 本次迭代来源：`sw-skill-upstream` 包（原 `sw-skill-for-claude.zip`，已去除 Claude 品牌，author 保持 Delancy）。基于远程 v5.1.2 基底（含隐私清理）叠加。
+
+#### 1. 基底已含上游 v5.1.2 系统化重构（共 41 章，详见 v5.1.2 条目）
+- Sec 1-17：SW 全模块教程（草图/特征/装配/工程图/曲面/钣金/焊件/模具/Simulation/Flow/批量/API参考/排错/规范/工作流）
+- Sec 18-28：SWValidator 验证框架、吕亚峰跨机验证全套（凳子建模/P1-P10/CoInitialize/版本化ProgID/动态模板/基准面翻译）
+- Sec 29-41：SolidPractices 官方最佳实践、get_com_member 兼容探测、装配体运动配合(Gear/Hinge)、结果自审查、大型装配体性能、外观材质、COM/VBA智能路由降级、熔断器三态管理、VBA宏生成执行、pywin32适配器增强、特征树遍历替代SelectByID2、COM空值安全规则
+  - 引用：SolidPractices / CADSharp、wzyn20051216 MIT 项目、vespo92/SolidworksMCP-TS (MIT)
+
+#### 2. 回并 v4.9.0 全网经验（带引用来源，现 Sec 42-46）
+- **Sec 42**：COM 健康检查与超时保护（子进程+超时、脏会话隔离、中文路径隔离）— 来源：CSDN @2402_87963769
+- **Sec 43**：装配体自动化规范（四阶段进化、配合黄金顺序、错误修复表）— 来源：抖音 @Hvemiiiiiours / B站 @奇葩人参果
+- **Sec 44**：工程图自动出图规范（四大模块、出图代码、企业四大经验）— 来源：网易 @Solidkits 企业案例
+- **Sec 45**：跨版本性能差异 + 失败统计 + 开源项目参考 — 来源：知乎 / 技术邻 / github.com/yu-qing2 / 2dmaterial-lab.github.io
+- **Sec 46**：AI+SolidWorks 能力边界（6能 ✅ / 5不能 ❌ + 全网共识）— 综合抖音/B站/CSDN/知乎/网易/技术邻
+
+#### 3. 所有外部来源均保留原始出处标注（符合引用要求）
+- 吕亚峰跨机测试、CSDN @2402_87963769、抖音 @Hvemiiiiiours、B站 @奇葩人参果、网易 @Solidkits、知乎、技术邻、SolidPractices/CADSharp、wzyn20051216、vespo92/SolidworksMCP-TS
+
+#### 4. 隐私合规
+- 全程未引入硬编码个人路径（E:/sw2024、C:/Users/22374 等），沿用远程 v5.1.2 的占位符规范
+
+---
+
 ## 2026-06-10（隐私清理 + Codex 经验同步 + sw-designer 更新）
 
 ### 隐私清理（P0）

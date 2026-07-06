@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fork_lug_bracket_dry_run",
+    "prompt": "根据一张三视图机械图纸建模：底座 120 x 70 x 14 mm；两片叉耳各 18 mm 厚，中间槽宽 30 mm；叉耳自底座顶面起高 72 mm；叉耳中心有 DIA 24 贯穿销孔；底座四角有 4x DIA 10 安装孔。请输出 SolidWorks Python COM 自动化方案和最小可运行脚本，必须说明 Python COM 无法可靠执行切除时的 fallback，并给出验证步骤。",
+    "expected": "应优先 connect_sw()/GetActiveObject，统一 mm->m，使用模板创建或复用文档；主体用加法建模构造底座和两片耳板；孔位若 Python COM 切除不可用则生成清晰孔位标记并报告限制，不得谎称已切穿；使用 get_com_member、VARIANT Callout、EditRebuild3/特征数/截图验证。"
+  },
+  {
+    "id": "assembly_repeated_instances",
+    "prompt": "根据叉耳-连杆-销轴装配图生成 SolidWorks 装配自动化计划：叉耳 1 件、连杆 2 件、销轴 2 件，要求按实际孔中心配合并输出验证清单。",
+    "expected": "必须数清重复实例，不能用额外销轴替代缺失连杆；应读取每个组件变换后的实际孔中心作为 mate 目标；需要等距/同轴/重合配合和等轴、前视、俯视截图验证。"
+  },
+  {
+    "id": "worldclasscad_bracket_real_pdf",
+    "prompt": "从公开 PDF `Dimensioning the Bracket Problem` 中读取 bracket 多视图图纸，生成一个 SolidWorks Python COM 近似模型。必须说明该 PDF 是 2D 标注练习，3D 厚度/孔切除若信息不足或 Python COM 不可靠，只能做近似和孔位标记，并输出真实运行日志。",
+    "expected": "应下载/引用公开来源，渲染或查看图纸页，按可读尺寸生成 2.5D bracket；连接 SW 后至少完成加法实体建模、EditRebuild3 兼容调用、SaveAs3/VARIANT 保存；孔状态必须报告为 markers only 或通过可靠切除验证后才称为 cut-through。"
+  },
+  {
+    "id": "complex_alignment_bracket_pdf",
+    "prompt": "从 IIT Madras 托管的 Autodesk Inventor Practice Part Drawings PDF 中选择 Sheet 8 `Alignment Bracket.ipt` 复杂零件图，生成 SolidWorks Python COM 自动化近似模型，并输出尺寸账本、真实运行日志和限制说明。",
+    "expected": "必须先列出 exact/inferred/designer-choice/unsupported 尺寸账本；按可读尺寸构建底座、左右台阶块、中央立块和圆台 boss；DIA25 主孔、DIA5.5/CBORE DIA10.4 顶孔、R42/R22.5/chamfer/slots 若未可靠切除或成形必须报告为 markers/approximated；应使用 connect_sw、get_com_member(EditRebuild3)、safe SaveAs，保存 SLDPRT 并报告特征数变化。"
+  }
+]
