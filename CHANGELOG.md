@@ -461,3 +461,16 @@
 
 ### 初始提交
 - solidworks-automation 和 sw-designer 技能创建
+
+## 2026-09-17（v5.4.0 — 短入口 + 按需加载 + 本地经验合并）
+
+### solidworks-automation v5.3.0 → v5.4.0
+- `SKILL.md` 从 3400 行压缩为短入口，保留硬约束、工作流和 SW 2024 关键坑位
+- 原 46 章完整手册迁移到 `references/automation-manual.md`，改为按关键词检索后局部阅读
+- 合并本地 7 月实战经验：图纸转 3D、材料成型/模具、装配调试
+- 技能文件夹自包含 references，安装时不再依赖仓库根目录 `docs/`
+- README 同步新结构、按需加载说明和自包含安装方式
+
+### sw-designer v2.6.0 → v2.7.0
+- `SKILL.md` 改为短入口，聚焦设计决策、参数化策略和与自动化技能的分工
+- 原 17 章设计指南迁移到 `references/design-manual.md`，支持按需检索

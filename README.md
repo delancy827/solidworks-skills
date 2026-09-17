@@ -109,12 +109,12 @@ SolidWorks 是全球最流行的 3D CAD 软件之一，但它的 API 非常复�
 ```
 solidworks-skills/
 ├── solidworks-automation/     # 自动化建模技能
-│  ├── SKILL.md          # 技能主文档（~103KB, 3100+行, 41个Section）
-│  │  ├── SW 2024 API 完全指南
-│  │  ├── Python COM 实战踩坑记录
-│  │  ├── 参数化建模工作流
-│  │  ├── 错误处理与调试技巧
-│  │  └── 代码示例（4 个完整脚本）
+│  ├── SKILL.md          # 短入口：硬约束 + 工作流 + 按需路由
+│  ├── references/       # 按需加载，不随入口整包注入上下文
+│  │  ├── automation-manual.md              # 46 章 API/COM/领域手册
+│  │  ├── drawing-to-3d-lessons.md          # 图纸转 3D 实战经验
+│  │  ├── materials-forming-mold-lessons.md # 材料成型/模具经验
+│  │  └── assembly-debugging-lessons.md     # 装配调试经验
 │  └── examples/         # 可运行示例代码
 │    ├── 01_basic_part.py     # 基础零件建模
 │    ├── 02_assembly.py       # 装配体建模
@@ -122,12 +122,8 @@ solidworks-skills/
 │    └── 04_simulation.py     # Simulation 分析
 │
 ├── sw-designer/          # 设计指导技能
-│  └── SKILL.md         # 设计指南（~28KB, 17章完整设计流程）
-│    ├── IMA 知识库集成（55 篇教程）
-│    ├── 参数化设计原则
-│    ├── 性能优化技巧
-│    ├── 设计规范检查清单
-│    └── 12 章完整设计流程
+│  ├── SKILL.md         # 短入口：设计决策 + 边界 + 路由
+│  └── references/design-manual.md # 17 章完整设计流程
 │
 ├── solidworks-mcp/       # MCP Server 安全操控 SolidWorks
 │  ├── server.py          # MCP 服务入口
@@ -191,7 +187,7 @@ doc.Extension.SelectByID2("前视基准面", "PLANE", 0, 0, 0, False, 0, variant
 
 **初学者（0-1 周）：**
 1. 安装 Skill → 让 AI 帮你建一个简单零件（方块、圆柱）
-2. 学习 SKILL.md 中的"API 基础"章节
+2. 用 `rg` 搜索 `references/automation-manual.md` 中的 "API 基础" 章节
 3. 运行 `examples/01_basic_part.py` 理解基本流程
 
 **进阶（1-4 周）：**
@@ -224,11 +220,13 @@ Package real-world debugging experience into **AI Agent Skills**, letting AI tru
 ```
 solidworks-skills/
 ├── solidworks-automation/     # Automation skill
-│  ├── SKILL.md          # Main doc (~103KB, 3100+ lines, 41 sections)
+│  ├── SKILL.md          # Short entrypoint: hard rules + routing
+│  ├── references/       # Lazy-loaded API and field references
 │  └── examples/         # Runnable examples (01-04)
 │
 ├── sw-designer/          # Design guidance skill
-│  └── SKILL.md         # Design guide (~28KB, 17 chapters)
+│  ├── SKILL.md          # Short entrypoint
+│  └── references/design-manual.md
 │
 ├── solidworks-mcp/       # MCP Server for SolidWorks
 │
@@ -284,6 +282,7 @@ cd solidworks-skills
 cp -r solidworks-automation /path/to/skills/
 cp -r sw-designer /path/to/skills/
 
+# references/ 已包含在技能文件夹内，安装包自包含
 # 重新加载
 ```
 
@@ -776,3 +775,5 @@ MIT License — 免费用于个人和商业项目。
 **By using this skill pack, you agree to the above disclaimer.**
 
 如有问题，请联系：[delancy827@example.com](mailto:delancy827@example.com)
+- 🔍 **设计审查** — AI 检查你的模型是否符合规范
+- 🧩 **边跑边检修** — 短入口 + references 按需加载，运行中项目也能低上下文体检和修复
