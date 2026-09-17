@@ -505,6 +505,22 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v5.4.0 — 短入口 + 按需加载 + 本地经验合并 (2026-09-17)
+
+**核心：技能主文档改为低上下文短入口，完整手册与实战经验按需加载，方便在运行中项目里做检修和修复。**
+
+#### 🧩 结构优化
+- `solidworks-automation/SKILL.md` 压缩为短入口，只保留硬约束、工作流和 SW 2024 关键坑位
+- 原 46 章完整手册迁移到 `references/automation-manual.md`
+- `sw-designer/SKILL.md` 同步压缩，原 17 章指南迁移到 `references/design-manual.md`
+- 新增 `references/` 按需加载结构，技能文件夹自包含
+
+#### 📚 经验合并
+- 新增图纸转 3D 实战经验
+- 新增材料成型 / 模具设计经验
+- 新增装配调试经验
+- 修复新版 frontmatter 规范问题，`category/version/author` 收入 `metadata`
+
 ### v5.3.0 — Claude 优化基底 + 经验章节回并 (2026-07-07)
 
 **核心：改回以用户用 Claude 优化的 v5.1.2 为唯一基底（含 preflight / 复杂图纸 intake 等独有优化），叠加 v4.9.0 经验章节（Sec 42-46）**
