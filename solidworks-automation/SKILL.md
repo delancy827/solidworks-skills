@@ -3,7 +3,7 @@ name: solidworks-automation
 description: "用户需要用 Python/C#/VBA 连接 SolidWorks API 自动建模、装配、工程图、仿真等时调用本技能。"
 metadata:
   category: engineering-cad
-  version: 5.4.0
+  version: 5.5.0
   author: Delancy
 ---
 
@@ -53,6 +53,7 @@ Read these only when the current task needs them.
 - `references/drawing-to-3d-lessons.md` — DXF/PDF-to-part rules, secondary-feature checks, volume calibration, and ground-truth STEP comparison.
 - `references/materials-forming-mold-lessons.md` — stamping edge sizing, die-cast shrink direction, process metadata, moldbase checks, and mold assembly QA.
 - `references/assembly-debugging-lessons.md` — repeated-instance counting, transformed hole centers, and render-based assembly validation.
+- `references/com-dualinterface-quirks.md` — **COM 双接口怪癖实证手册**（2026-10 单机全流程实战沉淀）。当动态 COM 调用报"找不到成员"、拉伸静默返回 None、AddComponent5 静默失败、ComposeTransform 摆位不对、截图视图切不过去时，先读它。配套可运行流水线见 `examples/verified/`。
 - `examples/01_basic_part.py`
 - `examples/02_assembly.py`
 - `examples/03_drawing.py`

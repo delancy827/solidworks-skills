@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-07（v5.5.0 — COM 双接口怪癖实证手册 + 实证流水线示例）
+
+### solidworks-automation v5.4.0 → v5.5.0
+
+> 来源：一次完整的「图纸 → 三零件 → 装配体」自动化实战（支座+连杆×2+销轴×2，两级135°肘节）。
+> 三零件体积与理论值偏差 0.000%，装配 9/9 配合自动添加，全流程零切除特征。
+
+#### 1. 新增 `references/com-dualinterface-quirks.md`（COM 双接口怪癖实证手册）
+- 动态 IDispatch 大量"找不到成员" → makepy 早绑定；byref 方法（OpenDoc6/SaveAs）走动态，双通道并存
+- 同一对象上属性/方法不稳定（GetFeatureCount/GetTitle/Volume...）→ pm() 自适应助手
+- `Create3PointArc` 的弧不并入轮廓导致拉伸静默 None → 必须用 `IModelDoc2.CreateArc2` 且**弧先画**
+- `FeatureExtrusion2` 第21参是 T0 起始条件枚举（3=偏移）不是偏移量；本机 Flip 在偏移模式下无效 → 负偏移实现反侧凸台
+- 零参考面建模法：起始面偏移 + 外环内环多轮廓一次拉伸（孔零切除）
+- `AddComponent5` 前置条件：零件必须先 `OpenDoc6` 进内存，否则静默失败
+- `IMathUtility.ComposeTransform` 的向量是旋转矩阵的**列**，且必须传 IMathVector 对象；摆位后用装配 bbox 硬校验
+- 装配配合绕开 SelectByID2：`IComponent2.FeatureByName` + `IFeature.Select2`；命中选面用 SelectionManager 验证归属
+- `ShowNamedView2` 第二参传 -1 视图不切换（等轴测=7/前视=1/上视=5/右视=4）；截图导出的是活动窗口文档，先 ActivateDoc3
+- `GetPartBox(True)` 恒定 SI 米；False 跟随文档单位（单位漂移坑）
+- 窗口纪律：建完即存、存完即关，全程最多 1~2 个窗口
+
+#### 2. 新增 `examples/verified/`（可运行实证流水线）
+- `make_typelib_wrapper.py` — 从 sldworks.tlb 生成早绑定包装
+- `sw_common.py` — 双通道公共库（CreateArc2 基元、T0 偏移拉伸、ComposeTransform 摆位、体积/bbox/截图）
+- `assemble_two_link_arm.py` — 两级肘节装配完整示例（9 配合 + 位姿硬校验 + 干涉检查）
+
+
 ## 2026-07-07（v5.3.0 — Claude 优化基底 + 经验章节回并）
 
 ### solidworks-automation v5.1.2 → v5.3.0

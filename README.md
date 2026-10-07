@@ -505,6 +505,23 @@ git push origin feature/amazing-feature
 
 完整版本历史详见 [CHANGELOG.md](CHANGELOG.md)。
 
+### v5.5.0 — COM 双接口怪癖实证手册 + 实证流水线 (2026-10-07)
+
+**核心：把一次"图纸 → 三零件 → 两级135°装配"全自动实战中踩出的十余项 COM 双接口怪癖沉淀成手册和可运行流水线，同机复现零踩坑。**
+
+#### 🧪 实证手册（references/com-dualinterface-quirks.md）
+- 动态 IDispatch "找不到成员" → makepy 早绑定 + byref 方法走动态的双通道并存
+- `Create3PointArc` 弧不并入轮廓 → `IModelDoc2.CreateArc2` 且**弧先画**
+- `FeatureExtrusion2` 第21参是 T0 枚举（3=偏移）不是偏移量；Flip 在偏移下无效 → 负偏移
+- `AddComponent5` 前零件必须先 `OpenDoc6` 进内存
+- `ComposeTransform` 向量是旋转矩阵的**列**，且必须传 IMathVector 对象
+- 装配配合：`IComponent2.FeatureByName` + `IFeature.Select2` 绕开 SelectByID2 失效
+- `ShowNamedView2` 第二参传 -1 不切视图；截图导出的是活动窗口文档
+
+#### 📦 实证流水线（examples/verified/）
+- `make_typelib_wrapper.py` / `sw_common.py` / `assemble_two_link_arm.py`
+- 实战战绩：三零件体积与理论值偏差 **0.000%**，装配 **9/9** 配合自动添加，零切除特征
+
 ### v5.4.0 — 短入口 + 按需加载 + 本地经验合并 (2026-09-17)
 
 **核心：技能主文档改为低上下文短入口，完整手册与实战经验按需加载，方便在运行中项目里做检修和修复。**
